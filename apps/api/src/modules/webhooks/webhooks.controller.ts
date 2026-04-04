@@ -184,7 +184,7 @@ export class WebhooksController {
     const orderStatus = Number(body?.order_status ?? body?.OrderStatus ?? 0);
     const paymentStatus = Number(body?.payment_status ?? body?.PaymentStatus ?? body?.paymentstatus ?? 0);
     const merchantOrderNumber: string =
-      body?.merchant_order_number || body?.MerchantOrderNumber || body?.merchantOrderNumber || '';
+      body?.order_number || body?.merchant_order_number || body?.MerchantOrderNumber || '';
 
     this.logger.log(`Cielo parsed — orderStatus: ${orderStatus}, paymentStatus: ${paymentStatus}, orderNumber: ${merchantOrderNumber}`);
 
