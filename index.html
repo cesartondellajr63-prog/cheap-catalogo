@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cheaps Pods — Catálogo</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0a0a0a; --surface:#111; --surface2:#1a1a1a;
+  --border:rgba(255,255,255,0.08); --accent:#c8ff00; --accent2:#7efff5;
+  --text:#fff; --muted:rgba(255,255,255,0.45); --pill:rgba(255,255,255,0.06);
+  --max:960px; --pad:clamp(16px,4vw,32px);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+
+body{background:var(--bg);font-family:'Inter',sans-serif;color:var(--text);overflow-x:hidden;min-height:100vh;-webkit-font-smoothing:antialiased;}
+body::before{
+  content:'';
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:0;
+  background: linear-gradient(
+    135deg,
+    #050505 0%,
+    #242424 33%,
+    #080808 66%,
+    #1e1e1e 100%
+  );
+  background-size: 400% 400%;
+  animation: diagGrad 90s ease infinite;
+}
+@keyframes diagGrad{
+  0%   { background-position: 0% 0%; }
+  25%  { background-position: 100% 0%; }
+  50%  { background-position: 100% 100%; }
+  75%  { background-position: 0% 100%; }
+  100% { background-position: 0% 0%; }
+}
+
+/* ── HEADER ── */
+header{position:relative;padding:clamp(16px,3vw,56px) var(--pad) clamp(16px,3vw,40px);overflow:hidden;border-bottom:1px solid var(--border);}
+header::before{content:'';position:absolute;top:-100px;left:50%;transform:translateX(-50%);width:min(600px,100%);height:320px;background:radial-gradient(ellipse,rgba(200,255,0,0.1) 0%,transparent 70%);pointer-events:none;}
+header::after{content:'';position:absolute;bottom:-80px;right:-60px;width:260px;height:260px;background:radial-gradient(ellipse,rgba(126,255,245,0.07) 0%,transparent 70%);pointer-events:none;}
+.header-inner{max-width:var(--max);margin:0 auto;position:relative;z-index:1;}
+
+.header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:clamp(12px,3vw,32px);}
+.logo{font-family:'Syne',sans-serif;font-size:clamp(16px,3.5vw,26px);font-weight:800;letter-spacing:-0.5px;}
+.logo span{color:var(--accent);}
+.header-badge{display:flex;align-items:center;gap:6px;background:var(--pill);border:1px solid var(--border);border-radius:99px;padding:6px 14px;font-size:clamp(11px,1.5vw,13px);color:var(--muted);font-weight:500;white-space:nowrap;}
+.badge-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent);animation:pulse 2s infinite;flex-shrink:0;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+
+/* Desktop: hero + stats side by side */
+.header-body{display:grid;grid-template-columns:1fr;gap:14px;}
+@media(min-width:700px){.header-body{grid-template-columns:1fr auto;align-items:center;gap:40px;}}
+
+.hero-title{font-family:'Syne',sans-serif;font-size:clamp(22px,6vw,52px);font-weight:800;line-height:1.1;letter-spacing:-1px;}
+.hero-title em{font-style:normal;color:var(--accent);}
+.hero-sub{margin-top:6px;font-size:clamp(12px,1.8vw,15px);color:var(--muted);line-height:1.5;max-width:400px;}
+
+.stats-strip{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--border);border-radius:16px;overflow:hidden;background:var(--surface);min-width:260px;}
+@media(min-width:700px){.stats-strip{min-width:300px;}}
+.stat-item{text-align:center;padding:clamp(8px,2vw,16px) 6px;border-right:1px solid var(--border);}
+.stat-item:last-child{border-right:none;}
+.stat-num{font-family:'Syne',sans-serif;font-size:clamp(18px,3vw,22px);font-weight:800;color:var(--accent);line-height:1;}
+.stat-label{font-size:clamp(9px,1.2vw,11px);color:var(--muted);margin-top:3px;letter-spacing:0.5px;text-transform:uppercase;}
+
+/* ── STICKY TOOLBAR ── */
+.toolbar{position:sticky;top:0;z-index:40;background:rgba(10,10,10,0.9);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:12px var(--pad);}
+.toolbar-inner{max-width:var(--max);margin:0 auto;display:flex;flex-direction:column;gap:10px;}
+@media(min-width:600px){.toolbar-inner{flex-direction:row;align-items:center;gap:16px;}}
+
+.search-inner{position:relative;flex:1;}
+.search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none;font-size:15px;}
+.search-input{width:100%;padding:11px 16px 11px 40px;border:1px solid var(--border);border-radius:12px;font-family:'Inter',sans-serif;font-size:14px;background:var(--surface2);color:#fff;outline:none;transition:border-color 0.2s;min-height:44px;}
+.search-input::placeholder{color:var(--muted);}
+.search-input:focus{border-color:rgba(200,255,0,0.4);}
+
+.brand-filter{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;flex-shrink:0;}
+.brand-filter::-webkit-scrollbar{display:none;}
+.brand-btn{flex-shrink:0;display:flex;align-items:center;gap:5px;padding:8px 14px;border-radius:99px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-family:'Inter',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.2s;white-space:nowrap;min-height:38px;}
+.brand-btn .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.brand-btn.active,.brand-btn:hover{border-color:var(--accent);color:#fff;background:rgba(200,255,0,0.1);}
+.brand-btn.active{background:rgba(200,255,0,0.12);}
+
+/* ── CATALOG ── */
+.catalog{max-width:var(--max);margin:0 auto;padding:0 var(--pad) clamp(120px,15vw,160px);}
+.brand-section{margin-top:clamp(24px,4vw,40px);}
+.brand-section-header{display:flex;align-items:center;gap:10px;margin-bottom:clamp(12px,2vw,18px);}
+.brand-section-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.brand-section-name{font-family:'Syne',sans-serif;font-size:clamp(16px,2.5vw,20px);font-weight:800;color:#fff;letter-spacing:-0.3px;}
+.brand-section-count{font-size:12px;color:var(--muted);margin-left:auto;}
+
+/* ── MODEL GRID — adaptive columns ── */
+.model-grid{display:grid;gap:clamp(12px,2vw,18px);}
+.model-grid{grid-template-columns:repeat(2,1fr);}
+@media(min-width:600px){.model-grid{grid-template-columns:repeat(4,1fr);}}
+
+/* ── MODEL CARD ── */
+.model-card{background:var(--surface);border-radius:clamp(14px,2vw,20px);overflow:hidden;border:1px solid var(--border);cursor:pointer;transition:transform 0.22s cubic-bezier(.34,1.56,.64,1),border-color 0.2s,box-shadow 0.22s;display:flex;flex-direction:column;animation:fadeUp 0.4s ease both;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.model-card:active{transform:scale(0.97);}
+.model-card:hover{transform:translateY(-4px) scale(1.01);border-color:var(--accent);box-shadow:0 12px 40px rgba(200,255,0,0.15),0 0 0 1px rgba(200,255,0,0.3);background:rgba(200,255,0,0.04);}
+.model-card:hover .model-name{color:var(--accent);}
+.model-card:hover .cta-btn{background:#000;color:var(--accent);border:1px solid var(--accent);}
+
+.model-img{width:100%;aspect-ratio:1/1;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+.model-img-placeholder{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;}
+.placeholder-icon{font-size:clamp(32px,5vw,44px);opacity:0.6;}
+.placeholder-line{width:36px;height:3px;border-radius:99px;opacity:0.15;}
+.model-img-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,transparent 50%,rgba(0,0,0,0.5));}
+.model-img-tags{position:absolute;top:8px;left:8px;right:8px;display:flex;justify-content:space-between;align-items:flex-start;z-index:2;}
+.brand-tag{display:flex;align-items:center;gap:4px;background:rgba(0,0,0,0.65);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.1);border-radius:99px;padding:3px 8px;font-size:9px;font-weight:700;color:#fff;letter-spacing:0.5px;text-transform:uppercase;}
+.brand-tag-dot{width:5px;height:5px;border-radius:50%;}
+.puffs-tag{background:rgba(200,255,0,0.15);border:1px solid rgba(200,255,0,0.3);border-radius:99px;padding:3px 7px;font-size:9px;font-weight:700;color:var(--accent);letter-spacing:0.5px;}
+.dual-tag{position:absolute;bottom:8px;right:8px;z-index:2;background:rgba(126,255,245,0.15);border:1px solid rgba(126,255,245,0.3);border-radius:99px;padding:3px 7px;font-size:8px;font-weight:700;color:var(--accent2);letter-spacing:0.5px;text-transform:uppercase;}
+
+.model-body{padding:clamp(10px,1.5vw,14px);}
+.model-name{font-family:'Syne',sans-serif;font-size:clamp(12px,1.6vw,14px);font-weight:700;color:#fff;line-height:1.3;}
+.model-flavors{font-size:clamp(10px,1.2vw,11px);color:var(--muted);margin-top:2px;}
+.model-price{font-family:'Syne',sans-serif;font-size:clamp(15px,2vw,18px);font-weight:800;color:var(--accent);margin-top:6px;letter-spacing:-0.3px;}
+.model-cta{display:flex;align-items:center;justify-content:space-between;margin-top:8px;}
+.cta-btn{background:var(--accent);color:#000;border:none;padding:6px 12px;border-radius:99px;font-family:'Inter',sans-serif;font-size:clamp(10px,1.3vw,12px);font-weight:700;cursor:pointer;transition:all 0.15s;}
+.cta-btn:hover{background:#d8ff20;}
+.cta-arrow{color:var(--muted);font-size:14px;}
+
+/* ── EMPTY ── */
+.empty-state{grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--muted);}
+.empty-icon{font-size:48px;margin-bottom:12px;}
+
+/* ── CART BAR ── */
+.cart-bar{
+  position:fixed;
+  bottom:0;left:0;right:0;
+  z-index:99;
+  pointer-events:none;
+  display:none;
+  transform:translateY(100%);
+  transition:transform 0.35s cubic-bezier(.34,1.2,.64,1);
+}
+.cart-bar.visible{
+  display:block;
+  pointer-events:all;
+  transform:translateY(0);
+}
+@media(min-width:600px){
+  .cart-bar{
+    bottom:80px;
+    display:none;
+    transform:none;
+    padding:clamp(12px,2vw,16px) var(--pad);
+    justify-content:center;
+    align-items:center;
+  }
+  .cart-bar.visible{display:flex;}
+}
+
+/* ── BOTÃO FLUTUANTE DO CARRINHO ── */
+.cart-fab{position:fixed;bottom:clamp(20px,5vw,32px);right:clamp(16px,4vw,24px);width:56px;height:56px;background:var(--accent);color:#000;border:none;border-radius:50%;display:none;z-index:101;cursor:pointer;font-size:22px;font-weight:700;box-shadow:0 4px 20px rgba(200,255,0,0.3);transition:all 0.3s;pointer-events:all;align-items:center;justify-content:center;flex-direction:column;}
+@media(min-width:600px){.cart-fab{bottom:32px;right:max(16px, calc(50% - 480px - 40px));}}
+.cart-fab.visible{display:flex;}
+.cart-fab:hover{transform:scale(1.1);box-shadow:0 6px 30px rgba(200,255,0,0.5);}
+.cart-fab:active{transform:scale(0.95);}
+.cart-fab-count{position:absolute;top:-8px;right:-8px;background:#ff4444;color:#fff;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;font-family:'Syne',sans-serif;}
+
+.cart-bar-inner{
+  background:rgba(15,15,15,0.98);
+  backdrop-filter:blur(24px);
+  border:1px solid rgba(200,255,0,0.25);
+  border-top:1px solid rgba(200,255,0,0.3);
+  border-radius:24px 24px 0 0;
+  padding:0 clamp(16px,3vw,24px) clamp(20px,4vw,28px);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  pointer-events:all;
+  box-shadow:0 -8px 40px rgba(0,0,0,0.7),0 0 0 1px rgba(200,255,0,0.08) inset;
+  gap:16px;
+  flex-wrap:wrap;
+  min-height:60px;
+  width:100%;
+  position:relative;
+}
+@media(min-width:600px){
+  .cart-bar-inner{
+    border-radius:clamp(16px,2vw,22px);
+    padding:clamp(12px,2vw,16px) clamp(16px,3vw,24px);
+    max-width:480px;
+    margin:0 auto;
+    border:1px solid rgba(200,255,0,0.25);
+    box-shadow:0 8px 40px rgba(0,0,0,0.7),0 0 0 1px rgba(200,255,0,0.08) inset;
+  }
+}
+@media(max-width:480px){.cart-bar-inner{flex-direction:column;align-items:flex-start;}}
+.cart-info-label{font-size:clamp(11px,1.5vw,13px);color:var(--muted);margin-bottom:2px;}
+.cart-total{font-family:'Syne',sans-serif;font-size:clamp(18px,3vw,24px);font-weight:800;color:var(--accent);letter-spacing:-0.5px;word-break:break-word;max-width:200px;}
+@media(max-width:480px){.cart-total{max-width:100%;font-size:16px;}}
+.cart-btn{background:var(--accent);color:#000;border:none;padding:clamp(10px,1.5vw,13px) clamp(16px,2.5vw,24px);border-radius:12px;font-family:'Inter',sans-serif;font-weight:700;font-size:clamp(13px,1.6vw,15px);cursor:pointer;display:flex;align-items:center;gap:6px;transition:all 0.15s;white-space:nowrap;min-height:44px;}
+.cart-btn:hover{background:#d8ff20;transform:scale(1.03);}
+
+/* ── MODAL ── */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);z-index:200;align-items:flex-end;justify-content:center;}
+.modal-bg.open{display:flex;}
+@media(min-width:600px){.modal-bg{align-items:center;padding:24px;}}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:28px 28px 0 0;padding:clamp(20px,3vw,32px) clamp(16px,3vw,28px) clamp(32px,5vw,48px);width:100%;max-width:480px;animation:slideUp 0.3s cubic-bezier(.34,1.3,.64,1);display:flex;flex-direction:column;position:fixed;bottom:0;left:0;right:0;height:auto;max-height:90vh;overflow-y:auto;}
+@media(min-width:600px){.modal{border-radius:24px;animation:scaleIn 0.25s cubic-bezier(.34,1.3,.64,1);position:relative;height:auto;max-height:92vh;}}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+@keyframes scaleIn{from{opacity:0;transform:scale(0.95)}to{opacity:1;transform:scale(1)}}
+.modal-handle{width:40px;height:4px;background:rgba(255,255,255,0.15);border-radius:99px;margin:0 auto 20px;}
+.modal-handle-wrap{display:flex;justify-content:center;padding:4px 0 12px;cursor:grab;touch-action:none;margin:-8px -clamp(16px,3vw,28px) 0;}
+@media(min-width:600px){.modal-handle{display:none;}.modal-handle-wrap{display:none;}}
+.modal h2{font-family:'Syne',sans-serif;font-size:clamp(18px,3vw,22px);font-weight:800;margin-bottom:16px;color:#fff;letter-spacing:-0.5px;}
+
+/* STEPPER */
+.stepper{display:flex;align-items:center;justify-content:center;margin-bottom:clamp(16px,3vw,24px);}
+.step{display:flex;flex-direction:column;align-items:center;gap:4px;}
+.step-circle{width:32px;height:32px;border-radius:50%;background:var(--surface2);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--muted);transition:all 0.3s;}
+.step.active .step-circle{background:var(--accent);border-color:var(--accent);color:#000;}
+.step.done .step-circle{background:rgba(200,255,0,0.12);border-color:var(--accent);color:var(--accent);}
+.step-label{font-size:10px;color:var(--muted);font-weight:500;white-space:nowrap;}
+.step.active .step-label{color:var(--accent);}
+.step-line{height:2px;width:clamp(28px,6vw,40px);background:var(--border);margin-bottom:14px;transition:background 0.3s;flex-shrink:0;}
+.step-line.done{background:var(--accent);}
+.step-panel{display:none;}
+.step-panel.active{display:block;}
+
+/* ORDER LIST */
+.order-list{list-style:none;margin-bottom:14px;}
+.order-list li{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:14px;gap:8px;}
+.order-list li:last-child{border-bottom:none;}
+.order-item-info{flex:1;}
+.order-item-name{color:#fff;font-weight:600;font-size:13px;}
+.order-item-flavor{color:var(--muted);font-size:12px;margin-top:2px;}
+.order-item-controls{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.order-item-price{
+  color:var(--accent);
+  font-weight:700;
+  font-family:'Syne',sans-serif;
+  font-size:15px;
+  white-space:nowrap;
+  min-width:80px;
+  text-align:right;
+}
+.qty-control{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:4px 6px;
+}
+.qty-btn{
+  background:transparent;
+  border:none;
+  color:var(--accent);
+  font-size:16px;
+  font-weight:700;
+  cursor:pointer;
+  width:24px;
+  height:24px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:all 0.2s;
+  border-radius:4px;
+}
+.qty-btn:hover{
+  background:rgba(200,255,0,0.1);
+  color:#d8ff20;
+}
+.qty-btn:active{
+  transform:scale(0.9);
+}
+.qty-display{
+  color:#fff;
+  font-weight:600;
+  font-size:13px;
+  min-width:20px;
+  text-align:center;
+}
+.qty-btn.remove{
+  color:#ff8080;
+}
+.qty-btn.remove:hover{
+  background:rgba(255,80,80,0.1);
+  color:#ff5050;
+}
+.order-subtotal{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-top:1px solid var(--border);font-size:14px;color:var(--muted);margin-bottom:14px;}
+.order-subtotal span:last-child{font-family:'Syne',sans-serif;font-weight:700;color:#fff;font-size:17px;}
+
+/* ADDRESS FORM */
+.address-form{display:flex;flex-direction:column;gap:10px;margin-bottom:14px;}
+.form-group{display:flex;flex-direction:column;gap:5px;}
+.form-group label{font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--muted);}
+.form-group input{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;font-family:'Inter',sans-serif;font-size:14px;color:#fff;outline:none;transition:border-color 0.2s;width:100%;min-height:44px;}
+.form-group input::placeholder{color:var(--muted);}
+.form-group input:focus{border-color:rgba(200,255,0,0.4);}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+/* FRETE RESULT */
+.frete-result{background:var(--surface2);border:1px solid rgba(200,255,0,0.2);border-radius:14px;padding:14px;margin-bottom:14px;display:none;}
+.frete-result.visible{display:block;}
+.frete-row{display:flex;justify-content:space-between;align-items:center;font-size:14px;padding:5px 0;}
+.frete-row:not(:last-child){border-bottom:1px solid var(--border);padding-bottom:7px;margin-bottom:3px;}
+.frete-row .lbl{color:var(--muted);}
+.frete-row .val{font-weight:600;color:#fff;}
+.frete-row.total-row .lbl{color:#fff;font-weight:700;font-size:15px;}
+.frete-row.total-row .val{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--accent);letter-spacing:-0.5px;}
+.frete-eta{font-size:12px;color:var(--muted);margin-top:8px;}
+.frete-eta b{color:var(--accent2);}
+
+/* NOTIFICAÇÕES */
+.notification{position:fixed;bottom:20px;left:var(--pad);right:var(--pad);max-width:calc(100% - 2*var(--pad));background:rgba(15,15,15,0.98);backdrop-filter:blur(24px);border:1px solid rgba(200,255,0,0.25);border-radius:clamp(14px,2vw,18px);padding:clamp(12px,2vw,16px) clamp(16px,3vw,20px);display:flex;align-items:center;gap:12px;pointer-events:all;z-index:99;box-shadow:0 8px 40px rgba(0,0,0,0.7);animation:slideInUp 0.3s ease;}
+.notification-icon{color:var(--accent);font-size:18px;flex-shrink:0;}
+.notification-text{color:#fff;font-size:clamp(12px,2vw,14px);line-height:1.4;word-break:break-word;flex:1;max-width:90%;}
+@keyframes slideInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:480px){.notification{left:12px;right:12px;max-width:calc(100% - 24px);}.notification-text{font-size:13px;}}
+.payment-summary{background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:14px;}
+.pay-row{display:flex;justify-content:space-between;font-size:14px;padding:5px 0;color:var(--muted);}
+.pay-row .v{color:#fff;font-weight:500;}
+.pay-row.grand{border-top:1px solid rgba(200,255,0,0.2);margin-top:8px;padding-top:12px;}
+.pay-row.grand .l{color:#fff;font-weight:700;font-size:15px;}
+.pay-row.grand .v{font-family:'Syne',sans-serif;font-size:clamp(20px,4vw,24px);font-weight:800;color:var(--accent);letter-spacing:-0.5px;}
+.secure-badge{display:flex;align-items:center;justify-content:center;gap:8px;padding:10px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:12px;margin-bottom:14px;font-size:12px;color:var(--muted);}
+
+/* BUTTONS */
+.modal-actions{display:flex;flex-direction:column;gap:10px;}
+.btn-primary{background:var(--accent);color:#000;border:none;padding:clamp(13px,2vw,15px);border-radius:14px;font-family:'Inter',sans-serif;font-size:clamp(14px,2vw,15px);font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.2s;width:100%;min-height:50px;}
+.btn-primary:hover{background:#d8ff20;transform:scale(1.01);}
+.btn-primary:disabled{opacity:0.4;pointer-events:none;}
+.btn-secondary{background:transparent;border:1px solid var(--border);padding:13px;border-radius:14px;font-family:'Inter',sans-serif;font-size:14px;cursor:pointer;color:var(--muted);transition:all 0.15s;width:100%;display:flex;align-items:center;justify-content:center;gap:6px;min-height:46px;}
+.btn-secondary:hover{border-color:rgba(255,255,255,0.2);color:#fff;}
+.btn-cielo{background:linear-gradient(135deg,#003087 0%,#009cde 100%);color:#fff;border:none;padding:clamp(13px,2vw,15px);border-radius:14px;font-family:'Inter',sans-serif;font-size:clamp(14px,2vw,15px);font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:all 0.2s;width:100%;min-height:50px;}
+.btn-cielo:hover{opacity:0.9;transform:scale(1.01);}
+.spinner{width:17px;height:17px;border:2px solid rgba(0,0,0,0.2);border-top-color:#000;border-radius:50%;animation:spin 0.7s linear infinite;display:inline-block;}
+.spinner-w{width:17px;height:17px;border:2px solid rgba(255,255,255,0.2);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;display:inline-block;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.error-msg{background:rgba(255,80,80,0.1);border:1px solid rgba(255,80,80,0.3);border-radius:10px;padding:10px 14px;font-size:13px;color:#ff8080;display:none;margin-bottom:8px;}
+.error-msg.visible{display:block;}
+
+/* ── AGE GATE ── */
+.age-gate{position:fixed;inset:0;background:rgba(0,0,0,0.92);backdrop-filter:blur(12px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;}
+.age-gate-box{background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:clamp(28px,5vw,48px);max-width:440px;width:100%;text-align:center;animation:scaleIn 0.3s cubic-bezier(.34,1.3,.64,1);}
+@keyframes scaleIn{from{opacity:0;transform:scale(0.9)}to{opacity:1;transform:scale(1)}}
+.age-gate-icon{font-size:48px;margin-bottom:16px;}
+.age-gate-title{font-family:'Syne',sans-serif;font-size:clamp(20px,4vw,26px);font-weight:800;color:#fff;letter-spacing:-0.5px;margin-bottom:10px;}
+.age-gate-text{font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:28px;}
+.age-gate-text b{color:#fff;}
+.age-gate-btns{display:flex;flex-direction:column;gap:10px;}
+.age-gate-yes{background:var(--accent);color:#000;border:none;padding:15px;border-radius:14px;font-family:'Inter',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.2s;width:100%;}
+.age-gate-yes:hover{background:#d8ff20;transform:scale(1.01);}
+.age-gate-no{background:transparent;border:1px solid var(--border);padding:13px;border-radius:14px;font-family:'Inter',sans-serif;font-size:14px;cursor:pointer;color:var(--muted);transition:all 0.15s;width:100%;}
+.age-gate-no:hover{border-color:rgba(255,255,255,0.2);color:#fff;}
+.age-gate-note{font-size:11px;color:var(--muted);margin-top:16px;line-height:1.5;}
+/* Blocked screen */
+.age-blocked{position:fixed;inset:0;background:#0a0a0a;z-index:9999;display:none;align-items:center;justify-content:center;padding:24px;}
+.age-blocked.show{display:flex;}
+
+/* ── HEADER CART BUTTON (desktop) ── */
+#headerCartBtn:hover{border-color:var(--accent);color:var(--accent);background:rgba(200,255,0,0.08);}
+@media(max-width:599px){#headerCartBtn{display:none!important;}}
+.cart-bar-handle{
+  display:flex;
+  justify-content:center;
+  padding:12px 0 8px;
+  cursor:grab;
+  touch-action:none;
+  width:100%;
+}
+.cart-bar-handle-pill{
+  width:40px;height:4px;
+  border-radius:99px;
+  background:rgba(255,255,255,0.2);
+  transition:background 0.2s;
+}
+.cart-bar-handle:active .cart-bar-handle-pill{background:rgba(200,255,0,0.5);}
+@media(min-width:600px){.cart-bar-handle{display:none;}}
+.age-blocked-box{text-align:center;max-width:380px;}
+.age-blocked-icon{font-size:56px;margin-bottom:20px;}
+.age-blocked-title{font-family:'Syne',sans-serif;font-size:clamp(20px,4vw,26px);font-weight:800;color:#fff;margin-bottom:12px;}
+.age-blocked-text{font-size:14px;color:var(--muted);line-height:1.6;}
+</style>
+</head>
+<body>
+
+<div class="age-gate" id="ageGate">
+  <div class="age-gate-box">
+    <div class="age-gate-icon">🔞</div>
+    <div class="age-gate-title">Verificação de Idade</div>
+    <div class="age-gate-text">
+      Este site vende <b>pods e cigarros eletrônicos</b>, produtos destinados exclusivamente a maiores de 18 anos.<br><br>
+      Você tem 18 anos ou mais?
+    </div>
+    <div class="age-gate-btns">
+      <button class="age-gate-yes" onclick="confirmAge(true)">✅ Sim, tenho 18 anos ou mais</button>
+      <button class="age-gate-no" onclick="confirmAge(false)">Não, sou menor de idade</button>
+    </div>
+    <div class="age-gate-note">Ao continuar, você confirma ter idade legal para adquirir estes produtos.</div>
+  </div>
+</div>
+
+<div class="age-blocked" id="ageBlocked">
+  <div class="age-blocked-box">
+    <div class="age-blocked-icon">🚫</div>
+    <div class="age-blocked-title">Acesso Restrito</div>
+    <div class="age-blocked-text">
+      Desculpe, este site é exclusivo para maiores de 18 anos.<br><br>
+      A venda de pods e cigarros eletrônicos para menores de idade é proibida por lei.
+    </div>
+  </div>
+</div>
+
+
+<header>
+  <div class="header-inner">
+    <div class="header-top">
+      <div class="logo">Cheaps<span>.</span>Pods</div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="header-badge"><span class="badge-dot"></span> Online agora</div>
+        <button id="headerCartBtn" onclick="toggleCartBar()" style="display:none;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:99px;padding:8px 18px;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;color:#fff;cursor:pointer;transition:all 0.2s;white-space:nowrap;">
+          🛒 Carrinho
+          <span id="headerCartCount" style="background:var(--accent);color:#000;border-radius:99px;padding:2px 10px;font-size:13px;font-weight:800;font-family:'Syne',sans-serif;display:none;">0</span>
+        </button>
+      </div>
+    </div>
+    <div class="header-body">
+      <div>
+        <h1 class="hero-title">Os melhores<br><em>pods</em> do rolê.</h1>
+        <p class="hero-sub">Ignite, Elf Bar, Lost Mary, Oxbar e Black Sheep. Escolha o seu sabor.</p>
+      </div>
+      <div class="stats-strip">
+        <div class="stat-item"><div class="stat-num">18</div><div class="stat-label">Modelos</div></div>
+        <div class="stat-item"><div class="stat-num">5</div><div class="stat-label">Marcas</div></div>
+        <div class="stat-item"><div class="stat-num">150+</div><div class="stat-label">Sabores</div></div>
+        <div class="stat-item"><div class="stat-num">⚡</div><div class="stat-label">Rápido</div></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="toolbar">
+  <div class="toolbar-inner">
+    <div class="search-inner">
+      <span class="search-icon">🔍</span>
+      <input class="search-input" type="text" id="searchInput" placeholder="Buscar modelo ou sabor..." oninput="renderCatalog()">
+    </div>
+    <div class="brand-filter" id="brandFilter"></div>
+  </div>
+</div>
+
+<div class="catalog" id="catalog"></div>
+
+<div class="cart-fab" id="cartFab" onclick="toggleCartBar()">
+  🛒
+  <div class="cart-fab-count" id="cartFabCount">0</div>
+</div>
+
+<div class="cart-bar" id="cartBar">
+  <div class="cart-bar-inner">
+    <div class="cart-bar-handle" id="cartBarHandle">
+      <div class="cart-bar-handle-pill"></div>
+    </div>
+    <div>
+      <div class="cart-info-label" id="cartCount">0 itens</div>
+      <div class="cart-total" id="cartTotal">R$ 0,00</div>
+    </div>
+    <button class="cart-btn" onclick="openModal()">
+      Ver pedido
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+    </button>
+    <button class="cart-close-btn" onclick="toggleCartBar()" title="Fechar carrinho">
+      ✕
+    </button>
+  </div>
+</div>
+
+<div class="modal-bg" id="modalBg" onclick="closeModalBg(event)">
+  <div class="modal">
+    <div class="modal-handle-wrap" id="modalHandle">
+      <div class="modal-handle"></div>
+    </div>
+    <div class="stepper">
+      <div class="step active" id="sEl1"><div class="step-circle">1</div><div class="step-label">Pedido</div></div>
+      <div class="step-line" id="sLine1"></div>
+      <div class="step" id="sEl2"><div class="step-circle">2</div><div class="step-label">Seus dados</div></div>
+      <div class="step-line" id="sLine2"></div>
+      <div class="step" id="sEl3"><div class="step-circle">3</div><div class="step-label">Entrega</div></div>
+      <div class="step-line" id="sLine3"></div>
+      <div class="step" id="sEl4"><div class="step-circle">4</div><div class="step-label">Pagamento</div></div>
+    </div>
+
+    <div class="step-panel active" id="panel1">
+      <h2>Seu Pedido</h2>
+      <ul class="order-list" id="orderList"></ul>
+      <div class="order-subtotal"><span>Subtotal</span><span id="subtotalLabel">R$ 0,00</span></div>
+      <div class="modal-actions">
+        <button class="btn-primary" onclick="goToStep(2)">Informar seus dados →</button>
+        <button class="btn-secondary" onclick="closeModal()">Continuar comprando</button>
+      </div>
+    </div>
+
+    <div class="step-panel" id="panel2">
+      <h2>Seus Dados</h2>
+      <div class="address-form">
+        <div class="form-group">
+          <label>Nome completo</label>
+          <input type="text" id="clienteNome" placeholder="Seu nome" autocomplete="name">
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="clienteEmail" placeholder="seu@email.com" autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label>WhatsApp</label>
+          <input type="tel" id="clienteTel" placeholder="(11) 99999-9999" maxlength="15" inputmode="numeric" oninput="maskTel(this)">
+        </div>
+      </div>
+      <div class="error-msg" id="dadosError"></div>
+      <div class="modal-actions">
+        <button class="btn-primary" onclick="confirmarDados()">Informar endereço de entrega →</button>
+        <button class="btn-secondary" onclick="goToStep(1)">← Voltar ao pedido</button>
+      </div>
+    </div>
+
+    <div class="step-panel" id="panel3">
+      <h2>Entrega</h2>
+      <div class="address-form">
+        <div class="form-row">
+          <div class="form-group"><label>CEP</label><input type="text" id="cep" placeholder="00000-000" maxlength="9" inputmode="numeric" oninput="maskCEP(this)" onblur="fetchCEP()"></div>
+          <div class="form-group"><label>Número</label><input type="text" id="numero" placeholder="123" inputmode="numeric"></div>
+        </div>
+        <div class="form-group"><label>Rua</label><input type="text" id="rua" placeholder="Preenchido pelo CEP"></div>
+        <div class="form-row">
+          <div class="form-group"><label>Bairro</label><input type="text" id="bairro" placeholder="Bairro"></div>
+          <div class="form-group"><label>Cidade</label><input type="text" id="cidade" placeholder="Cidade"></div>
+        </div>
+        <div class="form-group"><label>Complemento</label><input type="text" id="complemento" placeholder="Apto, bloco... (opcional)"></div>
+      </div>
+      <div class="error-msg" id="freteError"></div>
+      <div class="frete-result" id="freteResult">
+        <div class="frete-row"><span class="lbl">🚚 Frete Lalamove</span><span class="val" id="freteValorLabel">—</span></div>
+        <div class="frete-row"><span class="lbl">📦 Produtos</span><span class="val" id="prodValorLabel">—</span></div>
+        <div class="frete-row total-row"><span class="lbl">Total</span><span class="val" id="totalComFreteLabel">—</span></div>
+        <div class="frete-eta">⏰ Pedindo em: <b id="etaLabel">—</b></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-primary" id="btnCalcFrete" onclick="calcularFrete()">Calcular frete</button>
+        <button class="btn-primary" id="btnConfFrete" style="display:none" onclick="goToStep(4)">Confirmar e ir para pagamento →</button>
+        <button class="btn-secondary" onclick="goToStep(2)">← Voltar aos dados</button>
+      </div>
+    </div>
+
+    <div class="step-panel" id="panel4">
+      <h2>Pagamento</h2>
+      <div class="payment-summary">
+        <div class="pay-row"><span class="l">Produtos</span><span class="v" id="payProd">—</span></div>
+        <div class="pay-row"><span class="l">Frete</span><span class="v" id="payFrete">—</span></div>
+        <div class="pay-row grand"><span class="l">Total a pagar</span><span class="v" id="payTotal">—</span></div>
+      </div>
+      
+      <div class="secure-badge">
+        🔒 Pagamento seguro via <strong style="color:#fff;margin-left:4px">Cielo e Mercado Pago</strong>
+      </div>
+      
+      <div class="error-msg" id="pagError"></div>
+      <div class="modal-actions">
+        <button class="btn-cielo" id="btnPagar" onclick="iniciarPagamentoMP()" style="background:#FF8C00;">
+          🔷 Pagar com PIX
+        </button>
+        <button class="btn-cielo" onclick="pagarComCartao()" style="background:#1E90FF;">
+          💳 Pagar com Cartão
+        </button>
+        <button class="btn-secondary" onclick="window.location.href='/'">← Voltar à loja</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ✅ CREDENCIAIS REMOVIDAS - Estão no backend apenas
+// As chaves da Lalamove e Mercado Pago estão em variáveis de ambiente do Vercel
+
+const BRANDS = [
+  { id:'ignite',    label:'Ignite',      color:'#ff6a00' },
+  { id:'elfbar',    label:'Elf Bar',     color:'#3b9eff' },
+  { id:'lostmary',  label:'Lost Mary',   color:'#ff4e6a' },
+  { id:'blacksheep',label:'Black Sheep', color:'#888888' },
+  { id:'oxbar',     label:'Oxbar',       color:'#a855f7' },
+];
+
+const CATALOG = [
+  { id:'eb-king',  brand:'elfbar',     model:'Elfbar King',     puffs:'40K',  price:99.99,  dual:false, flavors:['Strawberry Watermelon','Triple Berry','Blue Razz Ice','Blueberry Sour Raspberry','Black Mint','Cherry Sour','Grape Ice','Strawberry Ice','Passion Fruit','Peach Berry Slush','Hawaiian Slush','Double Apple Ice','Miami Mint','Sakura Splash'] },
+  { id:'eb-trio',  brand:'elfbar',     model:'Elf Trio',        puffs:'40K',  price:99.99,  dual:false, flavors:['Orange Blast','Sour Strawberry Dragonfruit','Peach Twist','Pineapple Lime','Scary Berry','Black Mint','Cool Menthol','Sakura Grape'] },
+  { id:'eb-te',    brand:'elfbar',     model:'Elfbar TE',       puffs:'30K',  price:89.99,  dual:false, flavors:['Watermelon Ice','Bubbaloo Tutti Frutti','Miami Mint','Watermelon Peach'] },
+  { id:'eb-gh',    brand:'elfbar',     model:'Elfbar GH',       puffs:'23K',  price:84.99,  dual:false, flavors:['Peach Mango Watermelon','Watermelon Ice','Blueberry Ice','Grape Ice','Sakura Grape','Miami Mint','Strawberry Banana','Kiwi Dragon Fruit','Ice Mint'] },
+  { id:'eb-bc',    brand:'elfbar',     model:'Elf BC',          puffs:'15K',  price:64.99,  dual:false, flavors:['Strawberry Ice Cream','Banana Ice','Sakura Grape','Peach Mango Watermelon','Triple Berry Ice','Pear Watermelon Dragonfruit','Strawberry Kiwi'] },
+  { id:'lm-dura',  brand:'lostmary',   model:'Lost Dura',       puffs:'35K',  price:89.99,  dual:false, flavors:['Mango Ice','Miami Mint','Pineapple Ice','Strawberry Ice'] },
+  { id:'bs-30k',   brand:'blacksheep', model:'Black Sheep',     puffs:'30K',  price:99.99,  dual:true,  flavors:['Açaí Strawberry + Grape','Mango + Grape','Grape + Grape','Açaí Grape + Strawberry Kiwi','Açaí Strawberry Banana + Grape'] },
+  { id:'ox-30k',   brand:'oxbar',      model:'Oxbar',           puffs:'30K',  price:84.99,  dual:false, flavors:['Fanta Strawberry','Strawberry Watermelon','OK Love','Grape Peach','Passion Kiwi','Paradise Grape','Raspberry Watermelon'] },
+  { id:'ox-9k',    brand:'oxbar',      model:'Oxbar',           puffs:'9.5K', price:64.99,  dual:false, flavors:['Strawberry Watermelon Ice','Kiwi Passion Fruit Guava','Cool Mint','Watermelon Ice','Apple Kiwi Ice','Cola Ice'] },
+  { id:'ig-v400m', brand:'ignite',     model:'Ignite V400 Mix', puffs:'40K',  price:109.99, dual:true,  flavors:['Orange Ice + Strawberry Ice','Grape Ice + Strawberry','Apple Ice + Strawberry Watermelon','Icy Mint + Peach Grape','Watermelon Grape Ice + Açaí Ice','Strawberry Mango Ice + Banana Ice','Mango Ice + Passion Fruit Guava','Passion Fruit Sour Kiwi + Pineapple Ice','Strawberry Watermelon Ice + Aloe Grape'] },
+  { id:'ig-v400',  brand:'ignite',     model:'Ignite V400',     puffs:'40K',  price:104.99, dual:false, flavors:['Grape Peach','Strawberry Apple Watermelon','Grape Banana','Peach Mango Watermelon','Passion Fruit Sour Kiwi','Strawberry','Strawberry Watermelon','Sakura Grape','Tutti Frutti Mix','Grape Ice','Mint','Banana Cherry','Watermelon','Pineapple Ice','Peach'] },
+  { id:'ig-v400s', brand:'ignite',     model:'Ignite V400 Sweet',puffs:'40K', price:99.99,  dual:false, flavors:['Miami Mint','Strawberry Watermelon','Watermelon Ice','Blueberry Ice','Blue Razz Pop','Pineapple Ice','Grape Ice','Peach Berry Ice','Triple Mango','Cool Menthol'] },
+  { id:'ig-v250',  brand:'ignite',     model:'Ignite V250',     puffs:'25K',  price:89.99,  dual:false, flavors:['Strawberry Banana','Icy Mint','Menthol','Strawberry Kiwi','Pineapple Kiwi Dragonfruit','Pineapple Ice','Grape Ice','Watermelon Ice','Minty Melon','Cactus Lime Soda','Strawberry Ice','Blueberry Ice'] },
+  { id:'ig-v155',  brand:'ignite',     model:'Ignite V155',     puffs:'15K',  price:84.99,  dual:false, flavors:['Banana Ice','Grape Ice','Strawberry Ice','Tropical Açaí','Watermelon Mix','Strawberry Watermelon Ice','Icy Mint','Strawberry Kiwi','Kiwi Passion Fruit Guava','Watermelon Ice','Strawberry Banana'] },
+  { id:'ig-v150',  brand:'ignite',     model:'Ignite V150',     puffs:'15K',  price:79.99,  dual:false, flavors:['Icy Mint','Watermelon Dragon Fruit','Strawberry Ice','Grape Ice','Lemon Lime','Strawberry Kiwi','Watermelon Mix'] },
+  { id:'ig-v80',   brand:'ignite',     model:'Ignite V80',      puffs:'8K',   price:74.99,  dual:false, flavors:['Cactus'] },
+  { id:'ig-v55',   brand:'ignite',     model:'Ignite V55',      puffs:'5K',   price:69.99,  dual:false, flavors:['Miami Mint','Aloe Grape','Menthol','Strawberry Banana'] },
+  { id:'ig-nano',  brand:'ignite',     model:'Ignite V Nano',   puffs:'600',  price:29.99,  dual:false, flavors:['Passion Fruit Sour Kiwi','Strawberry Ice','Icy Mint','Green Apple','Cool Menthol','Tropical Fruit','Pineapple Ice','Grape Ice','Banana Ice'] },
+];
+
+const BRAND_GRADIENTS = {
+  elfbar:'linear-gradient(135deg,#0a1628 0%,#1a3a6e 100%)',
+  lostmary:'linear-gradient(135deg,#1a0a0a 0%,#5a1a2a 100%)',
+  blacksheep:'linear-gradient(135deg,#111 0%,#2a2a2a 100%)',
+  oxbar:'linear-gradient(135deg,#120a1a 0%,#3a1a6e 100%)',
+  ignite:'linear-gradient(135deg,#1a0a00 0%,#5a2000 100%)',
+};
+const BRAND_ICONS = { elfbar:'⚡', lostmary:'💀', blacksheep:'🖤', oxbar:'🟣', ignite:'🔥' };
+
+let activeBrand = 'all', cart = [];
+const fmtR = v => 'R$ ' + v.toFixed(2).replace('.', ',');
+const getBrand = id => BRANDS.find(b => b.id === id);
+
+function renderBrandFilter() {
+  document.getElementById('brandFilter').innerHTML =
+    `<button class="brand-btn ${activeBrand==='all'?'active':''}" onclick="setActiveBrand('all')">Todas</button>` +
+    BRANDS.map(b => `<button class="brand-btn ${activeBrand===b.id?'active':''}" onclick="setActiveBrand('${b.id}')"><span class="dot" style="background:${b.color}"></span>${b.label}</button>`).join('');
+}
+function setActiveBrand(id) { activeBrand=id; renderBrandFilter(); renderCatalog(); }
+
+function renderCatalog() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const brandsToShow = activeBrand==='all' ? BRANDS.map(b=>b.id) : [activeBrand];
+  let html = '';
+  brandsToShow.forEach(brandId => {
+    const brand = getBrand(brandId);
+    let items = CATALOG.filter(p => p.brand===brandId);
+    if (search) items = items.filter(p => p.model.toLowerCase().includes(search) || p.flavors.some(f=>f.toLowerCase().includes(search)));
+    if (!items.length) return;
+    html += `<div class="brand-section" id="brand-${brandId}">
+      <div class="brand-section-header">
+        <span class="brand-section-dot" style="background:${brand.color}"></span>
+        <span class="brand-section-name">${brand.label}</span>
+        <span class="brand-section-count">${items.length} modelo${items.length>1?'s':''}</span>
+      </div>
+      <div class="model-grid">${items.map((p,i)=>renderCard(p,i)).join('')}</div>
+    </div>`;
+  });
+  if (!html) html = `<div class="empty-state"><div class="empty-icon">🔍</div><p>Nenhum produto encontrado</p></div>`;
+  document.getElementById('catalog').innerHTML = html;
+}
+
+function renderCard(p, i) {
+  const brand = getBrand(p.brand);
+  return `<div class="model-card" style="animation-delay:${Math.min(i*0.05,0.5)}s" onclick="goToProduct('${p.id}')">
+    <div class="model-img" style="background:${BRAND_GRADIENTS[p.brand]}">
+      <div class="model-img-placeholder">
+        <div class="placeholder-icon">${BRAND_ICONS[p.brand]}</div>
+        <div class="placeholder-line" style="background:${brand.color}"></div>
+      </div>
+      <div class="model-img-overlay"></div>
+      <div class="model-img-tags">
+        <span class="brand-tag"><span class="brand-tag-dot" style="background:${brand.color}"></span>${brand.label}</span>
+        <span class="puffs-tag">${p.puffs}</span>
+      </div>
+      ${p.dual?'<span class="dual-tag">2 sabores</span>':''}
+    </div>
+    <div class="model-body">
+      <div class="model-name">${p.model}</div>
+      <div class="model-flavors">${p.flavors.length} sabor${p.flavors.length>1?'es':''}</div>
+      <div class="model-price">${fmtR(p.price)}</div>
+      <div class="model-cta"><span class="cta-btn">Ver sabores</span><span class="cta-arrow">›</span></div>
+    </div>
+  </div>`;
+}
+
+function goToProduct(id) { sessionStorage.setItem('cart',JSON.stringify(cart)); window.location.href='produto.html?id='+id; }
+function getSubtotal() { return cart.reduce((s,i)=>s+i.price*i.qty,0); }
+
+function toggleCartBar(){
+  openModal();
+}
+
+function fecharCartBarFora(e){
+  const cartBar = document.getElementById('cartBar');
+  const cartFab = document.getElementById('cartFab');
+  
+  if(!cartBar.contains(e.target) && !cartFab.contains(e.target)){
+    cartBar.classList.remove('visible');
+    document.removeEventListener('click', fecharCartBarFora);
+  }
+}
+
+function updateCartBar() {
+  const items=cart.reduce((s,i)=>s+i.qty,0);
+  const hasItems = items > 0;
+  
+  document.getElementById('cartCount').textContent=items+(items===1?' item':' itens');
+  document.getElementById('cartTotal').textContent=fmtR(getSubtotal());
+  document.getElementById('cartBar').classList.toggle('visible',false);
+  document.getElementById('cartFab').classList.toggle('visible',hasItems);
+  document.getElementById('cartFabCount').textContent=items;
+
+  const headerBtn = document.getElementById('headerCartBtn');
+  const headerCount = document.getElementById('headerCartCount');
+  if(headerBtn){
+    if(window.innerWidth >= 600){
+      headerBtn.style.display = hasItems ? 'flex' : 'none';
+    }
+    if(headerCount){
+      headerCount.textContent = items;
+      headerCount.style.display = hasItems ? 'inline' : 'none';
+    }
+  }
+}
+function loadCart() { try{cart=JSON.parse(sessionStorage.getItem('cart'))||[];}catch(e){cart=[];} updateCartBar(); }
+
+function aumentarQuantidade(index) {
+  if(index >= 0 && index < cart.length) {
+    cart[index].qty += 1;
+    sessionStorage.setItem('cart', JSON.stringify(cart));
+    updateCartBar();
+    openModal();
+  }
+}
+
+function diminuirQuantidade(index) {
+  if(index >= 0 && index < cart.length) {
+    if(cart[index].qty === 1) {
+      const item = cart[index];
+      const confirmar = confirm(`Deseja remover "${item.model} ${item.flavor}" do seu carrinho?`);
+      
+      if(confirmar) {
+        cart.splice(index, 1);
+        sessionStorage.setItem('cart', JSON.stringify(cart));
+        updateCartBar();
+        openModal();
+      }
+    } else {
+      cart[index].qty -= 1;
+      sessionStorage.setItem('cart', JSON.stringify(cart));
+      updateCartBar();
+      openModal();
+    }
+  }
+}
+
+function openModal() {
+  document.getElementById('orderList').innerHTML = cart.map((item, index)=>`<li>
+    <div class="order-item-info">
+      <div class="order-item-name">${item.model}</div>
+      <div class="order-item-flavor">${item.flavor}</div>
+    </div>
+    <div class="order-item-controls">
+      <span class="order-item-price">${fmtR(item.price*item.qty)}</span>
+      <div class="qty-control">
+        <button class="qty-btn remove" onclick="diminuirQuantidade(${index})" title="Diminuir ou remover">−</button>
+        <span class="qty-display">${item.qty}</span>
+        <button class="qty-btn" onclick="aumentarQuantidade(${index})" title="Aumentar quantidade">+</button>
+      </div>
+    </div>
+  </li>`).join('');
+  document.getElementById('subtotalLabel').textContent=fmtR(getSubtotal());
+  freteValorNum=0;
+  document.getElementById('freteResult').classList.remove('visible');
+  document.getElementById('dadosError').classList.remove('visible');
+  document.getElementById('freteError').classList.remove('visible');
+  const bc=document.getElementById('btnCalcFrete'); bc.style.display='flex'; bc.innerHTML='Calcular frete'; bc.disabled=false;
+  document.getElementById('btnConfFrete').style.display='none';
+  goToStep(1);
+  document.getElementById('modalBg').classList.add('open');
+}
+function closeModal() { document.getElementById('modalBg').classList.remove('open'); }
+function closeModalBg(e) { if(e.target===document.getElementById('modalBg')) closeModal(); }
+
+let freteValorNum=0;
+function goToStep(n) {
+  [1,2,3,4].forEach(i=>{
+    const el=document.getElementById('sEl'+i), panel=document.getElementById('panel'+i);
+    if(!el || !panel) return;
+    el.classList.remove('active','done'); panel.classList.remove('active');
+    if(i<n) el.classList.add('done');
+    if(i===n){ el.classList.add('active'); panel.classList.add('active'); }
+    const ln=document.getElementById('sLine'+i); if(ln) ln.classList.toggle('done',i<n);
+  });
+  document.querySelector('.modal').scrollTop=0;
+  if(n===4){ document.getElementById('payProd').textContent=fmtR(getSubtotal()); document.getElementById('payFrete').textContent=fmtR(freteValorNum); document.getElementById('payTotal').textContent=fmtR(getSubtotal()+freteValorNum); }
+}
+
+function maskTel(input){
+  let v = input.value.replace(/\D/g,'');
+  if(v.length > 10) v = '(' + v.slice(0,2) + ') ' + v.slice(2,7) + '-' + v.slice(7,11);
+  else if(v.length > 6) v = '(' + v.slice(0,2) + ') ' + v.slice(2,6) + '-' + v.slice(6);
+  else if(v.length > 2) v = '(' + v.slice(0,2) + ') ' + v.slice(2);
+  else if(v.length > 0) v = '(' + v;
+  input.value = v;
+}
+function confirmarDados(){
+  const nome = document.getElementById('clienteNome').value.trim();
+  const tel  = document.getElementById('clienteTel').value.replace(/\D/g,'');
+  const errEl = document.getElementById('dadosError');
+  errEl.classList.remove('visible');
+  if(!nome){ errEl.textContent='Por favor, informe seu nome.'; errEl.classList.add('visible'); return; }
+  if(tel.length < 10){ errEl.textContent='Por favor, informe um WhatsApp válido.'; errEl.classList.add('visible'); return; }
+  goToStep(3);
+}
+function maskCEP(input){ let v=input.value.replace(/\D/g,''); if(v.length>5) v=v.slice(0,5)+'-'+v.slice(5,8); input.value=v; }
+async function fetchCEP(){
+  const cep=document.getElementById('cep').value.replace(/\D/g,'');
+  if(cep.length!==8) return;
+  try{ const d=await(await fetch('https://viacep.com.br/ws/'+cep+'/json/')).json(); if(!d.erro){ document.getElementById('rua').value=d.logradouro||''; document.getElementById('bairro').value=d.bairro||''; document.getElementById('cidade').value=d.localidade||''; } }catch(e){}
+}
+
+const FRETE_API='https://cheapspods-catalogo-cesar8.vercel.app/api/frete';
+const CONTATO='5511951047070';
+
+let ultimoEnderecoCalculado = '';
+let timerInterval = null; 
+let expiresAtMs = null; 
+let calculandoFrete = false; 
+
+async function buscarCoordenadas(endereco){
+  try{
+    const res=await fetch('https://nominatim.openstreetmap.org/search?q='+encodeURIComponent(endereco)+'&format=json&limit=1');
+    return await res.json();
+  }catch(e){
+    return null;
+  }
+}
+
+function obterEnderecoAtual(){
+  const numero=document.getElementById('numero').value.trim();
+  const rua=document.getElementById('rua').value.trim();
+  const bairro=document.getElementById('bairro').value.trim();
+  const cidade=document.getElementById('cidade').value.trim();
+  
+  return rua+', '+numero+', '+bairro+', '+cidade+', SP, Brasil';
+}
+
+function iniciarTimer(expiresMs){
+  if(timerInterval) clearInterval(timerInterval);
+  expiresAtMs = expiresMs;
+  atualizarTimer();
+  timerInterval = setInterval(atualizarTimer, 1000);
+}
+
+function atualizarTimer(){
+  if(!expiresAtMs) return;
+  
+  const agora = Date.now();
+  const tempoRestante = expiresAtMs - agora;
+  
+  if(tempoRestante <= 0){
+    clearInterval(timerInterval);
+    document.getElementById('etaLabel').textContent = '⏰ Cotação expirada!';
+    document.getElementById('etaLabel').style.color = '#ff4444';
+    return;
+  }
+  
+  const minutos = Math.floor(tempoRestante / 60000);
+  const segundos = Math.floor((tempoRestante % 60000) / 1000);
+  
+  const tempoFormatado = minutos + ':' + (segundos < 10 ? '0' : '') + segundos;
+  document.getElementById('etaLabel').textContent = tempoFormatado;
+  
+  if(minutos === 0){
+    document.getElementById('etaLabel').style.color = '#ff9900';
+  } else {
+    document.getElementById('etaLabel').style.color = '';
+  }
+}
+
+function monitorarMudancasEndereco(){
+  const elementos = ['numero', 'rua', 'bairro', 'cidade'];
+  
+  elementos.forEach(id => {
+    const el = document.getElementById(id);
+    if(el){
+      el.addEventListener('change', () => {
+        if(document.getElementById('freteResult').classList.contains('visible')){
+          const novoEndereco = obterEnderecoAtual();
+          if(novoEndereco !== ultimoEnderecoCalculado){
+            if(timerInterval) clearInterval(timerInterval);
+            document.getElementById('freteResult').classList.remove('visible');
+            document.getElementById('btnCalcFrete').style.display='flex';
+            document.getElementById('btnConfFrete').style.display='none';
+            const btn = document.getElementById('btnCalcFrete');
+            btn.innerHTML='Calcular frete';
+            btn.disabled=false;
+          }
+        }
+      });
+    }
+  });
+}
+
+async function calcularFrete(){
+  if(calculandoFrete) return;
+  calculandoFrete = true;
+  
+  const cep=document.getElementById('cep').value.replace(/\D/g,'');
+  const numero=document.getElementById('numero').value.trim();
+  const rua=document.getElementById('rua').value.trim();
+  const bairro=document.getElementById('bairro').value.trim();
+  const cidade=document.getElementById('cidade').value.trim();
+  const errEl=document.getElementById('freteError');
+  errEl.classList.remove('visible');
+  
+  if(!numero||!rua||!cidade){
+    errEl.textContent='Preencha a Rua, Número e Cidade no mínimo.';
+    errEl.classList.add('visible');
+    calculandoFrete = false;
+    return;
+  }
+  
+  const btn=document.getElementById('btnCalcFrete');
+  btn.innerHTML='<span class="spinner"></span> Calculando...';
+  btn.disabled=true;
+  
+  try{
+    const addrCompleto=rua+', '+numero+', '+bairro+', '+cidade+', SP, Brasil';
+    let geo=await buscarCoordenadas(addrCompleto);
+    
+    if(!geo||!geo.length){
+      const addrSimples=cidade+', SP, Brasil';
+      geo=await buscarCoordenadas(addrSimples);
+      
+      if(!geo||!geo.length){
+        throw new Error('Endereço não encontrado. Verifique a cidade e tente novamente.');
+      }
+    }
+    
+    const addr=rua+', '+numero+', '+bairro+', '+cidade+', SP, Brasil';
+    const res=await fetch(FRETE_API,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        lat:parseFloat(geo[0].lat),
+        lng:parseFloat(geo[0].lon),
+        address:addr
+      })
+    });
+    
+    if(!res.ok){
+      const e=await res.json().catch(()=>({}));
+      throw new Error(e.error||'Erro ao calcular frete.');
+    }
+    
+    const data=await res.json();
+    let freteBase = data.frete || 0;
+
+    if (freteBase < 12) {
+      freteValorNum = 12;
+    } else {
+      freteValorNum = freteBase + 3;
+    }
+    
+    document.getElementById('freteValorLabel').textContent=fmtR(freteValorNum);
+    document.getElementById('prodValorLabel').textContent=fmtR(getSubtotal());
+    document.getElementById('totalComFreteLabel').textContent=fmtR(getSubtotal()+freteValorNum);
+    
+    if(data.expiresAtMs){
+      iniciarTimer(data.expiresAtMs);
+    }
+    
+    document.getElementById('freteResult').classList.add('visible');
+    btn.style.display='none';
+    document.getElementById('btnConfFrete').style.display='flex';
+    
+    ultimoEnderecoCalculado = addr;
+    calculandoFrete = false;
+    
+  }catch(err){
+    errEl.textContent=err.message||'Erro ao calcular frete.';
+    errEl.classList.add('visible');
+    btn.innerHTML='Calcular frete';
+    btn.disabled=false;
+    calculandoFrete = false;
+  }
+}
+
+monitorarMudancasEndereco();
+
+async function pagarComCartao() {
+  const nome   = document.getElementById('clienteNome')?.value.trim() || '';
+  const tel    = document.getElementById('clienteTel')?.value.replace(/\D/g,'') || '';
+  const rua    = document.getElementById('rua')?.value.trim() || '';
+  const numero = document.getElementById('numero')?.value.trim() || '';
+  const cidade = document.getElementById('cidade')?.value.trim() || '';
+
+  if (!nome || !rua || !numero || !cidade) {
+    alert('Por favor, preencha nome, rua, número e cidade.');
+    return;
+  }
+
+  const endereco  = `${rua}, ${numero}, ${cidade}`;
+  const totalText = document.getElementById('payTotal')?.textContent || 'R$ 0,00';
+  const orderId   = 'CHEAPS-' + Date.now() + '-' + Math.random().toString(36).substring(2,7).toUpperCase();
+
+  try {
+    await fetch('/api/pedido-cartao', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        orderId,
+        nome,
+        whatsapp: tel,
+        endereco,
+        produtos: JSON.stringify(cart),
+        valorProdutos: getSubtotal(),
+        valorFrete: freteValorNum,
+        valorTotal: getSubtotal() + freteValorNum
+      })
+    });
+  } catch(e) {
+  }
+
+  const mensagem = `Olá! Gostaria de fazer um pedido no endereço ${endereco} no valor de ${totalText}. Pode me enviar o link de pagamento por cartão? (Pedido #${orderId})`;
+  const linkWhatsApp = `https://wa.me/${CONTATO}?text=${encodeURIComponent(mensagem)}`;
+  window.open(linkWhatsApp, '_blank');
+}
+
+async function iniciarPagamentoMP() {
+  const errEl = document.getElementById('pagError');
+  const btn = document.getElementById('btnPagar');
+  
+  if (errEl) {
+    errEl.classList.remove('visible');
+  }
+  
+  if (btn) {
+    btn.innerHTML = '<span class="spinner-w"></span> Gerando link...';
+    btn.disabled = true;
+  }
+
+  try {
+    const nomeEl = document.getElementById('clienteNome');
+    const emailEl = document.getElementById('clienteEmail');
+    const telEl = document.getElementById('clienteTel');
+    const ruaEl = document.getElementById('rua');
+    const numeroEl = document.getElementById('numero');
+    const cidadeEl = document.getElementById('cidade');
+
+    if (!nomeEl || !emailEl || !telEl || !ruaEl || !numeroEl || !cidadeEl) {
+      throw new Error('Formulário incompleto. Recarregue a página.');
+    }
+
+    const nome = nomeEl.value.trim();
+    const email = emailEl.value.trim();
+    const tel = telEl.value.replace(/\D/g, '');
+    const rua = ruaEl.value.trim();
+    const numero = numeroEl.value.trim();
+    const cidade = cidadeEl.value.trim();
+
+    if (!nome || !email || !tel || !rua || !numero || !cidade) {
+      throw new Error('Preencha todos os campos obrigatórios');
+    }
+
+    if (!email.includes('@')) {
+      throw new Error('Email inválido');
+    }
+
+    if (tel.length < 10) {
+      throw new Error('Telefone inválido (mínimo 10 dígitos)');
+    }
+
+    if (!cart || cart.length === 0) {
+      throw new Error('Carrinho vazio');
+    }
+
+    if (isNaN(freteValorNum) || freteValorNum < 0) {
+      throw new Error('Valor de frete inválido. Calcule o frete novamente.');
+    }
+
+    const numeroPedidoAtual = 'CHEAPS-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7).toUpperCase();
+
+    const paymentData = {
+      orderId: numeroPedidoAtual,
+      items: cart.map(item => ({
+        id: item.id || item.productId,
+        model: item.model,
+        flavor: item.flavor,
+        price: item.price,
+        qty: item.qty || 1,
+        productId: item.productId
+      })),
+      shippingPrice: freteValorNum,
+      customerEmail: email,
+      customerName: nome,
+      customerPhone: tel,
+      address: `${rua}, ${numero}`,
+      city: cidade
+    };
+
+    const res = await fetch('/api/pagamento-mp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(paymentData)
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || !data.checkoutUrl) {
+      throw new Error(data.error || 'Erro ao gerar link de pagamento');
+    }
+
+    const pedidoData = {
+      numeroPedido: numeroPedidoAtual,
+      orderId: numeroPedidoAtual,
+      accessToken: data.accessToken,
+      nome: nome,
+      email: email,
+      tel: tel,
+      endereco: `${rua}, ${numero}, ${cidade}`,
+      produtos: JSON.stringify(cart),
+      valorProdutos: getSubtotalMP(),
+      valorFrete: freteValorNum,
+      valorTotal: getSubtotalMP() + freteValorNum,
+      data: new Date().toISOString()
+    };
+
+    sessionStorage.setItem('pedidoAtual', JSON.stringify(pedidoData));
+
+    window.location.href = data.checkoutUrl;
+
+  } catch (err) {
+    console.error('❌ Erro ao iniciar pagamento:', err);
+    
+    if (errEl) {
+      errEl.textContent = err.message || 'Erro ao processar pagamento. Tente novamente.';
+      errEl.classList.add('visible');
+    } else {
+      alert('Erro: ' + (err.message || 'Erro ao processar pagamento'));
+    }
+  } finally {
+    if (btn) {
+      btn.innerHTML = '🔷 Pagar com PIX';
+      btn.disabled = false;
+    }
+  }
+}
+
+function getSubtotalMP() {
+  if (!cart || cart.length === 0) return 0;
+  return cart.reduce((sum, item) => {
+    const price = parseFloat(item.price) || 0;
+    const qty = parseInt(item.qty) || 1;
+    return sum + (price * qty);
+  }, 0);
+}
+
+if(new URLSearchParams(window.location.search).get('opencart')==='1') { setTimeout(()=>openModal(),300); }
+
+loadCart(); renderBrandFilter(); renderCatalog();
+
+// ── AGE GATE ──
+function checkAge() {
+  if (sessionStorage.getItem('ageVerified') === '1') {
+    document.getElementById('ageGate').style.display = 'none';
+  }
+}
+function confirmAge(isAdult) {
+  if (isAdult) {
+    sessionStorage.setItem('ageVerified', '1');
+    const gate = document.getElementById('ageGate');
+    gate.style.opacity = '0';
+    gate.style.transition = 'opacity 0.3s';
+    setTimeout(() => gate.style.display = 'none', 300);
+  } else {
+    document.getElementById('ageGate').style.display = 'none';
+    document.getElementById('ageBlocked').classList.add('show');
+  }
+}
+// ── SWIPE TO CLOSE CART BAR ──
+(function(){
+  const bar = document.getElementById('cartBar');
+  const handle = document.getElementById('cartBarHandle');
+  if(!bar || !handle) return;
+
+  let startY = 0, currentY = 0, dragging = false;
+
+  function onStart(e){
+    dragging = true;
+    startY = e.touches ? e.touches[0].clientY : e.clientY;
+    currentY = startY;
+    bar.style.transition = 'none';
+  }
+  function onMove(e){
+    if(!dragging) return;
+    currentY = e.touches ? e.touches[0].clientY : e.clientY;
+    const delta = Math.max(0, currentY - startY);
+    const inner = bar.querySelector('.cart-bar-inner');
+    inner.style.transform = `translateY(${delta}px)`;
+    inner.style.opacity = 1 - (delta / 200);
+  }
+  function onEnd(){
+    if(!dragging) return;
+    dragging = false;
+    bar.style.transition = '';
+    const inner = bar.querySelector('.cart-bar-inner');
+    inner.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+    if(currentY - startY > 80){
+      inner.style.transform = 'translateY(100%)';
+      inner.style.opacity = '0';
+      setTimeout(()=>{
+        toggleCartBar();
+        inner.style.transform = '';
+        inner.style.opacity = '';
+        inner.style.transition = '';
+      }, 280);
+    } else {
+      inner.style.transform = '';
+      inner.style.opacity = '';
+      setTimeout(()=>{ inner.style.transition = ''; }, 300);
+    }
+  }
+
+  handle.addEventListener('touchstart', onStart, {passive:true});
+  handle.addEventListener('touchmove', onMove, {passive:true});
+  handle.addEventListener('touchend', onEnd);
+})();
+
+// ── SWIPE TO CLOSE MODAL ──
+(function(){
+  const handle = document.getElementById('modalHandle');
+  const modal  = document.querySelector('.modal');
+  const bg     = document.getElementById('modalBg');
+  if(!handle || !modal || !bg) return;
+
+  let startY = 0, currentY = 0, dragging = false;
+
+  function onStart(e){
+    dragging = true;
+    startY = e.touches ? e.touches[0].clientY : e.clientY;
+    currentY = startY;
+    modal.style.transition = 'none';
+  }
+  function onMove(e){
+    if(!dragging) return;
+    currentY = e.touches ? e.touches[0].clientY : e.clientY;
+    const delta = Math.max(0, currentY - startY);
+    modal.style.transform = `translateY(${delta}px)`;
+    modal.style.opacity = String(1 - delta / 350);
+  }
+  function onEnd(){
+    if(!dragging) return;
+    dragging = false;
+    modal.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+    if(currentY - startY > 100){
+      modal.style.transform = 'translateY(100%)';
+      modal.style.opacity = '0';
+      setTimeout(()=>{
+        closeModal();
+        modal.style.transform = '';
+        modal.style.opacity = '';
+        modal.style.transition = '';
+      }, 300);
+    } else {
+      modal.style.transform = '';
+      modal.style.opacity = '';
+      setTimeout(()=>{ modal.style.transition = ''; }, 300);
+    }
+  }
+
+  handle.addEventListener('touchstart', onStart, {passive:true});
+  handle.addEventListener('touchmove',  onMove,  {passive:true});
+  handle.addEventListener('touchend',   onEnd);
+})();
+
+checkAge();
+
+</script>
+</body>
+</html>
