@@ -44,6 +44,15 @@ export class OrdersController {
     return this.ordersService.updateStatus(id, status, actorId);
   }
 
+  @Patch(':id/shipping-status')
+  @UseGuards(JwtAuthGuard)
+  updateShippingStatus(
+    @Param('id') id: string,
+    @Body('shippingStatus') shippingStatus: string,
+  ) {
+    return this.ordersService.updateShippingStatus(id, shippingStatus);
+  }
+
   @Patch(':id/motoboy')
   @UseGuards(JwtAuthGuard)
   updateMotoboy(

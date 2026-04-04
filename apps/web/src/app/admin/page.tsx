@@ -236,6 +236,22 @@ export default function AdminDashboard() {
     );
   }, [orders, loading, page]);
 
+  const updateShippingStatus = useCallback(async (id: string, shippingStatus: string) => {
+    const token = getToken();
+    try {
+      const raw = await apiFetch<any>(`/orders/${id}/shipping-status`, token, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ shippingStatus }),
+      });
+      const updated = normalizeOrder(raw);
+      setOrders(prev => prev.map(o => o.id === id ? updated : o));
+      if (modalOrder?.id === id) setModalOrder(updated);
+    } catch (e) {
+      alert('Erro ao atualizar frete: ' + (e instanceof Error ? e.message : 'desconhecido'));
+    }
+  }, [modalOrder]);
+
   const updateMotoboy = useCallback(async (id: string, motoboy: string) => {
     const token = getToken();
     try {
@@ -485,6 +501,7 @@ export default function AdminDashboard() {
                 loading={loading}
                 onRowClick={setModalOrder}
                 onStatusChange={updateOrderStatus}
+                onShippingChange={updateShippingStatus}
                 onMotoboyChange={updateMotoboy}
               />
             </div>
@@ -539,6 +556,7 @@ export default function AdminDashboard() {
                 loading={loading}
                 onRowClick={setModalOrder}
                 onStatusChange={updateOrderStatus}
+                onShippingChange={updateShippingStatus}
                 onMotoboyChange={updateMotoboy}
               />
             </div>
@@ -750,15 +768,16 @@ function StatCard({ label, value, sub, color, icon, featured }: {
 }
 
 // ── OrderRow ──
-function OrderRow({ o, onRowClick, onStatusChange, onMotoboyChange }: {
+function OrderRow({ o, onRowClick, onStatusChange, onShippingChange, onMotoboyChange }: {
   o: Order;
   onRowClick: (o: Order) => void;
   onStatusChange: (id: string, status: OrderStatus) => void;
+  onShippingChange: (id: string, shippingStatus: string) => void;
   onMotoboyChange: (id: string, motoboy: string) => void;
 }) {
   const produtos = (o.items ?? []).map(i => `${i.productName ?? ''} — ${i.variantName ?? ''} ×${i.quantity ?? 0}`).join(' | ');
   const phone = o.customer?.phone?.replace(/\D/g, '');
-  const frete = statusToFrete(o.status);
+  const frete = ((o as any).shippingStatus as FreteOption | undefined) ?? '🔴 Pendente';
   const freteColor =
     frete === '🟢 Entregue' ? '#4cff72' :
     frete === '🟡 A Caminho' ? '#ffe500' :
@@ -830,7 +849,7 @@ function OrderRow({ o, onRowClick, onStatusChange, onMotoboyChange }: {
       <td style={td} onClick={e => e.stopPropagation()}>
         <select
           value={frete}
-          onChange={e => onStatusChange(o.id, freteToStatus(e.target.value as FreteOption))}
+          onChange={e => onShippingChange(o.id, e.target.value)}
           style={{
             background: 'linear-gradient(135deg,rgba(255,255,255,0.09),rgba(255,255,255,0.03))',
             border: `1px solid ${freteColor}55`,
@@ -850,11 +869,12 @@ function OrderRow({ o, onRowClick, onStatusChange, onMotoboyChange }: {
 }
 
 // ── OrdersTable ──
-function OrdersTable({ orders, loading, onRowClick, onStatusChange, onMotoboyChange }: {
+function OrdersTable({ orders, loading, onRowClick, onStatusChange, onShippingChange, onMotoboyChange }: {
   orders: Order[];
   loading: boolean;
   onRowClick: (o: Order) => void;
   onStatusChange: (id: string, status: OrderStatus) => void;
+  onShippingChange: (id: string, shippingStatus: string) => void;
   onMotoboyChange: (id: string, motoboy: string) => void;
 }) {
   return (
@@ -877,7 +897,7 @@ function OrdersTable({ orders, loading, onRowClick, onStatusChange, onMotoboyCha
               ? <tr><td colSpan={12}><StateBox loading /></td></tr>
               : orders.length === 0
                 ? <tr><td colSpan={12}><StateBox icon="🔍" text="Nenhum pedido encontrado." /></td></tr>
-                : orders.map(o => <OrderRow key={o.id} o={o} onRowClick={onRowClick} onStatusChange={onStatusChange} onMotoboyChange={onMotoboyChange} />)
+                : orders.map(o => <OrderRow key={o.id} o={o} onRowClick={onRowClick} onStatusChange={onStatusChange} onShippingChange={onShippingChange} onMotoboyChange={onMotoboyChange} />)
             }
           </tbody>
         </table>

@@ -143,6 +143,15 @@ export class OrdersService {
     return { id, ...updated.data() };
   }
 
+  async updateShippingStatus(id: string, shippingStatus: string): Promise<any> {
+    const docRef = this.firebaseService.db.collection('orders').doc(id);
+    const docSnap = await docRef.get();
+    if (!docSnap.exists) throw new NotFoundException(`Order with id "${id}" not found.`);
+    await docRef.update({ shippingStatus, updatedAt: Date.now() });
+    const updated = await docRef.get();
+    return { id, ...updated.data() };
+  }
+
   async updateMotoboy(id: string, motoboy: string): Promise<any> {
     const docRef = this.firebaseService.db.collection('orders').doc(id);
     const docSnap = await docRef.get();
