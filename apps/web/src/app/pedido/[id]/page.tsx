@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, Suspense, use } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { api } from '@/lib/api';
+import confetti from 'canvas-confetti';
 import type { PaymentStatus } from '@/types';
 
 const WHATSAPP = '5511951047070';
@@ -56,25 +57,26 @@ function CieloPoller({
   onApproved: () => void; onTimeout: () => void;
 }) {
   const [attempts, setAttempts] = useState(0);
-  const MAX = 10;
+  const MAX = 36; // ~3 minutos
   const ref = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const poll = async () => {
+    try {
+      const order = await api.orders.getById(orderId);
+      if (order.status === 'PAID' || order.status === 'SHIPPED' || order.status === 'DELIVERED') {
+        if (ref.current) clearInterval(ref.current);
+        onApproved();
+      }
+    } catch {}
+  };
+
   useEffect(() => {
-    const poll = async () => {
-      try {
-        const order = await api.orders.getById(orderId);
-        setAttempts(a => a + 1);
-        if (order.status === 'PAID' || order.status === 'SHIPPED' || order.status === 'DELIVERED') {
-          clearInterval(ref.current!);
-          onApproved();
-        }
-      } catch {}
-    };
     poll();
     ref.current = setInterval(() => {
       setAttempts(a => {
-        if (a >= MAX) { clearInterval(ref.current!); onTimeout(); }
-        return a + 1;
+        const next = a + 1;
+        if (next >= MAX) { clearInterval(ref.current!); onTimeout(); }
+        return next;
       });
       poll();
     }, 5000);
@@ -82,9 +84,17 @@ function CieloPoller({
   }, [orderId, onApproved, onTimeout]);
 
   return (
-    <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:10, color:'var(--muted)', fontSize:13, marginBottom:24 }}>
-      <div className="spinner-w"></div>
-      <span>Aguardando confirmação da Cielo... ({attempts}/{MAX})</span>
+    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:12, marginBottom:24 }}>
+      <div style={{ display:'flex', alignItems:'center', gap:10, color:'var(--muted)', fontSize:13 }}>
+        <div className="spinner-w"></div>
+        <span>Aguardando confirmação da Cielo... ({attempts}/{MAX})</span>
+      </div>
+      <button
+        onClick={poll}
+        style={{ fontSize:12, color:'var(--muted)', background:'transparent', border:'1px solid var(--border)', borderRadius:8, padding:'6px 14px', cursor:'pointer' }}
+      >
+        Verificar agora
+      </button>
     </div>
   );
 }
@@ -92,6 +102,17 @@ function CieloPoller({
 function PedidoContent({ orderId: orderIdProp }: { orderId: string }) {
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<'pending' | 'approved' | 'rejected' | 'timeout'>('pending');
+
+  useEffect(() => {
+    if (status !== 'approved') return;
+    const end = Date.now() + 3000;
+    const frame = () => {
+      confetti({ particleCount: 6, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#c8ff00', '#ffffff', '#00e676'] });
+      confetti({ particleCount: 6, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#c8ff00', '#ffffff', '#00e676'] });
+      if (Date.now() < end) requestAnimationFrame(frame);
+    };
+    frame();
+  }, [status]);
 
   const pedidoAtual = (() => { try { return JSON.parse(localStorage.getItem('pedidoAtual') ?? '{}'); } catch { return {}; } })();
 
@@ -115,12 +136,12 @@ function PedidoContent({ orderId: orderIdProp }: { orderId: string }) {
 
   return (
     <main style={{ minHeight:'80vh', display:'flex', alignItems:'center', justifyContent:'center', padding:'24px var(--pad)', position:'relative', zIndex:1 }}>
-      <div style={{ maxWidth:480, width:'100%', textAlign:'center' }}>
+      <div style={{ maxWidth:860, width:'100%', textAlign:'center' }}>
         <div style={{
           background: 'var(--surface)',
           border: `1px solid ${status==='approved' ? 'rgba(200,255,0,0.3)' : status==='rejected' ? 'rgba(255,80,80,0.3)' : 'var(--border)'}`,
           borderRadius: 24,
-          padding: 'clamp(32px,5vw,56px) clamp(24px,4vw,48px)',
+          padding: 'clamp(48px,6vw,80px) clamp(40px,5vw,72px)',
         }}>
 
           {/* Status badge */}
