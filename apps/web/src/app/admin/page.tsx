@@ -761,12 +761,6 @@ function OrderRow({ o, onRowClick, onStatusChange }: {
         {produtos || '—'}
       </td>
       <td style={{ ...tdMono, fontWeight: 700, color: '#fff' }}>{fmtR(o.total ?? 0)}</td>
-      <td style={tdMono}>
-        <span style={{ fontSize: 10, color: '#6a6a6a', maxWidth: 110, overflow: 'hidden', textOverflow: 'ellipsis', display: 'inline-block' }}
-          title={o.mpPaymentId ?? o.mpPreferenceId ?? '—'}>
-          {truncate(o.mpPaymentId ?? o.mpPreferenceId ?? '—', 14)}
-        </span>
-      </td>
       <td style={td}>
         {isPaid(o.status)
           ? <span style={{ display:'inline-flex',gap:5,padding:'5px 12px',borderRadius:8,fontSize:11,fontWeight:700,background:'rgba(200,255,0,0.1)',color:'#c8ff00',border:'1px solid rgba(200,255,0,0.2)' }}>✅ Pago</span>
@@ -829,16 +823,16 @@ function OrdersTable({ orders, loading, onRowClick, onStatusChange }: {
         <table style={{ width:'100%',borderCollapse:'collapse' }}>
           <thead>
             <tr>
-              {['Nº Pedido','Data/Hora','Cliente','WhatsApp','Endereço','Produtos','Total','Link / ID','Pagamento','Frete',''].map(h => (
+              {['Nº Pedido','Data/Hora','Cliente','WhatsApp','Endereço','Produtos','Total','Pagamento','Frete',''].map(h => (
                 <th key={h} style={th}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {loading
-              ? <tr><td colSpan={11}><StateBox loading /></td></tr>
+              ? <tr><td colSpan={10}><StateBox loading /></td></tr>
               : orders.length === 0
-                ? <tr><td colSpan={11}><StateBox icon="🔍" text="Nenhum pedido encontrado." /></td></tr>
+                ? <tr><td colSpan={10}><StateBox icon="🔍" text="Nenhum pedido encontrado." /></td></tr>
                 : orders.map(o => <OrderRow key={o.id} o={o} onRowClick={onRowClick} onStatusChange={onStatusChange} />)
             }
           </tbody>
