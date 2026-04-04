@@ -93,6 +93,22 @@ function drawDonut(
   });
 }
 
+function normalizeOrder(o: any): Order {
+  return {
+    ...o,
+    items: o.items ?? [],
+    customer: o.customer ?? {
+      name: o.customerName ?? '',
+      phone: o.customerPhone ?? '',
+      email: o.customerEmail ?? '',
+      address: o.address ?? '',
+      city: o.city ?? '',
+    },
+    createdAt: typeof o.createdAt === 'number' ? new Date(o.createdAt).toISOString() : o.createdAt ?? new Date().toISOString(),
+    updatedAt: typeof o.updatedAt === 'number' ? new Date(o.updatedAt).toISOString() : o.updatedAt ?? new Date().toISOString(),
+  };
+}
+
 export default function AdminDashboard() {
   const router = useRouter();
   const [page, setPage] = useState<Page>('dashboard');
@@ -122,20 +138,6 @@ export default function AdminDashboard() {
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const normalizeOrder = (o: any): Order => ({
-    ...o,
-    items: o.items ?? [],
-    customer: o.customer ?? {
-      name: o.customerName ?? '',
-      phone: o.customerPhone ?? '',
-      email: o.customerEmail ?? '',
-      address: o.address ?? '',
-      city: o.city ?? '',
-    },
-    createdAt: typeof o.createdAt === 'number' ? new Date(o.createdAt).toISOString() : o.createdAt ?? new Date().toISOString(),
-    updatedAt: typeof o.updatedAt === 'number' ? new Date(o.updatedAt).toISOString() : o.updatedAt ?? new Date().toISOString(),
-  });
 
   const loadOrders = useCallback(async (silent = false) => {
     const token = getToken();
@@ -229,11 +231,12 @@ export default function AdminDashboard() {
   const updateOrderStatus = useCallback(async (id: string, status: OrderStatus) => {
     const token = getToken();
     try {
-      const updated = await apiFetch<Order>(`/orders/${id}/status`, token, {
+      const raw = await apiFetch<any>(`/orders/${id}/status`, token, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
       });
+      const updated = normalizeOrder(raw);
       setOrders(prev => prev.map(o => o.id === id ? updated : o));
       if (modalOrder?.id === id) setModalOrder(updated);
     } catch (e) {
@@ -286,76 +289,6 @@ export default function AdminDashboard() {
   const chartPagos = pendentes;
   const chartPendentes = aguardando;
   const chartOutros = orders.filter(o => o.status === 'CANCELLED' || o.status === 'REFUNDED').length;
-
-  // ── Table row ──
-  function OrderRow({ o, onRowClick }: { o: Order; onRowClick: (o: Order) => void }) {
-    const produtos = o.items.map(i => `${i.productName} — ${i.variantName} ×${i.quantity}`).join(' | ');
-    const phone = o.customer?.phone?.replace(/\D/g, '');
-    const frete = statusToFrete(o.status);
-    const freteColor =
-      frete === 'Entregue 🟢' ? '#c8ff00' :
-      frete === 'A Caminho' ? '#ffb545' :
-      frete === 'Pag. Confirmado' ? '#7efff5' : '#6a6a6a';
-
-    return (
-      <tr
-        onClick={() => onRowClick(o)}
-        style={{ borderBottom: '1px solid rgba(255,255,255,0.07)', cursor: 'pointer', transition: 'background 0.15s' }}
-        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(200,255,0,0.02)')}
-        onMouseLeave={e => (e.currentTarget.style.background = '')}
-      >
-        <td style={tdMono}>{o.orderNumber}</td>
-        <td style={tdMono}>{fmtDate(o.createdAt)}</td>
-        <td style={{ ...td, fontWeight: 700, color: '#fff' }}>{o.customer?.name}</td>
-        <td style={td}>
-          {phone
-            ? <a href={`https://wa.me/55${phone}`} target="_blank" rel="noopener noreferrer"
-                onClick={e => e.stopPropagation()}
-                style={{ display:'inline-flex',alignItems:'center',justifyContent:'center',width:30,height:30,borderRadius:10,background:'rgba(37,211,102,0.1)',border:'1px solid rgba(37,211,102,0.2)',textDecoration:'none',fontSize:14 }}>💬</a>
-            : <span style={{ color:'#6a6a6a' }}>—</span>}
-        </td>
-        <td style={{ ...td, maxWidth: 200, whiteSpace: 'normal', wordBreak: 'break-word', lineHeight: 1.4 }}>
-          {o.customer?.address}, {o.customer?.city}
-        </td>
-        <td style={{ ...td, maxWidth: 240, whiteSpace: 'normal', wordBreak: 'break-word', lineHeight: 1.4, fontSize: 11, color: '#b0b0b0' }}>
-          {produtos}
-        </td>
-        <td style={{ ...tdMono, fontWeight: 700, color: '#fff' }}>{fmtR(o.total)}</td>
-        <td style={tdMono}>
-          <span style={{ fontSize: 10, color: '#6a6a6a', maxWidth: 110, overflow: 'hidden', textOverflow: 'ellipsis', display: 'inline-block' }}
-            title={o.mpPaymentId ?? o.mpPreferenceId ?? '—'}>
-            {truncate(o.mpPaymentId ?? o.mpPreferenceId ?? '—', 14)}
-          </span>
-        </td>
-        <td style={td}>
-          {isPaid(o.status)
-            ? <span style={{ display:'inline-flex',gap:5,padding:'5px 12px',borderRadius:8,fontSize:11,fontWeight:700,background:'rgba(200,255,0,0.1)',color:'#c8ff00',border:'1px solid rgba(200,255,0,0.2)' }}>✅ Pago</span>
-            : o.status === 'CANCELLED'
-              ? <span style={{ display:'inline-flex',gap:5,padding:'5px 12px',borderRadius:8,fontSize:11,fontWeight:700,background:'rgba(255,77,77,0.1)',color:'#ff4d4d',border:'1px solid rgba(255,77,77,0.2)' }}>❌ Cancelado</span>
-              : <span style={{ display:'inline-flex',gap:5,padding:'5px 12px',borderRadius:8,fontSize:11,fontWeight:700,background:'rgba(255,181,69,0.1)',color:'#ffb545',border:'1px solid rgba(255,181,69,0.2)' }}>⏳ Pendente</span>
-          }
-        </td>
-        <td style={td} onClick={e => e.stopPropagation()}>
-          <select
-            value={frete}
-            onChange={e => updateOrderStatus(o.id, freteToStatus(e.target.value as FreteOption))}
-            style={{
-              background: 'linear-gradient(135deg,rgba(255,255,255,0.09),rgba(255,255,255,0.03))',
-              border: `1px solid ${freteColor}55`,
-              borderRadius: 9, padding: '5px 24px 5px 10px',
-              fontFamily: 'Satoshi,sans-serif', fontSize: 11, fontWeight: 600,
-              color: freteColor, outline: 'none', cursor: 'pointer',
-              appearance: 'none', WebkitAppearance: 'none',
-              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238a8a8a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E")`,
-              backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center',
-            }}
-          >
-            {FRETE_OPTIONS.map(opt => <option key={opt} value={opt} style={{ background: '#1a1a1a', color: '#f0f0f0' }}>{opt}</option>)}
-          </select>
-        </td>
-      </tr>
-    );
-  }
 
   // ── Render ──
   return (
@@ -416,7 +349,7 @@ export default function AdminDashboard() {
       </aside>
 
       {/* Main */}
-      <div style={{ marginLeft: 232, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ marginLeft: 232, minHeight: '100vh', display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 1 }}>
 
         {/* ── DASHBOARD PAGE ── */}
         {page === 'dashboard' && (
@@ -528,7 +461,6 @@ export default function AdminDashboard() {
                 loading={loading}
                 onRowClick={setModalOrder}
                 onStatusChange={updateOrderStatus}
-                OrderRow={OrderRow}
               />
             </div>
           </>
@@ -582,7 +514,6 @@ export default function AdminDashboard() {
                 loading={loading}
                 onRowClick={setModalOrder}
                 onStatusChange={updateOrderStatus}
-                OrderRow={OrderRow}
               />
             </div>
           </>
@@ -750,7 +681,7 @@ const th: React.CSSProperties = {
   borderBottom: '1px solid rgba(255,255,255,0.08)',
   background: 'linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))',
 };
-const td: React.CSSProperties = { padding: '9px 14px', verticalAlign: 'top', fontSize: 12, whiteSpace: 'nowrap' };
+const td: React.CSSProperties = { padding: '9px 14px', verticalAlign: 'top', fontSize: 12, whiteSpace: 'nowrap', color: '#e0e0e0' };
 const tdMono: React.CSSProperties = { ...td, fontFamily: 'JetBrains Mono,monospace', color: '#8a8a8a', fontSize: 11 };
 const dateInput: React.CSSProperties = {
   background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.12)',
@@ -792,13 +723,101 @@ function StatCard({ label, value, sub, color, icon, featured }: {
   );
 }
 
+// ── OrderRow ──
+function OrderRow({ o, onRowClick, onStatusChange }: {
+  o: Order;
+  onRowClick: (o: Order) => void;
+  onStatusChange: (id: string, status: OrderStatus) => void;
+}) {
+  const produtos = (o.items ?? []).map(i => `${i.productName ?? ''} — ${i.variantName ?? ''} ×${i.quantity ?? 0}`).join(' | ');
+  const phone = o.customer?.phone?.replace(/\D/g, '');
+  const frete = statusToFrete(o.status);
+  const freteColor =
+    frete === 'Entregue 🟢' ? '#c8ff00' :
+    frete === 'A Caminho' ? '#ffb545' :
+    frete === 'Pag. Confirmado' ? '#7efff5' : '#6a6a6a';
+
+  return (
+    <tr
+      onClick={() => onRowClick(o)}
+      style={{ borderBottom: '1px solid rgba(255,255,255,0.07)', cursor: 'pointer', transition: 'background 0.15s' }}
+      onMouseEnter={e => (e.currentTarget.style.background = 'rgba(200,255,0,0.06)')}
+      onMouseLeave={e => (e.currentTarget.style.background = '')}
+    >
+      <td style={tdMono}>{o.orderNumber ?? '—'}</td>
+      <td style={tdMono}>{o.createdAt ? fmtDate(o.createdAt) : '—'}</td>
+      <td style={{ ...td, fontWeight: 700, color: '#fff' }}>{o.customer?.name ?? '—'}</td>
+      <td style={td}>
+        {phone
+          ? <a href={`https://wa.me/55${phone}`} target="_blank" rel="noopener noreferrer"
+              onClick={e => e.stopPropagation()}
+              style={{ display:'inline-flex',alignItems:'center',justifyContent:'center',width:30,height:30,borderRadius:10,background:'rgba(37,211,102,0.1)',border:'1px solid rgba(37,211,102,0.2)',textDecoration:'none',fontSize:14 }}>💬</a>
+          : <span style={{ color:'#6a6a6a' }}>—</span>}
+      </td>
+      <td style={{ ...td, maxWidth: 200, whiteSpace: 'normal', wordBreak: 'break-word', lineHeight: 1.4 }}>
+        {o.customer?.address ?? ''}{o.customer?.city ? `, ${o.customer.city}` : ''}
+      </td>
+      <td style={{ ...td, maxWidth: 240, whiteSpace: 'normal', wordBreak: 'break-word', lineHeight: 1.4, fontSize: 11, color: '#b0b0b0' }}>
+        {produtos || '—'}
+      </td>
+      <td style={{ ...tdMono, fontWeight: 700, color: '#fff' }}>{fmtR(o.total ?? 0)}</td>
+      <td style={tdMono}>
+        <span style={{ fontSize: 10, color: '#6a6a6a', maxWidth: 110, overflow: 'hidden', textOverflow: 'ellipsis', display: 'inline-block' }}
+          title={o.mpPaymentId ?? o.mpPreferenceId ?? '—'}>
+          {truncate(o.mpPaymentId ?? o.mpPreferenceId ?? '—', 14)}
+        </span>
+      </td>
+      <td style={td}>
+        {isPaid(o.status)
+          ? <span style={{ display:'inline-flex',gap:5,padding:'5px 12px',borderRadius:8,fontSize:11,fontWeight:700,background:'rgba(200,255,0,0.1)',color:'#c8ff00',border:'1px solid rgba(200,255,0,0.2)' }}>✅ Pago</span>
+          : o.status === 'CANCELLED'
+            ? <span style={{ display:'inline-flex',gap:5,padding:'5px 12px',borderRadius:8,fontSize:11,fontWeight:700,background:'rgba(255,77,77,0.1)',color:'#ff4d4d',border:'1px solid rgba(255,77,77,0.2)' }}>❌ Cancelado</span>
+            : <span style={{ display:'inline-flex',gap:5,padding:'5px 12px',borderRadius:8,fontSize:11,fontWeight:700,background:'rgba(255,181,69,0.1)',color:'#ffb545',border:'1px solid rgba(255,181,69,0.2)' }}>⏳ Pendente</span>
+        }
+      </td>
+      <td style={td} onClick={e => e.stopPropagation()}>
+        <select
+          value={frete}
+          onChange={e => onStatusChange(o.id, freteToStatus(e.target.value as FreteOption))}
+          style={{
+            background: 'linear-gradient(135deg,rgba(255,255,255,0.09),rgba(255,255,255,0.03))',
+            border: `1px solid ${freteColor}55`,
+            borderRadius: 9, padding: '5px 24px 5px 10px',
+            fontFamily: 'Satoshi,sans-serif', fontSize: 11, fontWeight: 600,
+            color: freteColor, outline: 'none', cursor: 'pointer',
+            appearance: 'none', WebkitAppearance: 'none',
+            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238a8a8a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E")`,
+            backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center',
+          }}
+        >
+          {FRETE_OPTIONS.map(opt => <option key={opt} value={opt} style={{ background: '#1a1a1a', color: '#f0f0f0' }}>{opt}</option>)}
+        </select>
+      </td>
+      <td style={{ ...td, whiteSpace: 'nowrap' }}>
+        <button
+          onClick={e => { e.stopPropagation(); onRowClick(o); }}
+          style={{
+            padding: '5px 14px', borderRadius: 8,
+            background: 'rgba(200,255,0,0.08)', border: '1px solid rgba(200,255,0,0.25)',
+            color: '#c8ff00', fontFamily: 'Satoshi,sans-serif', fontSize: 11, fontWeight: 700,
+            cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(200,255,0,0.18)'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(200,255,0,0.08)'; }}
+        >
+          Ver
+        </button>
+      </td>
+    </tr>
+  );
+}
+
 // ── OrdersTable ──
-function OrdersTable({ orders, loading, onRowClick, OrderRow }: {
+function OrdersTable({ orders, loading, onRowClick, onStatusChange }: {
   orders: Order[];
   loading: boolean;
   onRowClick: (o: Order) => void;
-  onStatusChange: (id: string, status: OrderStatus) => Promise<void>;
-  OrderRow: React.ComponentType<{ o: Order; onRowClick: (o: Order) => void }>;
+  onStatusChange: (id: string, status: OrderStatus) => void;
 }) {
   return (
     <div style={tableCard}>
@@ -810,17 +829,17 @@ function OrdersTable({ orders, loading, onRowClick, OrderRow }: {
         <table style={{ width:'100%',borderCollapse:'collapse' }}>
           <thead>
             <tr>
-              {['Nº Pedido','Data/Hora','Cliente','WhatsApp','Endereço','Produtos','Total','Link / ID','Pagamento','Frete'].map(h => (
+              {['Nº Pedido','Data/Hora','Cliente','WhatsApp','Endereço','Produtos','Total','Link / ID','Pagamento','Frete',''].map(h => (
                 <th key={h} style={th}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {loading
-              ? <tr><td colSpan={10}><StateBox loading /></td></tr>
+              ? <tr><td colSpan={11}><StateBox loading /></td></tr>
               : orders.length === 0
-                ? <tr><td colSpan={10}><StateBox icon="🔍" text="Nenhum pedido encontrado." /></td></tr>
-                : orders.map(o => <OrderRow key={o.id} o={o} onRowClick={onRowClick} />)
+                ? <tr><td colSpan={11}><StateBox icon="🔍" text="Nenhum pedido encontrado." /></td></tr>
+                : orders.map(o => <OrderRow key={o.id} o={o} onRowClick={onRowClick} onStatusChange={onStatusChange} />)
             }
           </tbody>
         </table>
