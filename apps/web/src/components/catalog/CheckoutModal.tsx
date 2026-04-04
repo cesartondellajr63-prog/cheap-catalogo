@@ -111,7 +111,7 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
   const total = subtotal + freteValue;
 
   const confirmarDados = () => {
-    if (!nome.trim()) { setDadosError('Informe seu nome completo.'); return; }
+    if (!nome.trim() || nome.trim().split(/\s+/).length < 2) { setDadosError('Informe seu nome e sobrenome.'); return; }
     if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setDadosError('Informe um email válido (ex: nome@email.com).'); return; }
     if (tel.replace(/\D/g, '').length < 10) { setDadosError('Informe um telefone válido.'); return; }
     setDadosError('');
@@ -490,7 +490,7 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
               </div>
             </div>
             <div className="secure-badge">
-              🔒 Pagamento seguro via <strong style={{ color: '#fff', marginLeft: 4 }}>Mercado Pago</strong>
+              🔒 Pagamento seguro via <strong style={{ color: '#fff', marginLeft: 4 }}>Mercado Pago / Cielo</strong>
             </div>
             {pagError && <div className="error-msg visible">{pagError}</div>}
             <div className="modal-actions">
@@ -513,7 +513,7 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
               >
                 {cardLoading
                   ? <><span className="spinner"></span> Aguarde...</>
-                  : '💳 Pagar com Cartão (WhatsApp)'
+                  : '💳 Pagar com Cartão'
                 }
               </button>
               <button className="btn-secondary" onClick={() => goToStep(3)}>← Voltar à entrega</button>
