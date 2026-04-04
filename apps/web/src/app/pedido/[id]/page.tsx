@@ -93,18 +93,19 @@ function PedidoContent({ orderId: orderIdProp }: { orderId: string }) {
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<'pending' | 'approved' | 'rejected' | 'timeout'>('pending');
 
+  const pedidoAtual = (() => { try { return JSON.parse(localStorage.getItem('pedidoAtual') ?? '{}'); } catch { return {}; } })();
+
   const orderId = orderIdProp
     || searchParams.get('external_reference')
-    || (() => { try { return JSON.parse(sessionStorage.getItem('pedidoAtual') ?? '{}').orderId ?? ''; } catch { return ''; } })();
+    || (pedidoAtual.orderId ?? '');
 
   const accessToken = searchParams.get('token')
     || searchParams.get('accessToken')
-    || (() => { try { return JSON.parse(sessionStorage.getItem('pedidoAtual') ?? '{}').accessToken ?? ''; } catch { return ''; } })();
+    || (pedidoAtual.accessToken ?? '');
 
   // Se não há accessToken → veio da Cielo (cartão)
   const isCard = !accessToken;
 
-  const pedidoAtual = (() => { try { return JSON.parse(sessionStorage.getItem('pedidoAtual') ?? '{}'); } catch { return {}; } })();
   const itemsText = (pedidoAtual.items as string[] | undefined)?.join(', ') ?? '';
   const addressText = (pedidoAtual.address as string | undefined) ?? '';
   const waMsg = itemsText && addressText

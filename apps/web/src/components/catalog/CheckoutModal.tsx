@@ -184,7 +184,7 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
         address: `${rua}, ${numero}${complemento ? ', ' + complemento : ''}, ${bairro}`,
         city: cidade,
       });
-      sessionStorage.setItem('pedidoAtual', JSON.stringify({
+      localStorage.setItem('pedidoAtual', JSON.stringify({
         orderId: result.orderId,
         accessToken: result.accessToken,
         items: localCart.map(i => `${i.productName} (${i.variantName})`),
