@@ -176,23 +176,28 @@ export class WebhooksController {
 
   @Post('cielo')
   @HttpCode(HttpStatus.OK)
-  async handleCielo(@Body() body: any): Promise<{ received: boolean }> {
+  async handleCielo(@Req() req: any): Promise<{ received: boolean }> {
+    const body = req.body;
     this.logger.log(`Cielo webhook received: ${JSON.stringify(body)}`);
 
-    // order_status 4 = Complete, payment_status 1 = Authorized / 2 = Confirmed
-    const orderStatus: number = body?.order_status;
-    const paymentStatus: number = body?.payment_status;
-    const merchantOrderNumber: string = body?.merchant_order_number;
+    // Cielo envia form-urlencoded — todos os valores chegam como string
+    const orderStatus = Number(body?.order_status ?? body?.OrderStatus ?? 0);
+    const paymentStatus = Number(body?.payment_status ?? body?.PaymentStatus ?? body?.paymentstatus ?? 0);
+    const merchantOrderNumber: string =
+      body?.merchant_order_number || body?.MerchantOrderNumber || body?.merchantOrderNumber || '';
+
+    this.logger.log(`Cielo parsed — orderStatus: ${orderStatus}, paymentStatus: ${paymentStatus}, orderNumber: ${merchantOrderNumber}`);
 
     if (!merchantOrderNumber) {
       this.logger.warn('Cielo webhook missing merchant_order_number');
       return { received: true };
     }
 
+    // order_status 4 = Complete | payment_status 1 = Authorized, 2 = PaymentConfirmed
     const isPaid = orderStatus === 4 || paymentStatus === 1 || paymentStatus === 2;
 
     if (!isPaid) {
-      this.logger.log(`Cielo webhook order ${merchantOrderNumber}: status ${orderStatus}/${paymentStatus}, no action.`);
+      this.logger.log(`Cielo webhook order ${merchantOrderNumber}: not paid yet (${orderStatus}/${paymentStatus}), no action.`);
       return { received: true };
     }
 
