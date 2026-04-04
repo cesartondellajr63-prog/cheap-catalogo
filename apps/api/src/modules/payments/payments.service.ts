@@ -103,6 +103,27 @@ export class PaymentsService {
     const sessionAccessToken = crypto.randomBytes(32).toString('hex');
     const tokenHash = crypto.createHash('sha256').update(sessionAccessToken).digest('hex');
 
+    // Cria o pedido no Firestore com todas as informações do cliente
+    const existingOrder = await this.firebaseService.db.collection('orders').doc(dto.orderId).get();
+    if (!existingOrder.exists) {
+      await this.ordersService.createWithId(dto.orderId, {
+        customerName: dto.customerName,
+        customerPhone: dto.customerPhone.replace(/\D/g, ''),
+        customerEmail: dto.customerEmail,
+        address: dto.address,
+        city: dto.city,
+        shippingCost: dto.shippingPrice,
+        items: dto.items.map(i => ({
+          productId: i.model,
+          productName: i.model,
+          variantId: i.flavor,
+          variantName: i.flavor,
+          quantity: i.qty,
+          unitPrice: i.price,
+        })),
+      });
+    }
+
     await this.firebaseService.db.collection('sessions').doc(dto.orderId).set({
       tokenHash,
       expiresAt: Date.now() + 2 * 60 * 60 * 1000,

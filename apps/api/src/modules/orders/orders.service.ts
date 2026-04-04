@@ -35,6 +35,35 @@ export class OrdersService {
     return `CP-${year}-${String(count).padStart(4, '0')}`;
   }
 
+  async createWithId(id: string, dto: CreateOrderDto): Promise<any> {
+    const orderNumber = await this.generateOrderNumber();
+    const subtotal = this.calculateSubtotal(dto.items);
+    const total = subtotal + dto.shippingCost;
+    const now = Date.now();
+
+    const order = {
+      id,
+      orderNumber,
+      customerName: dto.customerName,
+      customerPhone: dto.customerPhone,
+      customerEmail: dto.customerEmail || null,
+      address: dto.address,
+      city: dto.city,
+      shippingCost: dto.shippingCost,
+      items: dto.items,
+      subtotal,
+      total,
+      status: 'PENDING',
+      mpPaymentId: null,
+      mpPreferenceId: null,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    await this.firebaseService.db.collection('orders').doc(id).set(order);
+    return order;
+  }
+
   async create(dto: CreateOrderDto): Promise<any> {
     const id = crypto.randomUUID();
     const orderNumber = await this.generateOrderNumber();
