@@ -65,6 +65,17 @@ export class OrdersService {
     return order;
   }
 
+  async findByOrderNumber(orderNumber: string): Promise<any> {
+    const snap = await this.firebaseService.db
+      .collection('orders')
+      .where('orderNumber', '==', orderNumber)
+      .limit(1)
+      .get();
+    if (snap.empty) throw new NotFoundException(`Order "${orderNumber}" not found.`);
+    const doc = snap.docs[0];
+    return { id: doc.id, ...doc.data() };
+  }
+
   async findById(id: string): Promise<any> {
     const docRef = this.firebaseService.db.collection('orders').doc(id);
     const docSnap = await docRef.get();

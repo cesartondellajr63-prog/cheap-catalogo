@@ -173,4 +173,41 @@ export class WebhooksController {
     this.logger.log(`Order ${orderId} marked as PAID via payment ${paymentId}.`);
     return { received: true };
   }
+
+  @Post('cielo')
+  @HttpCode(HttpStatus.OK)
+  async handleCielo(@Body() body: any): Promise<{ received: boolean }> {
+    this.logger.log(`Cielo webhook received: ${JSON.stringify(body)}`);
+
+    // order_status 4 = Complete, payment_status 1 = Authorized / 2 = Confirmed
+    const orderStatus: number = body?.order_status;
+    const paymentStatus: number = body?.payment_status;
+    const merchantOrderNumber: string = body?.merchant_order_number;
+
+    if (!merchantOrderNumber) {
+      this.logger.warn('Cielo webhook missing merchant_order_number');
+      return { received: true };
+    }
+
+    const isPaid = orderStatus === 4 || paymentStatus === 1 || paymentStatus === 2;
+
+    if (!isPaid) {
+      this.logger.log(`Cielo webhook order ${merchantOrderNumber}: status ${orderStatus}/${paymentStatus}, no action.`);
+      return { received: true };
+    }
+
+    try {
+      const order = await this.ordersService.findByOrderNumber(merchantOrderNumber);
+      if (order.status === 'PAID') {
+        this.logger.log(`Order ${order.id} already PAID, skipping.`);
+        return { received: true };
+      }
+      await this.ordersService.updateStatus(order.id, 'PAID', 'webhook_cielo');
+      this.logger.log(`Order ${order.id} marked as PAID via Cielo webhook.`);
+    } catch (e) {
+      this.logger.error(`Cielo webhook error: ${(e as Error).message}`);
+    }
+
+    return { received: true };
+  }
 }
