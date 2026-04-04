@@ -105,13 +105,22 @@ function PedidoContent({ orderId: orderIdProp }: { orderId: string }) {
 
   useEffect(() => {
     if (status !== 'approved') return;
+    const colors = ['#ffffff', '#ff6b00', '#ff9500', '#ff3333', '#ffccaa'];
+
+    const canvas = document.createElement('canvas');
+    canvas.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1;';
+    document.body.appendChild(canvas);
+    const fire = confetti.create(canvas, { resize: true });
+
     const end = Date.now() + 3000;
     const frame = () => {
-      confetti({ particleCount: 6, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#c8ff00', '#ffffff', '#00e676'] });
-      confetti({ particleCount: 6, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#c8ff00', '#ffffff', '#00e676'] });
+      fire({ particleCount: 3, angle: 60, spread: 70, origin: { x: 0.5, y: 0.5 }, colors, startVelocity: 60, ticks: 200 });
+      fire({ particleCount: 3, angle: 120, spread: 70, origin: { x: 0.5, y: 0.5 }, colors, startVelocity: 60, ticks: 200 });
       if (Date.now() < end) requestAnimationFrame(frame);
     };
     frame();
+
+    return () => { document.body.removeChild(canvas); };
   }, [status]);
 
   const pedidoAtual = (() => { try { return JSON.parse(localStorage.getItem('pedidoAtual') ?? '{}'); } catch { return {}; } })();
@@ -135,13 +144,15 @@ function PedidoContent({ orderId: orderIdProp }: { orderId: string }) {
   const waLink = `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(waMsg)}`;
 
   return (
-    <main style={{ minHeight:'80vh', display:'flex', alignItems:'center', justifyContent:'center', padding:'24px var(--pad)', position:'relative', zIndex:1 }}>
-      <div style={{ maxWidth:860, width:'100%', textAlign:'center' }}>
+    <main style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', padding:'24px var(--pad)', position:'relative', zIndex:2 }}>
+      <div style={{ maxWidth:960, width:'100%', textAlign:'center' }}>
         <div style={{
           background: 'var(--surface)',
           border: `1px solid ${status==='approved' ? 'rgba(200,255,0,0.3)' : status==='rejected' ? 'rgba(255,80,80,0.3)' : 'var(--border)'}`,
           borderRadius: 24,
-          padding: 'clamp(48px,6vw,80px) clamp(40px,5vw,72px)',
+          padding: 'clamp(20px,2vw,32px) clamp(40px,5vw,72px)',
+          position: 'relative',
+          zIndex: 1,
         }}>
 
           {/* Status badge */}
@@ -210,22 +221,22 @@ function PedidoContent({ orderId: orderIdProp }: { orderId: string }) {
           )}
 
           {/* Actions */}
-          <div style={{ display:'flex', flexDirection:'column', gap:12, marginTop:8 }}>
+          <div style={{ display:'flex', flexDirection:'column', gap:12, marginTop:8, alignItems:'center' }}>
             {(status === 'approved' || status === 'timeout') && (
               <a href={waLink} target="_blank" rel="noopener noreferrer"
-                style={{ background:'var(--accent)', color:'#000', padding:'14px 32px', borderRadius:12, fontSize:14, fontWeight:700, display:'inline-flex', alignItems:'center', justifyContent:'center', gap:8, minHeight:48, textDecoration:'none', transition:'all 0.2s' }}>
+                style={{ background:'var(--accent)', color:'#000', padding:'14px 32px', borderRadius:12, fontSize:14, fontWeight:700, display:'inline-flex', alignItems:'center', justifyContent:'center', gap:8, minHeight:48, textDecoration:'none', transition:'all 0.2s', width:'35%' }}>
                 💬 {status === 'approved' ? 'Acompanhar entrega' : 'Confirmar pedido no WhatsApp'}
               </a>
             )}
             {status === 'rejected' && (
               <a href={waLink} target="_blank" rel="noopener noreferrer"
-                style={{ background:'rgba(255,80,80,0.15)', color:'#ff5050', border:'1px solid rgba(255,80,80,0.3)', padding:'14px 32px', borderRadius:12, fontSize:14, fontWeight:700, display:'inline-flex', alignItems:'center', justifyContent:'center', gap:8, minHeight:48, textDecoration:'none' }}>
+                style={{ background:'rgba(255,80,80,0.15)', color:'#ff5050', border:'1px solid rgba(255,80,80,0.3)', padding:'14px 32px', borderRadius:12, fontSize:14, fontWeight:700, display:'inline-flex', alignItems:'center', justifyContent:'center', gap:8, minHeight:48, textDecoration:'none', width:'35%' }}>
                 💬 Entrar em contato
               </a>
             )}
             {status !== 'pending' && (
               <a href="/"
-                style={{ background:'var(--surface2)', color:'var(--text)', padding:'14px 32px', borderRadius:12, border:'1px solid var(--border)', fontSize:14, fontWeight:600, display:'inline-flex', alignItems:'center', justifyContent:'center', gap:8, minHeight:48, textDecoration:'none' }}>
+                style={{ background:'var(--surface2)', color:'var(--text)', padding:'14px 32px', borderRadius:12, border:'1px solid var(--border)', fontSize:14, fontWeight:600, display:'inline-flex', alignItems:'center', justifyContent:'center', gap:8, minHeight:48, textDecoration:'none', width:'35%' }}>
                 ← Voltar ao Catálogo
               </a>
             )}
@@ -239,8 +250,8 @@ function PedidoContent({ orderId: orderIdProp }: { orderId: string }) {
 export default function PedidoPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   return (
-    <>
-      <header style={{ position:'relative', padding:'16px var(--pad)', borderBottom:'1px solid var(--border)', zIndex:1 }}>
+    <div style={{ display:'flex', flexDirection:'column', minHeight:'100vh' }}>
+      <header style={{ position:'relative', padding:'16px var(--pad)', borderBottom:'1px solid var(--border)', zIndex:10 }}>
         <div style={{ maxWidth:600, margin:'0 auto', display:'flex', alignItems:'center', justifyContent:'center' }}>
           <div style={{ fontFamily:'var(--font-syne),Syne,sans-serif', fontSize:'clamp(16px,3vw,20px)', fontWeight:800, cursor:'pointer' }}
             onClick={() => window.location.href = '/'}>
@@ -257,9 +268,9 @@ export default function PedidoPage({ params }: { params: Promise<{ id: string }>
         <PedidoContent orderId={id} />
       </Suspense>
 
-      <footer style={{ position:'relative', zIndex:1, padding:'24px var(--pad)', textAlign:'center', borderTop:'1px solid var(--border)', color:'var(--muted)', fontSize:12 }}>
+      <footer style={{ position:'relative', zIndex:2, padding:'10px var(--pad)', textAlign:'center', borderTop:'1px solid var(--border)', color:'var(--muted)', fontSize:12 }}>
         <p>© 2026 Cheaps Pods — Todos os direitos reservados</p>
       </footer>
-    </>
+    </div>
   );
 }
