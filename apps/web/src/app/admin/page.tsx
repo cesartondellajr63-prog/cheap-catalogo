@@ -42,24 +42,24 @@ function fmtDateOnly(iso: string) {
   return new Date(iso).toLocaleDateString('pt-BR');
 }
 
-const FRETE_OPTIONS = ['Pendente', 'Pag. Confirmado', 'A Caminho', 'Entregue 🟢', 'Cancelado'] as const;
+const FRETE_OPTIONS = ['🔴 Pendente', '🟠 Solicitado', '🟡 A Caminho', '🟢 Entregue', '⛔ Cancelado'] as const;
 type FreteOption = (typeof FRETE_OPTIONS)[number];
 
 function statusToFrete(s: OrderStatus): FreteOption {
   switch (s) {
-    case 'PAID': return 'Pag. Confirmado';
-    case 'SHIPPED': return 'A Caminho';
-    case 'DELIVERED': return 'Entregue 🟢';
-    case 'CANCELLED': return 'Cancelado';
-    default: return 'Pendente';
+    case 'PAID': return '🟠 Solicitado';
+    case 'SHIPPED': return '🟡 A Caminho';
+    case 'DELIVERED': return '🟢 Entregue';
+    case 'CANCELLED': return '⛔ Cancelado';
+    default: return '🔴 Pendente';
   }
 }
 function freteToStatus(f: FreteOption): OrderStatus {
   switch (f) {
-    case 'Pag. Confirmado': return 'PAID';
-    case 'A Caminho': return 'SHIPPED';
-    case 'Entregue 🟢': return 'DELIVERED';
-    case 'Cancelado': return 'CANCELLED';
+    case '🟠 Solicitado': return 'PAID';
+    case '🟡 A Caminho': return 'SHIPPED';
+    case '🟢 Entregue': return 'DELIVERED';
+    case '⛔ Cancelado': return 'CANCELLED';
     default: return 'PENDING';
   }
 }
@@ -92,6 +92,14 @@ function drawDonut(
     start += (v / total) * Math.PI * 2;
   });
 }
+
+const MOTOBOY_OPTIONS = ['⏳ Pendente', '🛵 Lala Move', '🏍️ Motoboy Próprio'] as const;
+type MotoboyOption = (typeof MOTOBOY_OPTIONS)[number];
+const MOTOBOY_COLOR: Record<MotoboyOption, string> = {
+  '⏳ Pendente': '#ff4d4d',
+  '🛵 Lala Move': '#ff8c00',
+  '🏍️ Motoboy Próprio': '#7efff5',
+};
 
 function normalizeOrder(o: any): Order {
   return {
@@ -227,6 +235,22 @@ export default function AdminDashboard() {
       ['#c8ff00', '#7efff5', '#ffb545', '#6a6a6a'].filter((_, i) => [concluidos, pagos, pendentes, outros][i] > 0)
     );
   }, [orders, loading, page]);
+
+  const updateMotoboy = useCallback(async (id: string, motoboy: string) => {
+    const token = getToken();
+    try {
+      const raw = await apiFetch<any>(`/orders/${id}/motoboy`, token, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ motoboy }),
+      });
+      const updated = normalizeOrder(raw);
+      setOrders(prev => prev.map(o => o.id === id ? updated : o));
+      if (modalOrder?.id === id) setModalOrder(updated);
+    } catch (e) {
+      alert('Erro ao atualizar motoboy: ' + (e instanceof Error ? e.message : 'desconhecido'));
+    }
+  }, [modalOrder]);
 
   const updateOrderStatus = useCallback(async (id: string, status: OrderStatus) => {
     const token = getToken();
@@ -461,6 +485,7 @@ export default function AdminDashboard() {
                 loading={loading}
                 onRowClick={setModalOrder}
                 onStatusChange={updateOrderStatus}
+                onMotoboyChange={updateMotoboy}
               />
             </div>
           </>
@@ -514,6 +539,7 @@ export default function AdminDashboard() {
                 loading={loading}
                 onRowClick={setModalOrder}
                 onStatusChange={updateOrderStatus}
+                onMotoboyChange={updateMotoboy}
               />
             </div>
           </>
@@ -724,18 +750,20 @@ function StatCard({ label, value, sub, color, icon, featured }: {
 }
 
 // ── OrderRow ──
-function OrderRow({ o, onRowClick, onStatusChange }: {
+function OrderRow({ o, onRowClick, onStatusChange, onMotoboyChange }: {
   o: Order;
   onRowClick: (o: Order) => void;
   onStatusChange: (id: string, status: OrderStatus) => void;
+  onMotoboyChange: (id: string, motoboy: string) => void;
 }) {
   const produtos = (o.items ?? []).map(i => `${i.productName ?? ''} — ${i.variantName ?? ''} ×${i.quantity ?? 0}`).join(' | ');
   const phone = o.customer?.phone?.replace(/\D/g, '');
   const frete = statusToFrete(o.status);
   const freteColor =
-    frete === 'Entregue 🟢' ? '#c8ff00' :
-    frete === 'A Caminho' ? '#ffb545' :
-    frete === 'Pag. Confirmado' ? '#7efff5' : '#6a6a6a';
+    frete === '🟢 Entregue' ? '#4cff72' :
+    frete === '🟡 A Caminho' ? '#ffe500' :
+    frete === '🟠 Solicitado' ? '#ff8c00' :
+    frete === '⛔ Cancelado' ? '#ff4d4d' : '#ff4d4d';
 
   return (
     <tr
@@ -758,10 +786,10 @@ function OrderRow({ o, onRowClick, onStatusChange }: {
             </a>
           : <span style={{ color:'#6a6a6a' }}>—</span>}
       </td>
-      <td style={{ ...tdMono, fontWeight: 600, color: '#7efff5' }}>{fmtR(o.shippingCost ?? 0)}</td>
       <td style={{ ...td, maxWidth: 200, whiteSpace: 'normal', wordBreak: 'break-word', lineHeight: 1.4 }}>
         {o.customer?.address ?? ''}{o.customer?.city ? `, ${o.customer.city}` : ''}
       </td>
+      <td style={{ ...tdMono, fontWeight: 600, color: '#7efff5' }}>{fmtR(o.shippingCost ?? 0)}</td>
       <td style={{ ...td, maxWidth: 240, whiteSpace: 'normal', wordBreak: 'break-word', lineHeight: 1.4, fontSize: 11, color: '#b0b0b0' }}>
         {produtos || '—'}
       </td>
@@ -774,6 +802,30 @@ function OrderRow({ o, onRowClick, onStatusChange }: {
             ? <span style={{ display:'inline-flex',gap:5,padding:'5px 12px',borderRadius:8,fontSize:11,fontWeight:700,background:'rgba(255,77,77,0.1)',color:'#ff4d4d',border:'1px solid rgba(255,77,77,0.2)' }}>❌ Cancelado</span>
             : <span style={{ display:'inline-flex',gap:5,padding:'5px 12px',borderRadius:8,fontSize:11,fontWeight:700,background:'rgba(255,181,69,0.1)',color:'#ffb545',border:'1px solid rgba(255,181,69,0.2)' }}>⏳ Pendente</span>
         }
+      </td>
+      <td style={td} onClick={e => e.stopPropagation()}>
+        {(() => {
+          const motoboyVal = ((o as any).motoboy as MotoboyOption | undefined) ?? '⏳ Pendente';
+          const motoboyColor = MOTOBOY_COLOR[motoboyVal] ?? '#ff4d4d';
+          return (
+            <select
+              value={motoboyVal}
+              onChange={e => onMotoboyChange(o.id, e.target.value)}
+              style={{
+                background: 'linear-gradient(135deg,rgba(255,255,255,0.09),rgba(255,255,255,0.03))',
+                border: `1px solid ${motoboyColor}55`,
+                borderRadius: 9, padding: '5px 24px 5px 10px',
+                fontFamily: 'Satoshi,sans-serif', fontSize: 11, fontWeight: 600,
+                color: motoboyColor, outline: 'none', cursor: 'pointer',
+                appearance: 'none', WebkitAppearance: 'none',
+                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238a8a8a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E")`,
+                backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center',
+              }}
+            >
+              {MOTOBOY_OPTIONS.map(opt => <option key={opt} value={opt} style={{ background: '#1a1a1a', color: '#f0f0f0' }}>{opt}</option>)}
+            </select>
+          );
+        })()}
       </td>
       <td style={td} onClick={e => e.stopPropagation()}>
         <select
@@ -793,31 +845,17 @@ function OrderRow({ o, onRowClick, onStatusChange }: {
           {FRETE_OPTIONS.map(opt => <option key={opt} value={opt} style={{ background: '#1a1a1a', color: '#f0f0f0' }}>{opt}</option>)}
         </select>
       </td>
-      <td style={{ ...td, whiteSpace: 'nowrap' }}>
-        <button
-          onClick={e => { e.stopPropagation(); onRowClick(o); }}
-          style={{
-            padding: '5px 14px', borderRadius: 8,
-            background: 'rgba(200,255,0,0.08)', border: '1px solid rgba(200,255,0,0.25)',
-            color: '#c8ff00', fontFamily: 'Satoshi,sans-serif', fontSize: 11, fontWeight: 700,
-            cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(200,255,0,0.18)'; }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(200,255,0,0.08)'; }}
-        >
-          Ver
-        </button>
-      </td>
     </tr>
   );
 }
 
 // ── OrdersTable ──
-function OrdersTable({ orders, loading, onRowClick, onStatusChange }: {
+function OrdersTable({ orders, loading, onRowClick, onStatusChange, onMotoboyChange }: {
   orders: Order[];
   loading: boolean;
   onRowClick: (o: Order) => void;
   onStatusChange: (id: string, status: OrderStatus) => void;
+  onMotoboyChange: (id: string, motoboy: string) => void;
 }) {
   return (
     <div style={tableCard}>
@@ -829,7 +867,7 @@ function OrdersTable({ orders, loading, onRowClick, onStatusChange }: {
         <table style={{ width:'100%',borderCollapse:'collapse' }}>
           <thead>
             <tr>
-              {['Nº Pedido','Data/Hora','Cliente','WhatsApp','Valor Frete','Endereço','Produtos','Valor Produtos','Total','Pagamento','Frete',''].map(h => (
+              {['Nº Pedido','Data/Hora','Cliente','WhatsApp','Endereço','Valor Frete','Produtos','Valor Produtos','Total','Pagamento','Motoboy','Frete'].map(h => (
                 <th key={h} style={th}>{h}</th>
               ))}
             </tr>
@@ -839,7 +877,7 @@ function OrdersTable({ orders, loading, onRowClick, onStatusChange }: {
               ? <tr><td colSpan={12}><StateBox loading /></td></tr>
               : orders.length === 0
                 ? <tr><td colSpan={12}><StateBox icon="🔍" text="Nenhum pedido encontrado." /></td></tr>
-                : orders.map(o => <OrderRow key={o.id} o={o} onRowClick={onRowClick} onStatusChange={onStatusChange} />)
+                : orders.map(o => <OrderRow key={o.id} o={o} onRowClick={onRowClick} onStatusChange={onStatusChange} onMotoboyChange={onMotoboyChange} />)
             }
           </tbody>
         </table>
@@ -880,9 +918,10 @@ function OrderModal({ order: o, onClose, onStatusChange }: {
   const produtos = o.items.map(i => `${i.productName} — ${i.variantName} ×${i.quantity}`);
   const frete = statusToFrete(o.status);
   const freteColor =
-    frete === 'Entregue 🟢' ? '#c8ff00' :
-    frete === 'A Caminho' ? '#ffb545' :
-    frete === 'Pag. Confirmado' ? '#7efff5' : '#8a8a8a';
+    frete === '🟢 Entregue' ? '#4cff72' :
+    frete === '🟡 A Caminho' ? '#ffe500' :
+    frete === '🟠 Solicitado' ? '#ff8c00' :
+    frete === '⛔ Cancelado' ? '#ff4d4d' : '#ff4d4d';
 
   return (
     <div style={{ position:'fixed',inset:0,zIndex:9000,background:'rgba(0,0,0,0.75)',backdropFilter:'blur(8px)',display:'flex',alignItems:'center',justifyContent:'center',padding:24,animation:'fadeIn 0.2s ease' }}

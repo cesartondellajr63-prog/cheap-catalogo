@@ -43,4 +43,13 @@ export class OrdersController {
     const actorId = req.user?.u || 'admin';
     return this.ordersService.updateStatus(id, status, actorId);
   }
+
+  @Patch(':id/motoboy')
+  @UseGuards(JwtAuthGuard)
+  updateMotoboy(
+    @Param('id') id: string,
+    @Body('motoboy') motoboy: string,
+  ) {
+    return this.ordersService.updateMotoboy(id, motoboy);
+  }
 }

@@ -12,31 +12,13 @@ export class OrdersService {
     return items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
   }
 
-  private async generateOrderNumber(): Promise<string> {
-    const year = new Date().getFullYear();
-    const snapshot = await this.firebaseService.db
-      .collection('orders')
-      .orderBy('createdAt', 'desc')
-      .limit(1)
-      .get();
-
-    let count = 1;
-    if (!snapshot.empty) {
-      const lastOrder = snapshot.docs[0].data();
-      if (lastOrder.orderNumber) {
-        const parts = lastOrder.orderNumber.split('-');
-        const lastCount = parseInt(parts[parts.length - 1], 10);
-        if (!isNaN(lastCount)) {
-          count = lastCount + 1;
-        }
-      }
-    }
-
-    return `CP-${year}-${String(count).padStart(4, '0')}`;
+  private generateOrderNumber(): string {
+    const digits = Math.floor(10000000 + Math.random() * 90000000);
+    return `CP-${digits}`;
   }
 
   async createWithId(id: string, dto: CreateOrderDto): Promise<any> {
-    const orderNumber = await this.generateOrderNumber();
+    const orderNumber = this.generateOrderNumber();
     const subtotal = this.calculateSubtotal(dto.items);
     const total = subtotal + dto.shippingCost;
     const now = Date.now();
@@ -66,7 +48,7 @@ export class OrdersService {
 
   async create(dto: CreateOrderDto): Promise<any> {
     const id = crypto.randomUUID();
-    const orderNumber = await this.generateOrderNumber();
+    const orderNumber = this.generateOrderNumber();
     const subtotal = this.calculateSubtotal(dto.items);
     const total = subtotal + dto.shippingCost;
     const now = Date.now();
@@ -157,6 +139,15 @@ export class OrdersService {
       createdAt: now,
     });
 
+    const updated = await docRef.get();
+    return { id, ...updated.data() };
+  }
+
+  async updateMotoboy(id: string, motoboy: string): Promise<any> {
+    const docRef = this.firebaseService.db.collection('orders').doc(id);
+    const docSnap = await docRef.get();
+    if (!docSnap.exists) throw new NotFoundException(`Order with id "${id}" not found.`);
+    await docRef.update({ motoboy, updatedAt: Date.now() });
     const updated = await docRef.get();
     return { id, ...updated.data() };
   }
