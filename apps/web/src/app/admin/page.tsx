@@ -123,17 +123,31 @@ export default function AdminDashboard() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const normalizeOrder = (o: any): Order => ({
+    ...o,
+    items: o.items ?? [],
+    customer: o.customer ?? {
+      name: o.customerName ?? '',
+      phone: o.customerPhone ?? '',
+      email: o.customerEmail ?? '',
+      address: o.address ?? '',
+      city: o.city ?? '',
+    },
+    createdAt: typeof o.createdAt === 'number' ? new Date(o.createdAt).toISOString() : o.createdAt ?? new Date().toISOString(),
+    updatedAt: typeof o.updatedAt === 'number' ? new Date(o.updatedAt).toISOString() : o.updatedAt ?? new Date().toISOString(),
+  });
+
   const loadOrders = useCallback(async (silent = false) => {
     const token = getToken();
     if (!token) { router.replace('/admin/login'); return; }
     if (!silent) setRefreshing(true);
     try {
-      const data = await apiFetch<Order[]>('/orders', token);
+      const raw = await apiFetch<any[]>('/orders', token);
+      const data = raw.map(normalizeOrder);
       if (silent) {
         setOrders(prev => {
           if (data.length > prev.length) {
             const diff = data.length - prev.length;
-            // new orders notification handled visually
             void diff;
           }
           return data;
