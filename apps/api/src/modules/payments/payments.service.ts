@@ -279,7 +279,16 @@ export class PaymentsService {
       status = 'rejected';
     }
 
-    if (status === 'approved' || status === 'rejected') {
+    if (status === 'approved') {
+      await sessionRef.delete();
+      try {
+        const order = await this.ordersService.findById(orderId);
+        if (order.status !== 'PAID') {
+          await this.ordersService.updatePaymentInfo(orderId, String(payment.id), payment.preference_id || '');
+          await this.ordersService.updateStatus(orderId, 'PAID', 'polling_mercadopago');
+        }
+      } catch {}
+    } else if (status === 'rejected') {
       await sessionRef.delete();
     }
 
