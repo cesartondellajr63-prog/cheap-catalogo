@@ -104,9 +104,13 @@ function PedidoContent({ orderId: orderIdProp }: { orderId: string }) {
   // Se não há accessToken → veio da Cielo (cartão)
   const isCard = !accessToken;
 
-  const waLink = `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(
-    `Olá! Acabei de finalizar o pagamento do pedido e gostaria de confirmar. Nº do pedido: ${orderId}`
-  )}`;
+  const pedidoAtual = (() => { try { return JSON.parse(sessionStorage.getItem('pedidoAtual') ?? '{}'); } catch { return {}; } })();
+  const itemsText = (pedidoAtual.items as string[] | undefined)?.join(', ') ?? '';
+  const addressText = (pedidoAtual.address as string | undefined) ?? '';
+  const waMsg = itemsText && addressText
+    ? `Olá! Acabei de finalizar o pagamento do pedido do meu ${itemsText} no endereço ${addressText} e gostaria de confirmar. Nº do pedido: ${orderId}`
+    : `Olá! Acabei de finalizar o pagamento do pedido e gostaria de confirmar. Nº do pedido: ${orderId}`;
+  const waLink = `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(waMsg)}`;
 
   return (
     <main style={{ minHeight:'80vh', display:'flex', alignItems:'center', justifyContent:'center', padding:'24px var(--pad)', position:'relative', zIndex:1 }}>

@@ -187,6 +187,8 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
       sessionStorage.setItem('pedidoAtual', JSON.stringify({
         orderId: result.orderId,
         accessToken: result.accessToken,
+        items: localCart.map(i => `${i.productName} (${i.variantName})`),
+        address: `${rua}, ${numero}${complemento ? ', ' + complemento : ''}, ${bairro}, ${cidade} - ${estado}`,
       }));
       onUpdateCart([]);
       window.location.href = result.checkoutUrl;
