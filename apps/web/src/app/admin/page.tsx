@@ -754,12 +754,14 @@ function OrderRow({ o, onRowClick, onStatusChange }: {
               style={{ display:'inline-flex',alignItems:'center',justifyContent:'center',width:30,height:30,borderRadius:10,background:'rgba(37,211,102,0.1)',border:'1px solid rgba(37,211,102,0.2)',textDecoration:'none',fontSize:14 }}>💬</a>
           : <span style={{ color:'#6a6a6a' }}>—</span>}
       </td>
+      <td style={{ ...tdMono, fontWeight: 600, color: '#7efff5' }}>{fmtR(o.shippingCost ?? 0)}</td>
       <td style={{ ...td, maxWidth: 200, whiteSpace: 'normal', wordBreak: 'break-word', lineHeight: 1.4 }}>
         {o.customer?.address ?? ''}{o.customer?.city ? `, ${o.customer.city}` : ''}
       </td>
       <td style={{ ...td, maxWidth: 240, whiteSpace: 'normal', wordBreak: 'break-word', lineHeight: 1.4, fontSize: 11, color: '#b0b0b0' }}>
         {produtos || '—'}
       </td>
+      <td style={{ ...tdMono, fontWeight: 600, color: '#ffb545' }}>{fmtR(o.subtotal ?? 0)}</td>
       <td style={{ ...tdMono, fontWeight: 700, color: '#fff' }}>{fmtR(o.total ?? 0)}</td>
       <td style={td}>
         {isPaid(o.status)
@@ -823,16 +825,16 @@ function OrdersTable({ orders, loading, onRowClick, onStatusChange }: {
         <table style={{ width:'100%',borderCollapse:'collapse' }}>
           <thead>
             <tr>
-              {['Nº Pedido','Data/Hora','Cliente','WhatsApp','Endereço','Produtos','Total','Pagamento','Frete',''].map(h => (
+              {['Nº Pedido','Data/Hora','Cliente','WhatsApp','Valor Frete','Endereço','Produtos','Valor Produtos','Total','Pagamento','Frete',''].map(h => (
                 <th key={h} style={th}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {loading
-              ? <tr><td colSpan={10}><StateBox loading /></td></tr>
+              ? <tr><td colSpan={12}><StateBox loading /></td></tr>
               : orders.length === 0
-                ? <tr><td colSpan={10}><StateBox icon="🔍" text="Nenhum pedido encontrado." /></td></tr>
+                ? <tr><td colSpan={12}><StateBox icon="🔍" text="Nenhum pedido encontrado." /></td></tr>
                 : orders.map(o => <OrderRow key={o.id} o={o} onRowClick={onRowClick} onStatusChange={onStatusChange} />)
             }
           </tbody>
