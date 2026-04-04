@@ -222,6 +222,11 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
         estado,
         cep,
       });
+      localStorage.setItem('pedidoAtual', JSON.stringify({
+        paymentType: 'card',
+        items: localCart.map(i => `${i.productName} (${i.variantName})`),
+        address: `${rua}, ${numero}${complemento ? ', ' + complemento : ''}, ${bairro}, ${cidade} - ${estado}`,
+      }));
       window.location.href = result.checkoutUrl;
     } catch (e: unknown) {
       setPagError(e instanceof Error ? e.message : 'Erro ao iniciar pagamento com cartão.');

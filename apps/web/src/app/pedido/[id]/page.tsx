@@ -103,8 +103,8 @@ function PedidoContent({ orderId: orderIdProp }: { orderId: string }) {
     || searchParams.get('accessToken')
     || (pedidoAtual.accessToken ?? '');
 
-  // Se não há accessToken → veio da Cielo (cartão)
-  const isCard = !accessToken;
+  // Se paymentType === 'card' ou não há accessToken → veio da Cielo (cartão)
+  const isCard = pedidoAtual.paymentType === 'card' || !accessToken;
 
   const itemsText = (pedidoAtual.items as string[] | undefined)?.join(', ') ?? '';
   const addressText = (pedidoAtual.address as string | undefined) ?? '';
