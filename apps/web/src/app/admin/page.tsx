@@ -751,7 +751,11 @@ function OrderRow({ o, onRowClick, onStatusChange }: {
         {phone
           ? <a href={`https://wa.me/55${phone}`} target="_blank" rel="noopener noreferrer"
               onClick={e => e.stopPropagation()}
-              style={{ display:'inline-flex',alignItems:'center',justifyContent:'center',width:30,height:30,borderRadius:10,background:'rgba(37,211,102,0.1)',border:'1px solid rgba(37,211,102,0.2)',textDecoration:'none',fontSize:14 }}>💬</a>
+              style={{ fontFamily:'JetBrains Mono,monospace',fontSize:12,fontWeight:600,color:'#25d366',textDecoration:'none',whiteSpace:'nowrap' }}
+              onMouseEnter={e => (e.currentTarget.style.textDecoration='underline')}
+              onMouseLeave={e => (e.currentTarget.style.textDecoration='none')}>
+              {o.customer?.phone}
+            </a>
           : <span style={{ color:'#6a6a6a' }}>—</span>}
       </td>
       <td style={{ ...tdMono, fontWeight: 600, color: '#7efff5' }}>{fmtR(o.shippingCost ?? 0)}</td>
