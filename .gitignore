@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+apps/api/node_modules/
+apps/web/node_modules/
+
+# Build outputs
+apps/api/dist/
+apps/web/.next/
+apps/web/out/
+
+# Environment variables — NUNCA subir isso!
+.env
+.env.local
+.env.production
+apps/api/.env
+apps/web/.env.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Coverage
+coverage/
+apps/api/coverage/

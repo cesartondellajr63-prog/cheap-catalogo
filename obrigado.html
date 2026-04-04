@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Confirmação de Pagamento — Cheaps Pods</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --surface: #111;
+      --surface2: #1a1a1a;
+      --border: rgba(255, 255, 255, 0.08);
+      --accent: #c8ff00;
+      --accent2: #7efff5;
+      --text: #fff;
+      --muted: rgba(255, 255, 255, 0.45);
+      --pill: rgba(255, 255, 255, 0.06);
+      --max: 960px;
+      --pad: clamp(16px, 4vw, 32px);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      font-family: 'Inter', sans-serif;
+      color: var(--text);
+      overflow-x: hidden;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      background: linear-gradient(135deg, #050505 0%, #242424 33%, #080808 66%, #1e1e1e 100%);
+      background-size: 400% 400%;
+      animation: diagGrad 90s ease infinite;
+    }
+
+    @keyframes diagGrad {
+      0%   { background-position: 0% 0%; }
+      25%  { background-position: 100% 0%; }
+      50%  { background-position: 100% 100%; }
+      75%  { background-position: 0% 100%; }
+      100% { background-position: 0% 0%; }
+    }
+
+    header {
+      position: relative;
+      padding: clamp(16px, 3vw, 56px) var(--pad) clamp(16px, 3vw, 40px);
+      overflow: hidden;
+      border-bottom: 1px solid var(--border);
+      z-index: 10;
+    }
+
+    header::before {
+      content: '';
+      position: absolute;
+      top: -100px; left: 50%;
+      transform: translateX(-50%);
+      width: min(600px, 100%);
+      height: 320px;
+      background: radial-gradient(ellipse, rgba(200, 255, 0, 0.1) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .header-inner {
+      max-width: var(--max);
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(16px, 3.5vw, 26px);
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      cursor: pointer;
+    }
+
+    .logo span { color: var(--accent); }
+
+    main {
+      position: relative;
+      z-index: 1;
+      min-height: calc(100vh - 120px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--pad);
+    }
+
+    .container {
+      max-width: var(--max);
+      width: 100%;
+      text-align: center;
+    }
+
+    /* ── CARD ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: clamp(32px, 5vw, 56px);
+      backdrop-filter: blur(20px);
+      transition: border-color 0.5s ease;
+    }
+
+    .card.approved {
+      border-color: rgba(200, 255, 0, 0.4);
+      box-shadow: 0 0 40px rgba(200, 255, 0, 0.08);
+    }
+
+    .card.rejected {
+      border-color: rgba(255, 80, 80, 0.4);
+      box-shadow: 0 0 40px rgba(255, 80, 80, 0.08);
+    }
+
+    /* ── ÍCONE ── */
+    .icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      margin-bottom: 24px;
+      font-size: 40px;
+      transition: all 0.5s ease;
+      background: rgba(200, 255, 0, 0.08);
+      border: 2px solid rgba(200, 255, 0, 0.3);
+    }
+
+    .icon.approved {
+      background: rgba(200, 255, 0, 0.15);
+      border-color: var(--accent);
+      animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .icon.rejected {
+      background: rgba(255, 80, 80, 0.1);
+      border-color: #ff5050;
+    }
+
+    @keyframes popIn {
+      0%   { transform: scale(0.5); opacity: 0; }
+      100% { transform: scale(1);   opacity: 1; }
+    }
+
+    /* ── SPINNER DE POLLING ── */
+    .spinner-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.1);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .spinner-wrap.hidden { display: none; }
+
+    /* ── BARRA DE PROGRESSO ── */
+    .progress-bar {
+      width: 100%;
+      height: 3px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 99px;
+      margin-bottom: 28px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 99px;
+      width: 0%;
+      transition: width 3s linear;
+    }
+
+    .progress-bar.hidden { display: none; }
+
+    /* ── TÍTULOS ── */
+    h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(28px, 6vw, 48px);
+      font-weight: 800;
+      margin-bottom: 16px;
+      letter-spacing: -1px;
+      transition: all 0.4s ease;
+    }
+
+    h1 em { font-style: normal; color: var(--accent); }
+    h1 em.red { color: #ff5050; }
+
+    .subtitle {
+      font-size: clamp(14px, 2vw, 16px);
+      color: var(--muted);
+      margin-bottom: 32px;
+      line-height: 1.6;
+      max-width: 500px;
+      margin-left: auto;
+      margin-right: auto;
+      transition: all 0.4s ease;
+    }
+
+    /* ── BOTÕES ── */
+    .button-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 32px;
+    }
+
+    @media (min-width: 600px) {
+      .button-group { flex-direction: row; justify-content: center; }
+    }
+
+    .btn {
+      padding: 14px 32px;
+      border-radius: 12px;
+      border: none;
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 48px;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #000;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 24px rgba(200, 255, 0, 0.3);
+    }
+
+    .btn-secondary {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .btn.hidden { display: none; }
+
+    /* ── BADGE DE STATUS ── */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 99px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--muted);
+      transition: all 0.4s ease;
+    }
+
+    .status-badge.approved {
+      background: rgba(200, 255, 0, 0.1);
+      border-color: rgba(200, 255, 0, 0.3);
+      color: var(--accent);
+    }
+
+    .status-badge.rejected {
+      background: rgba(255, 80, 80, 0.1);
+      border-color: rgba(255, 80, 80, 0.3);
+      color: #ff5050;
+    }
+
+    .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .dot.pulse {
+      animation: pulse 1.5s ease infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.4; transform: scale(0.7); }
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      position: relative;
+      z-index: 1;
+      padding: 24px var(--pad);
+      text-align: center;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    footer a { color: var(--accent); text-decoration: none; transition: color 0.2s; }
+    footer a:hover { color: var(--accent2); }
+
+    @media (max-width: 600px) {
+      .card { padding: 24px; }
+      h1 { font-size: 28px; }
+      .icon { width: 60px; height: 60px; font-size: 30px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <div class="logo" onclick="window.location.href='/'">Cheaps <span>Pods</span></div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <div class="card" id="card">
+
+        <div class="status-badge" id="statusBadge">
+          <span class="dot pulse" id="statusDot"></span>
+          <span id="statusText">Verificando pagamento...</span>
+        </div>
+
+        <div class="icon" id="icon">⏳</div>
+        <h1 id="titulo">Verificando seu <em id="tituloEm">pagamento...</em></h1>
+        <p class="subtitle" id="subtitulo">
+          Estamos confirmando seu PIX com o Mercado Pago. Isso pode levar alguns segundos.
+        </p>
+
+        <div class="spinner-wrap" id="spinnerWrap">
+          <div class="spinner"></div>
+          <span id="spinnerText">Consultando status...</span>
+        </div>
+
+        <div class="progress-bar" id="progressBar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <div class="button-group">
+          <a href="#" id="btnWhatsApp" class="btn btn-primary hidden">
+            💬 Solicitar Link de Rastreio
+          </a>
+          <a href="#" id="btnContato" class="btn btn-primary hidden">
+            💬 Entrar em contato
+          </a>
+          <a href="/" id="btnVoltar" class="btn btn-secondary hidden">
+            ← Voltar ao Catálogo
+          </a>
+          <a href="/" id="btnTentar" class="btn btn-primary hidden">
+            🔄 Tentar Novamente
+          </a>
+        </div>
+
+        <p id="notaRodape" style="margin-top: 24px; font-size: 12px; color: var(--muted); display: none;"></p>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>© 2026 Cheaps Pods — Todos os direitos reservados</p>
+  </footer>
+
+  <script>
+    // ─────────────────────────────────────────
+    // 🔧 CONFIGURAÇÃO
+    // ─────────────────────────────────────────
+    const POLLING_INTERVAL_MS = 4000;
+    const POLLING_MAX_ATTEMPTS = 15;
+    const API_STATUS_URL = '/api/status-pedido';
+    const WHATSAPP_NUMBER = '5511951047070';
+
+    const card        = document.getElementById('card');
+    const icon        = document.getElementById('icon');
+    const titulo      = document.getElementById('titulo');
+    const tituloEm    = document.getElementById('tituloEm');
+    const subtitulo   = document.getElementById('subtitulo');
+    const spinnerWrap = document.getElementById('spinnerWrap');
+    const spinnerText = document.getElementById('spinnerText');
+    const progressBar = document.getElementById('progressBar');
+    const progressFill= document.getElementById('progressFill');
+    const statusBadge = document.getElementById('statusBadge');
+    const statusDot   = document.getElementById('statusDot');
+    const statusText  = document.getElementById('statusText');
+    const btnWhatsApp = document.getElementById('btnWhatsApp');
+    const btnContato  = document.getElementById('btnContato');
+    const btnVoltar   = document.getElementById('btnVoltar');
+    const btnTentar   = document.getElementById('btnTentar');
+    const notaRodape  = document.getElementById('notaRodape');
+
+    // ✅ VARIÁVEL GLOBAL PARA GUARDAR DADOS DO BACKEND (Resolve Erro 7)
+    let dadosPedidoBackend = null;
+
+    function getOrderId() {
+      const params = new URLSearchParams(window.location.search);
+      const fromUrl = params.get('external_reference') || params.get('orderId');
+      if (fromUrl) return fromUrl;
+
+      const pedidoData = JSON.parse(sessionStorage.getItem('pedidoAtual') || '{}');
+      return pedidoData.orderId || pedidoData.numeroPedido || null;
+    }
+
+    function getAccessToken() {
+      const params = new URLSearchParams(window.location.search);
+      const fromUrl = params.get('token') || params.get('accessToken');
+      if (fromUrl) return fromUrl;
+      const pedidoData = JSON.parse(sessionStorage.getItem('pedidoAtual') || '{}');
+      return pedidoData.accessToken || null;
+    }
+
+    function setAprovado() {
+      card.classList.add('approved');
+      icon.textContent = '✅';
+      icon.classList.add('approved');
+
+      titulo.innerHTML = 'Pagamento <em>confirmado!</em>';
+      subtitulo.textContent = 'Seu PIX foi aprovado com sucesso. Em breve você receberá o link de rastreio do seu pedido.';
+
+      statusBadge.classList.add('approved');
+      statusDot.classList.remove('pulse');
+      statusText.textContent = 'Pagamento aprovado';
+
+      spinnerWrap.classList.add('hidden');
+      progressBar.classList.add('hidden');
+
+      btnWhatsApp.classList.remove('hidden');
+      btnVoltar.classList.remove('hidden');
+
+      notaRodape.textContent = 'Clique acima para falar conosco e receber seu rastreio no WhatsApp.';
+      notaRodape.style.display = 'block';
+
+      dispararConfete();
+    }
+
+    function setRecusado() {
+      card.classList.add('rejected');
+      icon.textContent = '❌';
+      icon.classList.add('rejected');
+
+      titulo.innerHTML = 'Pagamento <em class="red">não aprovado</em>';
+      subtitulo.textContent = 'Não identificamos o pagamento do seu PIX. Se você já pagou, aguarde alguns minutos e verifique novamente.';
+
+      statusBadge.classList.add('rejected');
+      statusDot.classList.remove('pulse');
+      statusText.textContent = 'Pagamento não identificado';
+
+      spinnerWrap.classList.add('hidden');
+      progressBar.classList.add('hidden');
+
+      btnTentar.classList.remove('hidden');
+      btnVoltar.classList.remove('hidden');
+    }
+
+    function setTimeout_() {
+      card.classList.add('rejected');
+      icon.textContent = '⚠️';
+      icon.classList.add('rejected');
+
+      titulo.innerHTML = 'Algo deu <em class="red">errado</em>';
+      subtitulo.textContent = 'Não conseguimos confirmar o seu pagamento. Se você já realizou o pagamento, entre em contato conosco e envie o comprovante.';
+
+      statusBadge.classList.add('rejected');
+      statusDot.classList.remove('pulse');
+      statusText.textContent = 'Pagamento não confirmado';
+
+      spinnerWrap.classList.add('hidden');
+      progressBar.classList.add('hidden');
+
+      btnContato.classList.remove('hidden');
+      btnVoltar.classList.remove('hidden');
+    }
+
+    function setSemPedido() {
+      icon.textContent = '👋';
+      titulo.innerHTML = 'Fico feliz de te <em>ver aqui!</em>';
+      subtitulo.textContent = 'Se você realizou o pagamento, entre em contato conosco para que possamos encaminhar o link de rastreio do seu pedido.';
+
+      statusBadge.style.display = 'none';
+      spinnerWrap.classList.add('hidden');
+      progressBar.classList.add('hidden');
+
+      btnWhatsApp.classList.remove('hidden');
+      btnVoltar.classList.remove('hidden');
+    }
+
+    function dispararConfete() {
+      const colors = ['#c8ff00', '#7efff5', '#fff', '#ffdc00'];
+      for (let i = 0; i < 30; i++) {
+        const el = document.createElement('div');
+        el.style.cssText = `
+          position: fixed;
+          top: -10px;
+          left: ${Math.random() * 100}vw;
+          width: ${Math.random() * 8 + 4}px;
+          height: ${Math.random() * 8 + 4}px;
+          background: ${colors[Math.floor(Math.random() * colors.length)]};
+          border-radius: ${Math.random() > 0.5 ? '50%' : '2px'};
+          pointer-events: none;
+          z-index: 9999;
+          animation: confettiDrop ${Math.random() * 2 + 1.5}s ease forwards;
+          animation-delay: ${Math.random() * 0.8}s;
+        `;
+        document.body.appendChild(el);
+        el.addEventListener('animationend', () => el.remove());
+      }
+    }
+
+    const styleSheet = document.createElement('style');
+    styleSheet.textContent = `
+      @keyframes confettiDrop {
+        0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+        100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+      }
+    `;
+    document.head.appendChild(styleSheet);
+
+    // ─────────────────────────────────────────
+    // 🔄 POLLING PRINCIPAL (Agora lendo dados!)
+    // ─────────────────────────────────────────
+    async function checkStatus(orderId, attempt) {
+      try {
+        spinnerText.textContent = `Verificando... (${attempt}/${POLLING_MAX_ATTEMPTS})`;
+        progressFill.style.width = ((attempt / POLLING_MAX_ATTEMPTS) * 100) + '%';
+
+        const accToken = getAccessToken();
+        let url = `${API_STATUS_URL}?orderId=${encodeURIComponent(orderId)}`;
+        if (accToken) url += `&accessToken=${encodeURIComponent(accToken)}`;
+
+        const res = await fetch(url);
+
+        if (!res.ok) {
+          return 'pending'; 
+        }
+
+        const data = await res.json();
+        
+        // ✅ SALVANDO DADOS DO BACKEND!
+        if (data.metadata) {
+          dadosPedidoBackend = data.metadata;
+        }
+
+        return data.status;
+
+      } catch (err) {
+        return 'pending';
+      }
+    }
+
+    async function iniciarPolling(orderId) {
+      let attempt = 0;
+      setTimeout(() => { progressFill.style.width = '5%'; }, 100);
+
+      const interval = setInterval(async () => {
+        attempt++;
+        const status = await checkStatus(orderId, attempt);
+
+        if (status === 'approved') {
+          clearInterval(interval);
+          setAprovado();
+          return;
+        }
+
+        if (status === 'rejected') {
+          clearInterval(interval);
+          setRecusado();
+          return;
+        }
+
+        if (attempt >= POLLING_MAX_ATTEMPTS) {
+          clearInterval(interval);
+          setTimeout_();
+          return;
+        }
+      }, POLLING_INTERVAL_MS);
+    }
+
+    // ─────────────────────────────────────────
+    // 📱 BOTÕES OTMIZADOS (Lendo Backend > SessionStorage)
+    // ─────────────────────────────────────────
+    btnWhatsApp.addEventListener('click', function(e) {
+      e.preventDefault();
+      const fallback = JSON.parse(sessionStorage.getItem('pedidoAtual') || '{}');
+      
+      const endereco = (dadosPedidoBackend && dadosPedidoBackend.customer_address) ? dadosPedidoBackend.customer_address : (fallback.endereco || 'endereço informado');
+      const orderId  = getOrderId() || 'N/A';
+
+      const mensagem = `Olá! Realizei o pagamento do meu Pedido #${orderId} para o endereço ${endereco}. Consegue me encaminhar o link de rastreio?`;
+      const link = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(mensagem)}`;
+      window.open(link, '_blank');
+    });
+
+    btnContato.addEventListener('click', function(e) {
+      e.preventDefault();
+      const fallback = JSON.parse(sessionStorage.getItem('pedidoAtual') || '{}');
+      
+      const valorFreteNum = (dadosPedidoBackend && dadosPedidoBackend.valor_frete) ? parseFloat(dadosPedidoBackend.valor_frete) : parseFloat(fallback.valorFrete || 0);
+      const valorTotalNum = (dadosPedidoBackend && dadosPedidoBackend.valor_total) ? parseFloat(dadosPedidoBackend.valor_total) : parseFloat(fallback.valorTotal || 0);
+      
+      const valorFrete = valorFreteNum > 0 ? 'R$ ' + valorFreteNum.toFixed(2).replace('.', ',') : 'valor do frete';
+      const valorTotal = valorTotalNum > 0 ? 'R$ ' + valorTotalNum.toFixed(2).replace('.', ',') : 'valor total';
+
+      const mensagem = `Olá! Eu já realizei o pagamento do meu Pedido #${getOrderId() || 'N/A'}, o valor do frete foi ${valorFrete} e a soma foi de ${valorTotal}, porém não recebi a confirmação automática.`;
+      const link = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(mensagem)}`;
+      window.open(link, '_blank');
+    });
+
+    const orderId = getOrderId();
+
+    if (!orderId) {
+      setSemPedido();
+    } else {
+      iniciarPolling(orderId);
+    }
+  </script>
+</body>
+</html>

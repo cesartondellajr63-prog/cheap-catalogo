@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx --yes @nestjs/cli new . --skip-git --package-manager npm --language TypeScript)",
+      "Bash(npm install:*)",
+      "Bash(npx --yes create-next-app@latest . --typescript --tailwind --app --src-dir --import-alias \"@/*\" --no-eslint --skip-install)",
+      "Bash(node_modules/.bin/tsc --noEmit)",
+      "Bash(npm run:*)",
+      "Bash(mkdir -p \"C:/Users/CesarJunior/Desktop/Cheap Pods/cheaps-frete/apps/web/src/app/produto/[id]\")",
+      "Bash(mkdir -p \"C:/Users/CesarJunior/Desktop/Cheap Pods/cheaps-frete/apps/web/src/app/pedido/[id]\")",
+      "Bash(npx tsc:*)",
+      "Bash(gh repo:*)",
+      "WebFetch(domain:github.com)"
+    ]
+  }
+}
