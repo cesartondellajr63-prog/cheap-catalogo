@@ -40,10 +40,23 @@ function PixPoller({
     return () => { if (ref.current) clearInterval(ref.current); };
   }, [orderId, accessToken, onApproved, onRejected, onTimeout]);
 
+  const pct = Math.min((attempts / MAX) * 100, 100);
+
   return (
-    <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:10, color:'var(--muted)', fontSize:13, marginBottom:24 }}>
-      <div className="spinner-w"></div>
-      <span>Consultando Mercado Pago... ({attempts}/{MAX})</span>
+    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:16, marginBottom:24, width:'100%', maxWidth:360, margin:'0 auto 24px' }}>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:10, color:'var(--muted)', fontSize:13, width:'100%' }}>
+        <div className="spinner-w"></div>
+        <span>Consultando Mercado Pago...</span>
+      </div>
+      <div style={{ width:'100%', height:6, background:'rgba(255,255,255,0.08)', borderRadius:99, overflow:'hidden' }}>
+        <div style={{
+          height:'100%', borderRadius:99,
+          width: `${pct}%`,
+          background: 'linear-gradient(90deg, #c8ff00, #7efff5)',
+          transition: 'width 0.5s ease',
+          boxShadow: '0 0 8px rgba(200,255,0,0.5)',
+        }} />
+      </div>
     </div>
   );
 }
