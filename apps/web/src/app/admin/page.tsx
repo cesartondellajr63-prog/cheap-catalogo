@@ -130,13 +130,13 @@ export default function AdminDashboard() {
   const [usuario, setUsuario] = useState('');
 
   // Filters — dashboard
-  const [filtro, setFiltro] = useState<'todos' | 'pendente' | 'pago' | 'concluido'>('todos');
+  const [filtro, setFiltro] = useState<'todos' | 'pendente' | 'concluido'>('todos');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
 
   // Filters — pedidos page
   const [pSearch, setPSearch] = useState('');
-  const [pFiltro, setPFiltro] = useState<'todos' | 'pendente' | 'pago' | 'concluido'>('todos');
+  const [pFiltro, setPFiltro] = useState<'todos' | 'pendente' | 'concluido'>('todos');
 
   // Filters — clientes
   const [cSearch, setCSearch] = useState('');
@@ -310,9 +310,8 @@ export default function AdminDashboard() {
   // ── Filtered lists ──
   function filterOrders(list: Order[], f: typeof filtro, dFrom: string, dTo: string) {
     let r = [...list];
-    if (f === 'pendente') r = r.filter(o => o.status === 'PENDING');
-    else if (f === 'pago') r = r.filter(o => o.status === 'PAID' || o.status === 'SHIPPED');
-    else if (f === 'concluido') r = r.filter(o => o.status === 'DELIVERED');
+    if (f === 'pendente') r = r.filter(o => (o as any).shippingStatus !== '🟢 Entregue');
+    else if (f === 'concluido') r = r.filter(o => (o as any).shippingStatus === '🟢 Entregue');
     if (dFrom) r = r.filter(o => new Date(o.createdAt) >= new Date(dFrom));
     if (dTo) r = r.filter(o => new Date(o.createdAt) <= new Date(dTo + 'T23:59:59'));
     return r.reverse();
@@ -320,9 +319,8 @@ export default function AdminDashboard() {
 
   function filterPedidos(list: Order[], f: typeof pFiltro, search: string) {
     let r = [...list];
-    if (f === 'pendente') r = r.filter(o => o.status === 'PENDING');
-    else if (f === 'pago') r = r.filter(o => o.status === 'PAID' || o.status === 'SHIPPED');
-    else if (f === 'concluido') r = r.filter(o => o.status === 'DELIVERED');
+    if (f === 'pendente') r = r.filter(o => (o as any).shippingStatus !== '🟢 Entregue');
+    else if (f === 'concluido') r = r.filter(o => (o as any).shippingStatus === '🟢 Entregue');
     if (search) {
       const q = search.toLowerCase();
       r = r.filter(o =>
@@ -481,7 +479,6 @@ export default function AdminDashboard() {
                       {([
                         { key:'todos', label:'Todos', cls:'green' },
                         { key:'pendente', label:'⏳ Pendentes', cls:'amber' },
-                        { key:'pago', label:'💳 Pagos', cls:'blue' },
                         { key:'concluido', label:'✅ Concluídos', cls:'green' },
                       ] as const).map(f => (
                         <button key={f.key} onClick={() => setFiltro(f.key)}
@@ -552,8 +549,7 @@ export default function AdminDashboard() {
               <div style={{ display:'flex',alignItems:'center',gap:10,marginBottom:20,flexWrap:'wrap' }}>
                 {([
                   { key:'todos', label:'Todos', cls:'green' },
-                  { key:'pendente', label:'⏳ Pag. Pendentes', cls:'amber' },
-                  { key:'pago', label:'💳 Pagos', cls:'blue' },
+                  { key:'pendente', label:'⏳ Pendentes', cls:'amber' },
                   { key:'concluido', label:'✅ Concluídos', cls:'green' },
                 ] as const).map(f => (
                   <button key={f.key} onClick={() => setPFiltro(f.key)}
