@@ -424,19 +424,6 @@ export default function AdminDashboard() {
               <div style={{ fontSize:15,fontWeight:700,color:'#fff',letterSpacing:-0.3 }}>
                 Dashboard <span style={{ color:'#6a6a6a',fontWeight:400 }}>/ Visão Geral</span>
               </div>
-              <div style={{ display:'flex',alignItems:'center',gap:10 }}>
-                <span style={{ fontFamily:'JetBrains Mono,monospace',fontSize:11,color:'#6a6a6a' }}>
-                  <span style={{ width:7,height:7,borderRadius:'50%',background:'#c8ff00',display:'inline-block',marginRight:6 }}></span>
-                  refresh em {countdown}s
-                </span>
-                <button className="admin-btn-refresh" onClick={() => loadOrders()} disabled={refreshing}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ animation: refreshing ? 'spin 0.8s linear infinite' : 'none' }}>
-                    <path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/>
-                    <path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/>
-                  </svg>
-                  Atualizar
-                </button>
-              </div>
             </header>
 
             <div style={{ padding:'28px 32px',flex:1 }}>
@@ -896,6 +883,40 @@ function OrderRow({ o, onRowClick, onStatusChange, onShippingChange, onMotoboyCh
   );
 }
 
+// ── Export CSV ──
+function exportCSV(orders: Order[]) {
+  const headers = ['Nº Pedido','Data/Hora','Nome','WhatsApp','Endereço','Produtos + Sabores','Valor Produtos (R$)','Frete (R$)','Total (R$)','Metodo de pagamento','Pagamento','Frete'];
+  const rows = orders.map(o => {
+    const produtos = (o.items ?? []).map(i => `${i.productName} - ${i.variantName} x${i.quantity}`).join(' | ');
+    const metodo = o.mpPaymentId ? 'Mercado Pago' : 'Cielo';
+    const pagamento = isPaid(o.status) ? 'Pago' : o.status === 'CANCELLED' ? 'Cancelado' : 'Pendente';
+    const entrega = (o as any).shippingStatus ?? 'Pendente';
+    return [
+      o.orderNumber ?? '',
+      o.createdAt ? fmtDate(o.createdAt) : '',
+      o.customer?.name ?? '',
+      o.customer?.phone ?? '',
+      `${o.customer?.address ?? ''} ${o.customer?.city ?? ''}`.trim(),
+      produtos,
+      (o.subtotal ?? 0).toFixed(2).replace('.', ','),
+      (o.shippingCost ?? 0).toFixed(2).replace('.', ','),
+      (o.total ?? 0).toFixed(2).replace('.', ','),
+      metodo,
+      pagamento,
+      entrega,
+    ].map(v => `"${String(v).replace(/"/g, '""')}"`);
+  });
+
+  const csv = [headers.map(h => `"${h}"`), ...rows].map(r => r.join(';')).join('\n');
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `pedidos_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 // ── OrdersTable ──
 function OrdersTable({ orders, loading, onRowClick, onStatusChange, onShippingChange, onMotoboyChange }: {
   orders: Order[];
@@ -909,7 +930,17 @@ function OrdersTable({ orders, loading, onRowClick, onStatusChange, onShippingCh
     <div style={tableCard}>
       <div style={tableHead}>
         <span style={{ fontSize:13,fontWeight:800,color:'#fff' }}>Pedidos</span>
-        <span style={tableCount}>{orders.length} pedido{orders.length !== 1 ? 's' : ''}</span>
+        <div style={{ display:'flex',alignItems:'center',gap:10 }}>
+          <span style={tableCount}>{orders.length} pedido{orders.length !== 1 ? 's' : ''}</span>
+          <button
+            onClick={() => exportCSV(orders)}
+            style={{ display:'flex',alignItems:'center',gap:6,padding:'6px 14px',borderRadius:8,background:'rgba(200,255,0,0.08)',border:'1px solid rgba(200,255,0,0.25)',color:'#c8ff00',fontFamily:'Satoshi,sans-serif',fontSize:11,fontWeight:700,cursor:'pointer',transition:'all 0.2s' }}
+            onMouseEnter={e => (e.currentTarget.style.background='rgba(200,255,0,0.18)')}
+            onMouseLeave={e => (e.currentTarget.style.background='rgba(200,255,0,0.08)')}
+          >
+            📥 Exportar CSV
+          </button>
+        </div>
       </div>
       <div style={{ overflowX:'auto' }}>
         <table style={{ width:'100%',borderCollapse:'collapse' }}>
