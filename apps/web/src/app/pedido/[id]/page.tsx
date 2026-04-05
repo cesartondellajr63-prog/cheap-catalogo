@@ -186,7 +186,7 @@ function PedidoContent({ orderId: orderIdProp }: { orderId: string }) {
           background: 'var(--surface)',
           border: `1px solid ${status==='approved' ? 'rgba(200,255,0,0.3)' : status==='rejected' ? 'rgba(255,80,80,0.3)' : 'var(--border)'}`,
           borderRadius: 24,
-          padding: 'clamp(20px,2vw,32px) clamp(40px,5vw,72px)',
+          padding: 'clamp(20px,2vw,32px) clamp(16px,5vw,72px)',
           position: 'relative',
           zIndex: 1,
         }}>
@@ -260,19 +260,19 @@ function PedidoContent({ orderId: orderIdProp }: { orderId: string }) {
           <div style={{ display:'flex', flexDirection:'column', gap:12, marginTop:8, alignItems:'center' }}>
             {(status === 'approved' || status === 'timeout') && (
               <a href={waLink} target="_blank" rel="noopener noreferrer"
-                style={{ background:'var(--accent)', color:'#000', padding:'14px 32px', borderRadius:12, fontSize:14, fontWeight:700, display:'inline-flex', alignItems:'center', justifyContent:'center', gap:8, minHeight:48, textDecoration:'none', transition:'all 0.2s', width:'35%' }}>
+                style={{ background:'var(--accent)', color:'#000', padding:'14px 32px', borderRadius:12, fontSize:14, fontWeight:700, display:'inline-flex', alignItems:'center', justifyContent:'center', gap:8, minHeight:48, textDecoration:'none', transition:'all 0.2s', width:'min(80%, 320px)' }}>
                 💬 {status === 'approved' ? 'Acompanhar entrega' : 'Confirmar pedido no WhatsApp'}
               </a>
             )}
             {status === 'rejected' && (
               <a href={waLink} target="_blank" rel="noopener noreferrer"
-                style={{ background:'rgba(255,80,80,0.15)', color:'#ff5050', border:'1px solid rgba(255,80,80,0.3)', padding:'14px 32px', borderRadius:12, fontSize:14, fontWeight:700, display:'inline-flex', alignItems:'center', justifyContent:'center', gap:8, minHeight:48, textDecoration:'none', width:'35%' }}>
+                style={{ background:'rgba(255,80,80,0.15)', color:'#ff5050', border:'1px solid rgba(255,80,80,0.3)', padding:'14px 32px', borderRadius:12, fontSize:14, fontWeight:700, display:'inline-flex', alignItems:'center', justifyContent:'center', gap:8, minHeight:48, textDecoration:'none', width:'min(80%, 320px)' }}>
                 💬 Entrar em contato
               </a>
             )}
             {status !== 'pending' && (
               <a href="/"
-                style={{ background:'var(--surface2)', color:'var(--text)', padding:'14px 32px', borderRadius:12, border:'1px solid var(--border)', fontSize:14, fontWeight:600, display:'inline-flex', alignItems:'center', justifyContent:'center', gap:8, minHeight:48, textDecoration:'none', width:'35%' }}>
+                style={{ background:'var(--surface2)', color:'var(--text)', padding:'14px 32px', borderRadius:12, border:'1px solid var(--border)', fontSize:14, fontWeight:600, display:'inline-flex', alignItems:'center', justifyContent:'center', gap:8, minHeight:48, textDecoration:'none', width:'min(80%, 320px)' }}>
                 ← Voltar ao Catálogo
               </a>
             )}
