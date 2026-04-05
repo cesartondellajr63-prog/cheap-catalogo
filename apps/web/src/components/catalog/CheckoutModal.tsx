@@ -214,12 +214,11 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
     setPagError('');
     setCardLoading(true);
     try {
-      const CARD_FEE = 1.07;
       const result = await api.payments.createCard({
         items: localCart.map(i => ({
           name:   i.productName,
           flavor: i.variantName,
-          price:  Math.round(i.price * CARD_FEE * 100) / 100,
+          price:  i.price,
           qty:    i.qty,
         })),
         shippingPrice: freteValue,

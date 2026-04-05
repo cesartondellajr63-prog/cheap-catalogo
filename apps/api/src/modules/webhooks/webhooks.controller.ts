@@ -178,6 +178,14 @@ export class WebhooksController {
   @HttpCode(HttpStatus.OK)
   async handleCielo(@Req() req: any): Promise<{ received: boolean }> {
     const body = req.body;
+
+    const receivedKey = req.headers['merchantkey'] || req.headers['MerchantKey'] || body?.MerchantKey || '';
+    const expectedKey = process.env.CIELO_MERCHANT_KEY || '';
+    if (!receivedKey || receivedKey !== expectedKey) {
+      this.logger.warn('Cielo webhook: invalid or missing MerchantKey');
+      throw new ForbiddenException('Invalid MerchantKey.');
+    }
+
     this.logger.log(`Cielo webhook received: ${JSON.stringify(body)}`);
 
     // Cielo envia form-urlencoded — todos os valores chegam como string

@@ -24,4 +24,9 @@ export class PaymentsController {
   ) {
     return this.paymentsService.getPaymentStatus(orderId, accessToken);
   }
+
+  @Get('card-status/:orderId')
+  getCardPaymentStatus(@Param('orderId') orderId: string) {
+    return this.paymentsService.getCardPaymentStatus(orderId);
+  }
 }

@@ -53,6 +53,8 @@ export const api = {
       }),
     getStatus: (orderId: string, accessToken: string): Promise<PaymentStatus> =>
       request(`/payments/status/${orderId}?accessToken=${encodeURIComponent(accessToken)}`),
+    getCardStatus: (orderId: string): Promise<{ status: string; orderNumber: string }> =>
+      request(`/payments/card-status/${orderId}`),
     createCard: (body: {
       items: { name: string; flavor: string; price: number; qty: number }[];
       shippingPrice: number;

@@ -75,8 +75,8 @@ function CieloPoller({
 
   const poll = async () => {
     try {
-      const order = await api.orders.getById(orderId);
-      if (order.status === 'PAID' || order.status === 'SHIPPED' || order.status === 'DELIVERED') {
+      const result = await api.payments.getCardStatus(orderId);
+      if (result.status === 'PAID' || result.status === 'SHIPPED' || result.status === 'DELIVERED') {
         if (ref.current) clearInterval(ref.current);
         onApproved();
       }

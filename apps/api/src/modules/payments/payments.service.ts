@@ -175,7 +175,9 @@ export class PaymentsService {
 
     // 2. Monta o body para o Checkout Cielo
     // Cielo trabalha com centavos (inteiros)
+    const CARD_FEE = 1.07;
     const toCents = (v: number) => Math.round(v * 100);
+    const withFee = (v: number) => Math.round(v * CARD_FEE * 100) / 100;
 
     const body = {
       OrderNumber:    order.orderNumber,
@@ -183,7 +185,7 @@ export class PaymentsService {
       Cart: {
         Items: dto.items.map(i => ({
           Name:      `${i.name} - ${i.flavor}`,
-          UnitPrice: toCents(i.price),
+          UnitPrice: toCents(withFee(i.price)),
           Quantity:  i.qty,
           Type:      'Asset',
         })),
@@ -247,6 +249,18 @@ export class PaymentsService {
       orderId:      order.id,
       orderNumber:  order.orderNumber,
       checkoutUrl,
+    };
+  }
+
+  async getCardPaymentStatus(orderId: string): Promise<{ status: string; orderNumber: string }> {
+    const doc = await this.firebaseService.db.collection('orders').doc(orderId).get();
+    if (!doc.exists) {
+      return { status: 'PENDING', orderNumber: '' };
+    }
+    const data = doc.data() as any;
+    return {
+      status: data.status || 'PENDING',
+      orderNumber: data.orderNumber || '',
     };
   }
 
