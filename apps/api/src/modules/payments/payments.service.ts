@@ -132,9 +132,13 @@ export class PaymentsService {
 
     await this.ordersService.updatePaymentInfo(dto.orderId, null as any, data.id);
 
+    const orderDoc = await this.firebaseService.db.collection('orders').doc(dto.orderId).get();
+    const orderNumber = (orderDoc.data() as any)?.orderNumber ?? dto.orderId;
+
     return {
       success: true,
       orderId: dto.orderId,
+      orderNumber,
       checkoutUrl: data.init_point,
       preferenceId: data.id,
       accessToken: sessionAccessToken,

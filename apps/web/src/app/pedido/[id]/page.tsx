@@ -57,7 +57,7 @@ function CieloPoller({
   onApproved: () => void; onTimeout: () => void;
 }) {
   const [attempts, setAttempts] = useState(0);
-  const MAX = 36; // ~3 minutos
+  const MAX = 24; // ~2 minutos
   const ref = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const poll = async () => {
@@ -83,11 +83,23 @@ function CieloPoller({
     return () => { if (ref.current) clearInterval(ref.current); };
   }, [orderId, onApproved, onTimeout]);
 
+  const pct = Math.min((attempts / MAX) * 100, 100);
+
   return (
-    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:12, marginBottom:24 }}>
+    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:16, marginBottom:24, width:'100%', maxWidth:360 }}>
       <div style={{ display:'flex', alignItems:'center', gap:10, color:'var(--muted)', fontSize:13 }}>
         <div className="spinner-w"></div>
-        <span>Aguardando confirmação da Cielo... ({attempts}/{MAX})</span>
+        <span>Aguardando confirmação da Cielo...</span>
+      </div>
+      {/* Barra de progresso */}
+      <div style={{ width:'100%', height:6, background:'rgba(255,255,255,0.08)', borderRadius:99, overflow:'hidden' }}>
+        <div style={{
+          height:'100%', borderRadius:99,
+          width: `${pct}%`,
+          background: 'linear-gradient(90deg, #c8ff00, #7efff5)',
+          transition: 'width 0.5s ease',
+          boxShadow: '0 0 8px rgba(200,255,0,0.5)',
+        }} />
       </div>
       <button
         onClick={poll}
@@ -123,7 +135,16 @@ function PedidoContent({ orderId: orderIdProp }: { orderId: string }) {
     return () => { document.body.removeChild(canvas); };
   }, [status]);
 
-  const pedidoAtual = (() => { try { return JSON.parse(localStorage.getItem('pedidoAtual') ?? '{}'); } catch { return {}; } })();
+  const pedidoAtual = (() => {
+    try {
+      const ls = localStorage.getItem('pedidoAtual');
+      const ss = sessionStorage.getItem('pedidoAtual');
+      const lsData = ls ? JSON.parse(ls) : {};
+      const ssData = ss ? JSON.parse(ss) : {};
+      // Mescla os dois, dando preferência ao que tiver orderNumber
+      return { ...lsData, ...ssData, orderNumber: ssData.orderNumber || lsData.orderNumber };
+    } catch { return {}; }
+  })();
 
   const orderId = orderIdProp
     || searchParams.get('external_reference')
@@ -138,9 +159,10 @@ function PedidoContent({ orderId: orderIdProp }: { orderId: string }) {
 
   const itemsText = (pedidoAtual.items as string[] | undefined)?.join(', ') ?? '';
   const addressText = (pedidoAtual.address as string | undefined) ?? '';
+  const orderNumber = (pedidoAtual.orderNumber as string | undefined) ?? orderId;
   const waMsg = itemsText && addressText
-    ? `Olá! Acabei de finalizar o pagamento do pedido do meu ${itemsText} no endereço ${addressText} e gostaria de confirmar. Nº do pedido: ${orderId}`
-    : `Olá! Acabei de finalizar o pagamento do pedido e gostaria de confirmar. Nº do pedido: ${orderId}`;
+    ? `Olá! Acabei de finalizar o pagamento do pedido do meu ${itemsText} no endereço ${addressText} e gostaria de solicitar o link de rastreio. Nº do pedido: ${orderNumber}`
+    : `Olá! Acabei de finalizar o pagamento do pedido e gostaria de solicitar o link de rastreio. Nº do pedido: ${orderNumber}`;
   const waLink = `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(waMsg)}`;
 
   return (
