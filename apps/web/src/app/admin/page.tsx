@@ -245,6 +245,14 @@ export default function AdminDashboard() {
     }
   }, [page, products.length, loadProducts]);
 
+  // Sync modal with latest orders data
+  useEffect(() => {
+    if (modalOrder) {
+      const updated = orders.find(o => o.id === modalOrder.id);
+      if (updated) setModalOrder(updated);
+    }
+  }, [orders]);
+
   // Draw chart
   useEffect(() => {
     if (!canvasRef.current || loading) return;
