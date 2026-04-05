@@ -852,7 +852,7 @@ export default function AdminDashboard() {
 
       {/* ── ORDER DETAIL MODAL ── */}
       {modalOrder && (
-        <OrderModal order={modalOrder} onClose={() => setModalOrder(null)} onStatusChange={updateOrderStatus} onTrackingChange={updateTrackingLink} onArchive={archiveOrder} />
+        <OrderModal order={modalOrder} onClose={() => setModalOrder(null)} onStatusChange={updateOrderStatus} onShippingChange={updateShippingStatus} onTrackingChange={updateTrackingLink} onArchive={archiveOrder} />
       )}
 
       {/* ── PRODUCT MODAL ── */}
@@ -1177,10 +1177,11 @@ function StateBox({ icon, text, loading }: { icon?: string; text?: string; loadi
 }
 
 // ── Order Detail Modal ──
-function OrderModal({ order: o, onClose, onStatusChange, onTrackingChange, onArchive }: {
+function OrderModal({ order: o, onClose, onStatusChange, onShippingChange, onTrackingChange, onArchive }: {
   order: Order;
   onClose: () => void;
   onStatusChange: (id: string, status: OrderStatus) => Promise<void>;
+  onShippingChange: (id: string, shippingStatus: string) => void;
   onTrackingChange: (id: string, trackingLink: string) => void;
   onArchive: (id: string, archived: boolean) => void;
 }) {
@@ -1196,7 +1197,7 @@ function OrderModal({ order: o, onClose, onStatusChange, onTrackingChange, onArc
   };
 
   const produtos = o.items.map(i => `${i.productName} — ${i.variantName} ×${i.quantity}`);
-  const frete = statusToFrete(o.status);
+  const frete = ((o as any).shippingStatus as FreteOption | undefined) ?? statusToFrete(o.status);
   const freteColor =
     frete === '🟢 Entregue' ? '#4cff72' :
     frete === '🟡 A Caminho' ? '#ffe500' :
@@ -1284,7 +1285,7 @@ function OrderModal({ order: o, onClose, onStatusChange, onTrackingChange, onArc
                 <div style={{ fontSize:10,fontWeight:700,letterSpacing:1,textTransform:'uppercase',color:'#8a8a8a',marginBottom:8 }}>Entrega</div>
                 <select
                   value={frete}
-                  onChange={e => onStatusChange(o.id, freteToStatus(e.target.value as FreteOption))}
+                  onChange={e => onShippingChange(o.id, e.target.value)}
                   style={{
                     background:'rgba(255,255,255,0.04)',border:`1px solid ${freteColor}55`,borderRadius:9,
                     padding:'5px 24px 5px 10px',fontFamily:'Satoshi,sans-serif',fontSize:11,fontWeight:600,
