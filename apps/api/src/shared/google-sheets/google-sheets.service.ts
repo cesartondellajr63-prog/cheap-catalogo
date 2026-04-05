@@ -12,17 +12,13 @@ export class GoogleSheetsService implements OnModuleInit {
 
   onModuleInit() {
     const spreadsheetId = this.configService.get<string>('GOOGLE_SHEETS_SPREADSHEET_ID');
-    const clientEmail = this.configService.get<string>('GOOGLE_SHEETS_CLIENT_EMAIL');
-    const privateKey = this.configService
-      .get<string>('GOOGLE_SHEETS_PRIVATE_KEY')
-      ?.replace(/\\n/g, '\n');
+    const credentialsJson = this.configService.get<string>('GOOGLE_SHEETS_CREDENTIALS_JSON');
 
-    if (!spreadsheetId || !clientEmail || !privateKey) {
+    if (!spreadsheetId || !credentialsJson) {
       this.logger.warn(
         `Google Sheets not configured — missing: ${[
           !spreadsheetId && 'GOOGLE_SHEETS_SPREADSHEET_ID',
-          !clientEmail && 'GOOGLE_SHEETS_CLIENT_EMAIL',
-          !privateKey && 'GOOGLE_SHEETS_PRIVATE_KEY',
+          !credentialsJson && 'GOOGLE_SHEETS_CREDENTIALS_JSON',
         ]
           .filter(Boolean)
           .join(', ')}`,
@@ -30,11 +26,19 @@ export class GoogleSheetsService implements OnModuleInit {
       return;
     }
 
+    let credentials: { client_email: string; private_key: string };
+    try {
+      credentials = JSON.parse(credentialsJson);
+    } catch {
+      this.logger.error('GOOGLE_SHEETS_CREDENTIALS_JSON is not valid JSON.');
+      return;
+    }
+
     this.spreadsheetId = spreadsheetId;
 
     const auth = new google.auth.JWT({
-      email: clientEmail,
-      key: privateKey,
+      email: credentials.client_email,
+      key: credentials.private_key,
       scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     });
 
