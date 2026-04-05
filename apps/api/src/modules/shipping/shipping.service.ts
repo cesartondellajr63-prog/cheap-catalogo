@@ -145,7 +145,20 @@ export class ShippingService {
       throw new InternalServerErrorException('Preço de frete inválido recebido da Lalamove.');
     }
 
-    const finalPrice = 0.05; // TEMP: valor fixo para testes — remover antes de ir para produção
+    // Regras de frete:
+    // - Mínimo: R$ 11,00
+    // - Entre R$ 11 e R$ 18: adicionar R$ 2,00
+    // - Acima de R$ 18: manter valor original
+    let finalPrice: number;
+    if (totalReais < 11) {
+      finalPrice = 11;
+    } else if (totalReais <= 18) {
+      finalPrice = totalReais + 2;
+    } else {
+      finalPrice = totalReais;
+    }
+    finalPrice = Math.round(finalPrice * 100) / 100;
+
     const expiresAt = Date.now() + 5 * 60 * 1000;
 
     await cacheRef.set({
