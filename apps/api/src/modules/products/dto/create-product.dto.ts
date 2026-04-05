@@ -1,5 +1,6 @@
 import { IsString, IsNumber, IsArray, Min, IsBoolean, IsOptional } from 'class-validator';
 
+
 export class CreateProductDto {
   @IsString()
   name: string;
@@ -23,4 +24,8 @@ export class CreateProductDto {
 
   @IsBoolean()
   active: boolean;
+
+  @IsOptional()
+  @IsArray()
+  variants?: any[];
 }

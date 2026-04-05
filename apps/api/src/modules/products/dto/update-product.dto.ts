@@ -1,4 +1,5 @@
-import { IsString, IsNumber, IsArray, Min, IsBoolean, IsOptional } from 'class-validator';
+import { IsString, IsNumber, IsArray, Min, IsBoolean, IsOptional, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class UpdateProductDto {
   @IsOptional()
@@ -30,4 +31,8 @@ export class UpdateProductDto {
   @IsOptional()
   @IsBoolean()
   active?: boolean;
+
+  @IsOptional()
+  @IsArray()
+  variants?: any[];
 }

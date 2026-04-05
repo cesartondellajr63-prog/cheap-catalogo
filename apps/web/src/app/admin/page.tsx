@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import type { Order, OrderStatus } from '@/types';
+import type { Order, OrderStatus, Product } from '@/types';
+import { BRANDS_STATIC } from '@/types';
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
@@ -29,7 +30,7 @@ interface Customer {
   createdAt: number;
 }
 
-type Page = 'dashboard' | 'pedidos' | 'clientes' | 'config';
+type Page = 'dashboard' | 'pedidos' | 'clientes' | 'produtos' | 'config';
 
 function fmtR(v: number) {
   return 'R$ ' + v.toFixed(2).replace('.', ',');
@@ -141,6 +142,11 @@ export default function AdminDashboard() {
   // Filters — clientes
   const [cSearch, setCSearch] = useState('');
 
+  // Produtos
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loadingProducts, setLoadingProducts] = useState(false);
+  const [prodModal, setProdModal] = useState<{ mode: 'create' | 'edit'; product?: Product } | null>(null);
+
   // Modal
   const [modalOrder, setModalOrder] = useState<Order | null>(null);
 
@@ -173,6 +179,19 @@ export default function AdminDashboard() {
       if (!silent) setRefreshing(false);
     }
   }, [router]);
+
+  const loadProducts = useCallback(async () => {
+    const token = getToken();
+    setLoadingProducts(true);
+    try {
+      const data = await apiFetch<Product[]>('/products/admin', token);
+      setProducts(data);
+    } catch {
+      // ignore
+    } finally {
+      setLoadingProducts(false);
+    }
+  }, []);
 
   const loadCustomers = useCallback(async () => {
     const token = getToken();
@@ -218,6 +237,13 @@ export default function AdminDashboard() {
       loadCustomers();
     }
   }, [page, customers.length, loadCustomers]);
+
+  // Load products when navigating to produtos
+  useEffect(() => {
+    if (page === 'produtos' && products.length === 0) {
+      loadProducts();
+    }
+  }, [page, products.length, loadProducts]);
 
   // Draw chart
   useEffect(() => {
@@ -384,6 +410,7 @@ export default function AdminDashboard() {
             { id:'dashboard', icon:'📊', label:'Dashboard' },
             { id:'pedidos',   icon:'📦', label:'Pedidos' },
             { id:'clientes',  icon:'👥', label:'Clientes' },
+            { id:'produtos',  icon:'🛍️', label:'Produtos' },
           ] as { id: Page; icon: string; label: string }[]).map(item => (
             <div key={item.id}
               onClick={() => setPage(item.id)}
@@ -644,6 +671,118 @@ export default function AdminDashboard() {
           </>
         )}
 
+        {/* ── PRODUTOS PAGE ── */}
+        {page === 'produtos' && (
+          <>
+            <header style={topbar}>
+              <div style={{ fontSize:15,fontWeight:700,color:'#fff',letterSpacing:-0.3 }}>
+                Produtos <span style={{ color:'#6a6a6a',fontWeight:400 }}>/ Catálogo</span>
+              </div>
+              <div style={{ display:'flex',gap:10 }}>
+                <button className="admin-btn-refresh" onClick={loadProducts}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/>
+                    <path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/>
+                  </svg>
+                  Atualizar
+                </button>
+                <button
+                  onClick={() => setProdModal({ mode: 'create' })}
+                  style={{ display:'flex',alignItems:'center',gap:8,padding:'9px 18px',borderRadius:12,background:'rgba(200,255,0,0.12)',border:'1px solid rgba(200,255,0,0.3)',color:'#c8ff00',fontFamily:'Satoshi,sans-serif',fontSize:13,fontWeight:700,cursor:'pointer',transition:'all 0.2s' }}
+                  onMouseEnter={e=>(e.currentTarget.style.background='rgba(200,255,0,0.22)')}
+                  onMouseLeave={e=>(e.currentTarget.style.background='rgba(200,255,0,0.12)')}>
+                  + Novo Produto
+                </button>
+              </div>
+            </header>
+
+            <div style={{ padding:'28px 32px',flex:1 }}>
+              <div style={tableCard}>
+                <div style={tableHead}>
+                  <span style={{ fontSize:13,fontWeight:800,color:'#fff' }}>🛍️ Produtos Cadastrados</span>
+                  <span style={tableCount}>{products.length} produto{products.length !== 1 ? 's' : ''}</span>
+                </div>
+                <div style={{ overflowX:'auto' }}>
+                  <table style={{ width:'100%',borderCollapse:'collapse' }}>
+                    <thead>
+                      <tr>
+                        {['Nome','Marca','Preço Base','Sabores','Status','Ações'].map(h => (
+                          <th key={h} style={th}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {loadingProducts ? (
+                        <tr><td colSpan={6}><StateBox loading /></td></tr>
+                      ) : products.length === 0 ? (
+                        <tr><td colSpan={6}><StateBox icon="🛍️" text="Nenhum produto cadastrado ainda." /></td></tr>
+                      ) : products.map(p => {
+                        const brand = BRANDS_STATIC.find(b => b.id === p.brandId);
+                        return (
+                          <tr key={p.id} style={{ borderBottom:'1px solid rgba(255,255,255,0.07)',transition:'background 0.15s' }}
+                            onMouseEnter={e=>(e.currentTarget.style.background='rgba(200,255,0,0.02)')}
+                            onMouseLeave={e=>(e.currentTarget.style.background='')}>
+                            <td style={{ ...td,fontWeight:700,color:'#fff',maxWidth:200,whiteSpace:'normal' }}>{p.name}</td>
+                            <td style={td}>
+                              <span style={{ display:'inline-flex',alignItems:'center',gap:6,padding:'4px 10px',borderRadius:8,background:`${brand?.color ?? '#888'}22`,border:`1px solid ${brand?.color ?? '#888'}44`,fontSize:11,fontWeight:600,color:brand?.color ?? '#888' }}>
+                                {brand?.name ?? p.brandId}
+                              </span>
+                            </td>
+                            <td style={{ ...tdMono,color:'#c8ff00',fontWeight:600 }}>R$ {(p.basePrice ?? 0).toFixed(2).replace('.',',')}</td>
+                            <td style={tdMono}>{(p.variants ?? []).length}</td>
+                            <td style={td}>
+                              {p.active
+                                ? <span style={{ padding:'4px 10px',borderRadius:8,background:'rgba(200,255,0,0.1)',border:'1px solid rgba(200,255,0,0.3)',color:'#c8ff00',fontSize:11,fontWeight:700 }}>Ativo</span>
+                                : <span style={{ padding:'4px 10px',borderRadius:8,background:'rgba(255,77,77,0.1)',border:'1px solid rgba(255,77,77,0.3)',color:'#ff4d4d',fontSize:11,fontWeight:700 }}>Inativo</span>
+                              }
+                            </td>
+                            <td style={{ ...td,whiteSpace:'nowrap' }}>
+                              <div style={{ display:'flex',gap:6 }}>
+                                <button onClick={() => setProdModal({ mode:'edit', product: p })}
+                                  style={{ padding:'5px 12px',borderRadius:8,background:'rgba(126,255,245,0.08)',border:'1px solid rgba(126,255,245,0.2)',color:'#7efff5',fontFamily:'Satoshi,sans-serif',fontSize:11,fontWeight:700,cursor:'pointer',transition:'all 0.2s' }}
+                                  onMouseEnter={e=>(e.currentTarget.style.background='rgba(126,255,245,0.18)')}
+                                  onMouseLeave={e=>(e.currentTarget.style.background='rgba(126,255,245,0.08)')}>
+                                  Editar
+                                </button>
+                                {p.active ? (
+                                  <button onClick={async () => {
+                                    if (!confirm('Desativar "' + p.name + '"?')) return;
+                                    const token = getToken();
+                                    try {
+                                      await apiFetch(`/products/${p.id}`, token, { method: 'DELETE' });
+                                      setProducts(prev => prev.map(x => x.id === p.id ? { ...x, active: false } : x));
+                                    } catch { alert('Erro ao desativar produto.'); }
+                                  }} style={{ padding:'5px 12px',borderRadius:8,background:'rgba(255,77,77,0.08)',border:'1px solid rgba(255,77,77,0.2)',color:'#ff4d4d',fontFamily:'Satoshi,sans-serif',fontSize:11,fontWeight:700,cursor:'pointer',transition:'all 0.2s' }}
+                                  onMouseEnter={e=>(e.currentTarget.style.background='rgba(255,77,77,0.18)')}
+                                  onMouseLeave={e=>(e.currentTarget.style.background='rgba(255,77,77,0.08)')}>
+                                    Desativar
+                                  </button>
+                                ) : (
+                                  <button onClick={async () => {
+                                    const token = getToken();
+                                    try {
+                                      const updated = await apiFetch<Product>(`/products/${p.id}`, token, { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ active: true }) });
+                                      setProducts(prev => prev.map(x => x.id === p.id ? updated : x));
+                                    } catch { alert('Erro ao reativar produto.'); }
+                                  }} style={{ padding:'5px 12px',borderRadius:8,background:'rgba(200,255,0,0.08)',border:'1px solid rgba(200,255,0,0.2)',color:'#c8ff00',fontFamily:'Satoshi,sans-serif',fontSize:11,fontWeight:700,cursor:'pointer',transition:'all 0.2s' }}
+                                  onMouseEnter={e=>(e.currentTarget.style.background='rgba(200,255,0,0.18)')}
+                                  onMouseLeave={e=>(e.currentTarget.style.background='rgba(200,255,0,0.08)')}>
+                                    Reativar
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+
         {/* ── CONFIG PAGE ── */}
         {page === 'config' && (
           <>
@@ -675,6 +814,20 @@ export default function AdminDashboard() {
       {/* ── ORDER DETAIL MODAL ── */}
       {modalOrder && (
         <OrderModal order={modalOrder} onClose={() => setModalOrder(null)} onStatusChange={updateOrderStatus} onTrackingChange={updateTrackingLink} />
+      )}
+
+      {/* ── PRODUCT MODAL ── */}
+      {prodModal && (
+        <ProductModal
+          mode={prodModal.mode}
+          product={prodModal.product}
+          onSaved={(p) => {
+            if (prodModal.mode === 'create') setProducts(prev => [p, ...prev]);
+            else setProducts(prev => prev.map(x => x.id === p.id ? p : x));
+            setProdModal(null);
+          }}
+          onClose={() => setProdModal(null)}
+        />
       )}
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
@@ -1172,6 +1325,155 @@ function ModalField({ label, value, mono, lime, big, small }: {
       <div style={{ fontSize:10,fontWeight:700,letterSpacing:1,textTransform:'uppercase',color:'#8a8a8a',marginBottom:4 }}>{label}</div>
       <div style={{ fontSize: big ? 18 : small ? 11 : 13,fontWeight:600,color: lime ? '#c8ff00' : '#fff',fontFamily: mono ? 'JetBrains Mono,monospace' : undefined,lineHeight:1.4,wordBreak:'break-word' }}>
         {value ?? '—'}
+      </div>
+    </div>
+  );
+}
+
+// ── ProductModal ──
+interface ProdVariantForm { _key: string; name: string; stock: string; priceOverride: string; active: boolean; }
+
+function ProductModal({ mode, product, onSaved, onClose }: {
+  mode: 'create' | 'edit';
+  product?: Product;
+  onSaved: (p: Product) => void;
+  onClose: () => void;
+}) {
+  const emptyForm = { name:'', slug:'', brandId:'ignite', description:'', basePrice:'', images:'', active:true, variants:[] as ProdVariantForm[] };
+  const [form, setForm] = React.useState(() => product ? {
+    name: product.name,
+    slug: product.slug,
+    brandId: product.brandId,
+    description: product.description,
+    basePrice: String(product.basePrice),
+    images: (product.images ?? []).join('\n'),
+    active: product.active,
+    variants: (product.variants ?? []).map(v => ({ _key: v.id || String(Math.random()), name: v.name, stock: String(v.stock), priceOverride: v.priceOverride != null ? String(v.priceOverride) : '', active: v.active })),
+  } : emptyForm);
+  const [saving, setSaving] = React.useState(false);
+
+  const inp: React.CSSProperties = { width:'100%',boxSizing:'border-box',background:'rgba(255,255,255,0.04)',border:'1px solid rgba(255,255,255,0.12)',borderRadius:10,padding:'9px 12px',fontFamily:'Satoshi,sans-serif',fontSize:13,color:'#e0e0e0',outline:'none' };
+
+  function autoSlug(name: string) {
+    return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  }
+
+  function addVariant() {
+    setForm(f => ({ ...f, variants: [...f.variants, { _key: String(Date.now()), name:'', stock:'0', priceOverride:'', active:true }] }));
+  }
+  function removeVariant(key: string) {
+    setForm(f => ({ ...f, variants: f.variants.filter(v => v._key !== key) }));
+  }
+  function updateVariant(key: string, field: keyof ProdVariantForm, value: string | boolean) {
+    setForm(f => ({ ...f, variants: f.variants.map(v => v._key === key ? { ...v, [field]: value } : v) }));
+  }
+
+  async function save() {
+    if (!form.name || !form.slug || !form.basePrice) { alert('Preencha nome, slug e preço.'); return; }
+    setSaving(true);
+    const token = getToken();
+    try {
+      const images = form.images.split(/[\n,]/).map(s => s.trim()).filter(Boolean);
+      const variants = form.variants.map(v => ({ id: v._key, name: v.name, stock: parseInt(v.stock) || 0, priceOverride: v.priceOverride ? parseFloat(v.priceOverride) : undefined, active: v.active }));
+      const body = { name: form.name, slug: form.slug, brandId: form.brandId, description: form.description, basePrice: parseFloat(form.basePrice) || 0, images, active: form.active, variants };
+      const result = mode === 'create'
+        ? await apiFetch<Product>('/products', token, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) })
+        : await apiFetch<Product>(`/products/${product!.id}`, token, { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+      onSaved(result);
+    } catch (e) {
+      alert('Erro ao salvar: ' + (e instanceof Error ? e.message : 'desconhecido'));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div style={{ position:'fixed',inset:0,zIndex:200,background:'rgba(0,0,0,0.75)',backdropFilter:'blur(6px)',display:'flex',alignItems:'center',justifyContent:'center',padding:24 }} onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div style={{ background:'linear-gradient(160deg,rgba(20,20,20,0.98),rgba(12,12,12,0.98))',border:'1px solid rgba(255,255,255,0.12)',borderRadius:20,width:'100%',maxWidth:680,maxHeight:'90vh',overflowY:'auto',animation:'modalIn 0.25s ease',boxShadow:'0 24px 80px rgba(0,0,0,0.6)' }}>
+        {/* Header */}
+        <div style={{ padding:'22px 28px 18px',borderBottom:'1px solid rgba(255,255,255,0.07)',display:'flex',justifyContent:'space-between',alignItems:'center' }}>
+          <div style={{ fontSize:15,fontWeight:800,color:'#fff' }}>{mode === 'create' ? '+ Novo Produto' : 'Editar Produto'}</div>
+          <button onClick={onClose} style={{ background:'none',border:'none',color:'#6a6a6a',fontSize:20,cursor:'pointer',lineHeight:1 }}>×</button>
+        </div>
+
+        <div style={{ padding:'22px 28px',display:'flex',flexDirection:'column',gap:16 }}>
+          {/* Name + Slug */}
+          <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:12 }}>
+            <div>
+              <label style={{ fontSize:10,fontWeight:700,letterSpacing:1,textTransform:'uppercase',color:'#8a8a8a',display:'block',marginBottom:6 }}>Nome *</label>
+              <input style={inp} value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value, slug: mode === 'create' ? autoSlug(e.target.value) : f.slug }))} placeholder="ex: Ignite V600" />
+            </div>
+            <div>
+              <label style={{ fontSize:10,fontWeight:700,letterSpacing:1,textTransform:'uppercase',color:'#8a8a8a',display:'block',marginBottom:6 }}>Slug *</label>
+              <input style={inp} value={form.slug} onChange={e => setForm(f => ({ ...f, slug: e.target.value }))} placeholder="ex: ignite-v600" />
+            </div>
+          </div>
+
+          {/* Brand + Price + Active */}
+          <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:12,alignItems:'end' }}>
+            <div>
+              <label style={{ fontSize:10,fontWeight:700,letterSpacing:1,textTransform:'uppercase',color:'#8a8a8a',display:'block',marginBottom:6 }}>Marca *</label>
+              <select style={{ ...inp,cursor:'pointer' }} value={form.brandId} onChange={e => setForm(f => ({ ...f, brandId: e.target.value }))}>
+                {BRANDS_STATIC.map(b => <option key={b.id} value={b.id} style={{ background:'#1a1a1a' }}>{b.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={{ fontSize:10,fontWeight:700,letterSpacing:1,textTransform:'uppercase',color:'#8a8a8a',display:'block',marginBottom:6 }}>Preço Base (R$) *</label>
+              <input style={inp} type="number" min="0" step="0.01" value={form.basePrice} onChange={e => setForm(f => ({ ...f, basePrice: e.target.value }))} placeholder="0.00" />
+            </div>
+            <div style={{ display:'flex',alignItems:'center',gap:10,paddingBottom:2 }}>
+              <label style={{ fontSize:12,fontWeight:600,color:'#b0b0b0',cursor:'pointer',display:'flex',alignItems:'center',gap:8 }}>
+                <input type="checkbox" checked={form.active} onChange={e => setForm(f => ({ ...f, active: e.target.checked }))} />
+                Ativo
+              </label>
+            </div>
+          </div>
+
+          {/* Description */}
+          <div>
+            <label style={{ fontSize:10,fontWeight:700,letterSpacing:1,textTransform:'uppercase',color:'#8a8a8a',display:'block',marginBottom:6 }}>Descrição</label>
+            <textarea style={{ ...inp,minHeight:72,resize:'vertical' }} value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Descrição do produto..." />
+          </div>
+
+          {/* Images */}
+          <div>
+            <label style={{ fontSize:10,fontWeight:700,letterSpacing:1,textTransform:'uppercase',color:'#8a8a8a',display:'block',marginBottom:6 }}>Imagens (uma URL por linha)</label>
+            <textarea style={{ ...inp,minHeight:64,resize:'vertical',fontSize:11 }} value={form.images} onChange={e => setForm(f => ({ ...f, images: e.target.value }))} placeholder="https://..." />
+          </div>
+
+          {/* Variants */}
+          <div>
+            <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10 }}>
+              <label style={{ fontSize:10,fontWeight:700,letterSpacing:1,textTransform:'uppercase',color:'#8a8a8a' }}>Sabores / Variantes ({form.variants.length})</label>
+              <button onClick={addVariant} style={{ padding:'5px 12px',borderRadius:8,background:'rgba(200,255,0,0.1)',border:'1px solid rgba(200,255,0,0.25)',color:'#c8ff00',fontFamily:'Satoshi,sans-serif',fontSize:11,fontWeight:700,cursor:'pointer' }}>+ Adicionar</button>
+            </div>
+            {form.variants.length === 0 && (
+              <div style={{ padding:'14px',textAlign:'center',fontSize:12,color:'#6a6a6a',background:'rgba(255,255,255,0.02)',borderRadius:10,border:'1px dashed rgba(255,255,255,0.1)' }}>Nenhum sabor ainda. Clique em "+ Adicionar".</div>
+            )}
+            <div style={{ display:'flex',flexDirection:'column',gap:8 }}>
+              {form.variants.map(v => (
+                <div key={v._key} style={{ display:'grid',gridTemplateColumns:'2fr 80px 100px 60px 28px',gap:8,alignItems:'center',padding:'8px 10px',background:'rgba(255,255,255,0.03)',borderRadius:10,border:'1px solid rgba(255,255,255,0.07)' }}>
+                  <input style={{ ...inp,padding:'6px 10px',fontSize:12 }} value={v.name} onChange={e => updateVariant(v._key,'name',e.target.value)} placeholder="Nome do sabor" />
+                  <input style={{ ...inp,padding:'6px 10px',fontSize:12 }} type="number" min="0" value={v.stock} onChange={e => updateVariant(v._key,'stock',e.target.value)} placeholder="Estoque" />
+                  <input style={{ ...inp,padding:'6px 10px',fontSize:12 }} type="number" min="0" step="0.01" value={v.priceOverride} onChange={e => updateVariant(v._key,'priceOverride',e.target.value)} placeholder="Preço (R$)" />
+                  <label style={{ display:'flex',alignItems:'center',justifyContent:'center',gap:5,fontSize:11,color:'#b0b0b0',cursor:'pointer' }}>
+                    <input type="checkbox" checked={v.active} onChange={e => updateVariant(v._key,'active',e.target.checked)} />
+                    Ativo
+                  </label>
+                  <button onClick={() => removeVariant(v._key)} style={{ background:'none',border:'none',color:'#ff4d4d',fontSize:16,cursor:'pointer',padding:0,lineHeight:1 }}>×</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div style={{ padding:'16px 28px 24px',display:'flex',gap:10,justifyContent:'flex-end',borderTop:'1px solid rgba(255,255,255,0.07)' }}>
+          <button onClick={onClose} style={{ padding:'10px 20px',borderRadius:10,background:'transparent',border:'1px solid rgba(255,255,255,0.12)',color:'#b0b0b0',fontFamily:'Satoshi,sans-serif',fontSize:13,fontWeight:600,cursor:'pointer' }}>Cancelar</button>
+          <button onClick={save} disabled={saving} style={{ padding:'10px 24px',borderRadius:10,background:'rgba(200,255,0,0.12)',border:'1px solid rgba(200,255,0,0.3)',color:'#c8ff00',fontFamily:'Satoshi,sans-serif',fontSize:13,fontWeight:700,cursor:'pointer',opacity:saving?0.6:1 }}>
+            {saving ? 'Salvando...' : mode === 'create' ? 'Criar Produto' : 'Salvar Alterações'}
+          </button>
+        </div>
       </div>
     </div>
   );

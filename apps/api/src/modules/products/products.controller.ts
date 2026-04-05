@@ -22,6 +22,12 @@ export class ProductsController {
     return this.productsService.findAll(true);
   }
 
+  @Get('admin')
+  @UseGuards(JwtAuthGuard)
+  findAllAdmin() {
+    return this.productsService.findAll(false);
+  }
+
   @Get(':slug')
   findBySlug(@Param('slug') slug: string) {
     return this.productsService.findBySlug(slug);
