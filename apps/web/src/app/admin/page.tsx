@@ -461,8 +461,8 @@ export default function AdminDashboard() {
               <div style={{ display:'grid',gridTemplateColumns:'2fr 1fr 1fr 1fr 1fr',gap:14,marginBottom:24 }}>
                 <StatCard label="Total Vendido" value={fmtR(totalVendido)} sub="pagos + enviados" color="#c8ff00" icon="💰" featured />
                 <StatCard label="Total Pedidos" value={String(totalPedidos)} sub="todos os status" color="#7efff5" icon="📦" onClick={() => setFiltro('todos')} active={filtro === 'todos'} />
-                <StatCard label="Aguardando" value={String(aguardando)} sub="pagamento pendente" color="#7efff5" icon="🔗" onClick={() => setFiltro(filtro === 'aguardando' ? 'todos' : 'aguardando')} active={filtro === 'aguardando'} />
-                <StatCard label="Pendentes" value={String(pendentes)} sub="não entregues" color="#ffb545" icon="⏳" onClick={() => setFiltro(filtro === 'pendente' ? 'todos' : 'pendente')} active={filtro === 'pendente'} />
+                <StatCard label="Aguardando Pagamento" value={String(aguardando)} sub="pagamento pendente" color="#7efff5" icon="💳" onClick={() => setFiltro(filtro === 'aguardando' ? 'todos' : 'aguardando')} active={filtro === 'aguardando'} />
+                <StatCard label="Aguardando Entrega" value={String(pendentes)} sub="pagos, não entregues" color="#ffb545" icon="🏍️" onClick={() => setFiltro(filtro === 'pendente' ? 'todos' : 'pendente')} active={filtro === 'pendente'} />
                 <StatCard label="Concluídos" value={String(concluidos)} sub={`${pctConcluidos}% do total`} color="#c8ff00" icon="✅" onClick={() => setFiltro(filtro === 'concluido' ? 'todos' : 'concluido')} active={filtro === 'concluido'} />
               </div>
 
@@ -503,8 +503,8 @@ export default function AdminDashboard() {
                     <div style={{ display:'flex',flexWrap:'wrap',gap:8 }}>
                       {([
                         { key:'todos',     label:'Todos',          cls:'green' },
-                        { key:'aguardando',label:'🔗 Aguardando',  cls:'cyan'  },
-                        { key:'pendente',  label:'⏳ Pendentes',   cls:'amber' },
+                        { key:'aguardando',label:'💳 Aguard. Pagamento', cls:'cyan'  },
+                        { key:'pendente',  label:'🏍️ Aguard. Entrega',  cls:'amber' },
                         { key:'concluido', label:'✅ Concluídos',  cls:'green' },
                       ] as const).map(f => (
                         <button key={f.key} onClick={() => setFiltro(f.key)}
@@ -575,8 +575,8 @@ export default function AdminDashboard() {
               <div style={{ display:'flex',alignItems:'center',gap:10,marginBottom:20,flexWrap:'wrap' }}>
                 {([
                   { key:'todos',      label:'Todos',             cls:'green' },
-                  { key:'aguardando', label:'🔗 Aguardando',     cls:'cyan'  },
-                  { key:'pendente',   label:'⏳ Aguard. Entrega', cls:'amber' },
+                  { key:'aguardando', label:'💳 Aguard. Pagamento', cls:'cyan'  },
+                  { key:'pendente',   label:'🏍️ Aguard. Entrega',  cls:'amber' },
                   { key:'concluido',  label:'✅ Concluídos',     cls:'green' },
                 ] as const).map(f => (
                   <button key={f.key} onClick={() => setPFiltro(f.key)}
