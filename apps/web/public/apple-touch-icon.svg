@@ -1,0 +1,12 @@
+<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'>
+  <defs>
+    <radialGradient id='bg' cx='50%' cy='50%' r='60%'>
+      <stop offset='0%' stop-color='#141414'/>
+      <stop offset='100%' stop-color='#080808'/>
+    </radialGradient>
+  </defs>
+  <rect width='180' height='180' fill='url(#bg)'/>
+  <text x='90' y='97' font-family='Arial Black, Helvetica, sans-serif' font-size='30' font-weight='900' text-anchor='middle' dominant-baseline='middle' letter-spacing='-0.5'>
+    <tspan fill='#ffffff'>Cheaps</tspan><tspan fill='#c8ff00'>.</tspan><tspan fill='#ffffff'>Pods</tspan>
+  </text>
+</svg>
