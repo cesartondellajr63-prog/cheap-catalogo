@@ -852,7 +852,7 @@ export default function AdminDashboard() {
 
       {/* ── ORDER DETAIL MODAL ── */}
       {modalOrder && (
-        <OrderModal order={modalOrder} onClose={() => setModalOrder(null)} onStatusChange={updateOrderStatus} onShippingChange={updateShippingStatus} onTrackingChange={updateTrackingLink} onArchive={archiveOrder} />
+        <OrderModal order={modalOrder} onClose={() => setModalOrder(null)} onStatusChange={updateOrderStatus} onShippingChange={updateShippingStatus} onMotoboyChange={updateMotoboy} onTrackingChange={updateTrackingLink} onArchive={archiveOrder} />
       )}
 
       {/* ── PRODUCT MODAL ── */}
@@ -1177,11 +1177,12 @@ function StateBox({ icon, text, loading }: { icon?: string; text?: string; loadi
 }
 
 // ── Order Detail Modal ──
-function OrderModal({ order: o, onClose, onStatusChange, onShippingChange, onTrackingChange, onArchive }: {
+function OrderModal({ order: o, onClose, onStatusChange, onShippingChange, onMotoboyChange, onTrackingChange, onArchive }: {
   order: Order;
   onClose: () => void;
   onStatusChange: (id: string, status: OrderStatus) => Promise<void>;
   onShippingChange: (id: string, shippingStatus: string) => void;
+  onMotoboyChange: (id: string, motoboy: string) => void;
   onTrackingChange: (id: string, trackingLink: string) => void;
   onArchive: (id: string, archived: boolean) => void;
 }) {
@@ -1275,16 +1276,25 @@ function OrderModal({ order: o, onClose, onStatusChange, onShippingChange, onTra
             <ModalSection label="Status" />
             <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:12 }}>
               <div style={{ background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.07)',borderRadius:12,padding:'12px 14px' }}>
-                <div style={{ fontSize:10,fontWeight:700,letterSpacing:1,textTransform:'uppercase',color:'#8a8a8a',marginBottom:8 }}>Pagamento</div>
-                {isPaid(o.status)
-                  ? <span style={{ display:'inline-flex',flexDirection:'column',gap:2,padding:'5px 12px',borderRadius:8,fontSize:11,fontWeight:700,background:'rgba(200,255,0,0.1)',color:'#c8ff00',border:'1px solid rgba(200,255,0,0.2)',lineHeight:1.4 }}>
-                      <span>✅ Pago</span>
-                      <span style={{ fontSize:10,fontWeight:500,color:'#8a8a8a' }}>{o.mpPaymentId ? '🟡 Mercado Pago' : '🔵 Cielo'}</span>
-                    </span>
-                  : o.status === 'CANCELLED'
-                    ? <span style={{ display:'inline-flex',gap:5,padding:'5px 12px',borderRadius:8,fontSize:11,fontWeight:700,background:'rgba(255,77,77,0.1)',color:'#ff4d4d',border:'1px solid rgba(255,77,77,0.2)' }}>❌ Cancelado</span>
-                    : <span style={{ display:'inline-flex',gap:5,padding:'5px 12px',borderRadius:8,fontSize:11,fontWeight:700,background:'rgba(255,181,69,0.1)',color:'#ffb545',border:'1px solid rgba(255,181,69,0.2)' }}>⏳ Pendente</span>
-                }
+                <div style={{ fontSize:10,fontWeight:700,letterSpacing:1,textTransform:'uppercase',color:'#8a8a8a',marginBottom:8 }}>Motoboy</div>
+                {(() => {
+                  const motoboyVal = ((o as any).motoboy as MotoboyOption | undefined) ?? '⏳ Pendente';
+                  const motoboyColor = MOTOBOY_COLOR[motoboyVal] ?? '#ff4d4d';
+                  return (
+                    <select
+                      value={motoboyVal}
+                      onChange={e => onMotoboyChange(o.id, e.target.value)}
+                      style={{
+                        background:'rgba(255,255,255,0.04)',border:`1px solid ${motoboyColor}55`,borderRadius:9,
+                        padding:'5px 24px 5px 10px',fontFamily:'Satoshi,sans-serif',fontSize:11,fontWeight:600,
+                        color:motoboyColor,outline:'none',cursor:'pointer',appearance:'none',WebkitAppearance:'none',
+                        backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238a8a8a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E")`,
+                        backgroundRepeat:'no-repeat',backgroundPosition:'right 8px center',
+                      }}>
+                      {MOTOBOY_OPTIONS.map(opt => <option key={opt} value={opt} style={{ background:'#1a1a1a',color:'#f0f0f0' }}>{opt}</option>)}
+                    </select>
+                  );
+                })()}
               </div>
               <div style={{ background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.07)',borderRadius:12,padding:'12px 14px' }}>
                 <div style={{ fontSize:10,fontWeight:700,letterSpacing:1,textTransform:'uppercase',color:'#8a8a8a',marginBottom:8 }}>Entrega</div>
