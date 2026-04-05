@@ -57,7 +57,7 @@ function CieloPoller({
   onApproved: () => void; onTimeout: () => void;
 }) {
   const [attempts, setAttempts] = useState(0);
-  const MAX = 24; // ~2 minutos
+  const MAX = 12; // ~1 minuto
   const ref = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const poll = async () => {
@@ -86,8 +86,8 @@ function CieloPoller({
   const pct = Math.min((attempts / MAX) * 100, 100);
 
   return (
-    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:16, marginBottom:24, width:'100%', maxWidth:360 }}>
-      <div style={{ display:'flex', alignItems:'center', gap:10, color:'var(--muted)', fontSize:13 }}>
+    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:16, marginBottom:24, width:'100%', maxWidth:360, margin:'0 auto 24px' }}>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:10, color:'var(--muted)', fontSize:13, width:'100%' }}>
         <div className="spinner-w"></div>
         <span>Aguardando confirmação da Cielo...</span>
       </div>
@@ -160,9 +160,16 @@ function PedidoContent({ orderId: orderIdProp }: { orderId: string }) {
   const itemsText = (pedidoAtual.items as string[] | undefined)?.join(', ') ?? '';
   const addressText = (pedidoAtual.address as string | undefined) ?? '';
   const orderNumber = (pedidoAtual.orderNumber as string | undefined) ?? orderId;
-  const waMsg = itemsText && addressText
-    ? `Olá! Acabei de finalizar o pagamento do pedido do meu ${itemsText} no endereço ${addressText} e gostaria de solicitar o link de rastreio. Nº do pedido: ${orderNumber}`
+
+  const waMsgApproved = itemsText
+    ? `Olá! Acabei de finalizar o pagamento do pedido do meu ${itemsText} e gostaria de solicitar o link de rastreio. Nº do pedido: ${orderNumber}`
     : `Olá! Acabei de finalizar o pagamento do pedido e gostaria de solicitar o link de rastreio. Nº do pedido: ${orderNumber}`;
+
+  const waMsgTimeout = itemsText
+    ? `Olá! Acabei de realizar o pagamento do pedido do meu ${itemsText} porém não recebi a confirmação, consegue verificar para mim? Nº do pedido: ${orderNumber}`
+    : `Olá! Acabei de realizar o pagamento do pedido porém não recebi a confirmação, consegue verificar para mim? Nº do pedido: ${orderNumber}`;
+
+  const waMsg = status === 'timeout' ? waMsgTimeout : waMsgApproved;
   const waLink = `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(waMsg)}`;
 
   return (
