@@ -1098,14 +1098,6 @@ function OrdersTable({ orders, loading, onRowClick, onStatusChange, onShippingCh
         <span style={{ fontSize:13,fontWeight:800,color:'#fff' }}>Pedidos</span>
         <div style={{ display:'flex',alignItems:'center',gap:10 }}>
           <span style={tableCount}>{orders.length} pedido{orders.length !== 1 ? 's' : ''}</span>
-          <button
-            onClick={() => exportCSV(orders)}
-            style={{ display:'flex',alignItems:'center',gap:6,padding:'6px 14px',borderRadius:8,background:'rgba(200,255,0,0.08)',border:'1px solid rgba(200,255,0,0.25)',color:'#c8ff00',fontFamily:'Satoshi,sans-serif',fontSize:11,fontWeight:700,cursor:'pointer',transition:'all 0.2s' }}
-            onMouseEnter={e => (e.currentTarget.style.background='rgba(200,255,0,0.18)')}
-            onMouseLeave={e => (e.currentTarget.style.background='rgba(200,255,0,0.08)')}
-          >
-            📥 Exportar CSV
-          </button>
         </div>
       </div>
       <div style={{ overflowX:'auto' }}>
