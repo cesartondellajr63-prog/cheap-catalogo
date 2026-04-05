@@ -555,7 +555,6 @@ export default function AdminDashboard() {
                     style={{ padding:'7px 16px',borderRadius:10,border:'1px solid',fontFamily:'Satoshi,sans-serif',fontSize:12,fontWeight:700,cursor:'pointer',transition:'all 0.2s',whiteSpace:'nowrap',
                       ...(pFiltro === f.key
                         ? f.cls==='amber' ? { background:'rgba(255,181,69,0.1)',borderColor:'rgba(255,181,69,0.3)',color:'#ffb545' }
-                        : f.cls==='blue' ? { background:'rgba(126,255,245,0.08)',borderColor:'rgba(126,255,245,0.25)',color:'#7efff5' }
                         : { background:'rgba(200,255,0,0.1)',borderColor:'rgba(200,255,0,0.3)',color:'#c8ff00' }
                         : { background:'rgba(255,255,255,0.04)',borderColor:'rgba(255,255,255,0.12)',color:'#b0b0b0' })
                     }}>
