@@ -10,7 +10,8 @@
       "Bash(mkdir -p \"C:/Users/CesarJunior/Desktop/Cheap Pods/cheaps-frete/apps/web/src/app/pedido/[id]\")",
       "Bash(npx tsc:*)",
       "Bash(gh repo:*)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(done)"
     ]
   }
 }
