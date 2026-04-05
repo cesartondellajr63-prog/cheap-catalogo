@@ -123,6 +123,7 @@ export default function AdminDashboard() {
   const [page, setPage] = useState<Page>('dashboard');
   const [orders, setOrders] = useState<Order[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [authChecked, setAuthChecked] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadingClients, setLoadingClients] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -219,6 +220,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     const token = getToken();
     if (!token) { router.replace('/admin/login'); return; }
+    setAuthChecked(true);
     // Try to get username from token payload
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
@@ -424,6 +426,8 @@ export default function AdminDashboard() {
   const chartPendentes = orders.filter(o => (o as any).shippingStatus !== '🟢 Entregue').length;
 
   // ── Render ──
+  if (!authChecked) return <div style={{ background:'#080808', minHeight:'100vh' }} />;
+
   return (
     <>
       <style>{adminCSS}</style>
