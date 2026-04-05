@@ -59,6 +59,13 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
   const [cardLoading, setCardLoading] = useState(false);
   const [pagError, setPagError] = useState('');
 
+  // Volta ao step 3 automaticamente se o frete expirar no step 4
+  useEffect(() => {
+    if (freteExpired && step === 4) {
+      setStep(3);
+    }
+  }, [freteExpired, step]);
+
   // Persiste os dados do formulário na sessão sempre que mudam
   useEffect(() => {
     sessionStorage.setItem('checkoutForm', JSON.stringify({ nome, email, tel, cep, numero, rua, bairro, cidade, estado, complemento }));
@@ -509,33 +516,49 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
                 <span className="v">{fmtBRLFromDecimal(total)}</span>
               </div>
             </div>
+            {freteTimer && !freteExpired && (
+              <div className="frete-result visible" style={{ marginBottom: 12 }}>
+                <div className="frete-eta">
+                  ⏰ Válido por: <b style={{ color: freteTimer.startsWith('0:') ? '#ff9900' : 'var(--accent2)' }}>{freteTimer}</b>
+                </div>
+              </div>
+            )}
+            {freteExpired && (
+              <div className="error-msg visible">⏰ Cotação expirada. Recalcule o frete para continuar.</div>
+            )}
             <div className="secure-badge">
               🔒 Pagamento seguro via <strong style={{ color: '#fff', marginLeft: 4 }}>Mercado Pago / Cielo</strong>
             </div>
             {pagError && <div className="error-msg visible">{pagError}</div>}
             <div className="modal-actions">
-              <button
-                className="btn-primary"
-                onClick={iniciarPagamento}
-                disabled={pagLoading || cardLoading}
-                style={{ background: '#FF8C00' }}
-              >
-                {pagLoading
-                  ? <><span className="spinner"></span> Aguarde...</>
-                  : '🔷 Pagar com PIX'
-                }
-              </button>
-              <button
-                className="btn-primary"
-                onClick={pagarCartao}
-                disabled={pagLoading || cardLoading}
-                style={{ background: '#1a56db', flexDirection: 'column', gap: 2, padding: '14px 16px' }}
-              >
-                {cardLoading
-                  ? <><span className="spinner"></span> Aguarde...</>
-                  : <><span>💳 Pagar com Cartão</span><span style={{ fontSize: '0.7rem', opacity: 0.8, fontWeight: 400 }}>Taxa de 7% será aplicada</span></>
-                }
-              </button>
+              {freteExpired ? (
+                <button className="btn-primary" onClick={() => goToStep(3)}>🔄 Recalcular frete</button>
+              ) : (
+                <>
+                  <button
+                    className="btn-primary"
+                    onClick={iniciarPagamento}
+                    disabled={pagLoading || cardLoading}
+                    style={{ background: '#FF8C00' }}
+                  >
+                    {pagLoading
+                      ? <><span className="spinner"></span> Aguarde...</>
+                      : '🔷 Pagar com PIX'
+                    }
+                  </button>
+                  <button
+                    className="btn-primary"
+                    onClick={pagarCartao}
+                    disabled={pagLoading || cardLoading}
+                    style={{ background: '#1a56db', flexDirection: 'column', gap: 2, padding: '14px 16px' }}
+                  >
+                    {cardLoading
+                      ? <><span className="spinner"></span> Aguarde...</>
+                      : <><span>💳 Pagar com Cartão</span><span style={{ fontSize: '0.7rem', opacity: 0.8, fontWeight: 400 }}>Taxa de 7% será aplicada</span></>
+                    }
+                  </button>
+                </>
+              )}
               <button className="btn-secondary" onClick={() => goToStep(3)}>← Voltar à entrega</button>
             </div>
           </>
