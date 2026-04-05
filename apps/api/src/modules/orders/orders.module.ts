@@ -3,9 +3,10 @@ import { OrdersController } from './orders.controller';
 import { OrdersService } from './orders.service';
 import { AuthModule } from '../auth/auth.module';
 import { CustomersModule } from '../customers/customers.module';
+import { GoogleSheetsModule } from '../../shared/google-sheets/google-sheets.module';
 
 @Module({
-  imports: [AuthModule, CustomersModule],
+  imports: [AuthModule, CustomersModule, GoogleSheetsModule],
   controllers: [OrdersController],
   providers: [OrdersService],
   exports: [OrdersService],

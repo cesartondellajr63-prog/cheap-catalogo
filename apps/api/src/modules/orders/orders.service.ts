@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { FirebaseService } from '../../shared/firebase/firebase.service';
 import { CustomersService } from '../customers/customers.service';
+import { GoogleSheetsService } from '../../shared/google-sheets/google-sheets.service';
 import { CreateOrderDto, OrderItemDto } from './dto/create-order.dto';
 
 const VALID_STATUSES = ['PENDING', 'PAID', 'SHIPPED', 'DELIVERED', 'CANCELLED', 'REFUNDED'];
@@ -10,6 +11,7 @@ export class OrdersService {
   constructor(
     private readonly firebaseService: FirebaseService,
     private readonly customersService: CustomersService,
+    private readonly googleSheetsService: GoogleSheetsService,
   ) {}
 
   private calculateSubtotal(items: OrderItemDto[]): number {
@@ -56,6 +58,9 @@ export class OrdersService {
       address: `${dto.address}, ${dto.city}`,
     }).catch(() => {});
 
+    // Sincroniza com Google Sheets
+    this.googleSheetsService.appendOrderRow(order).catch(() => {});
+
     return order;
   }
 
@@ -94,6 +99,9 @@ export class OrdersService {
       email: dto.customerEmail,
       address: `${dto.address}, ${dto.city}`,
     }).catch(() => {});
+
+    // Sincroniza com Google Sheets
+    this.googleSheetsService.appendOrderRow(order).catch(() => {});
 
     return order;
   }
