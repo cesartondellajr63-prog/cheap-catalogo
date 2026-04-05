@@ -29,20 +29,24 @@ function maskCEP(v: string) {
 export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutModalProps) {
   const [localCart, setLocalCart] = useState<CartItem[]>(cart);
   const [step, setStep] = useState<Step>(1);
+
+  // Carrega dados salvos na sessão (se existirem)
+  const savedForm = (() => { try { return JSON.parse(sessionStorage.getItem('checkoutForm') ?? '{}'); } catch { return {}; } })();
+
   // Step 2 fields
-  const [nome, setNome] = useState('');
-  const [email, setEmail] = useState('');
-  const [tel, setTel] = useState('');
+  const [nome, setNome] = useState<string>(savedForm.nome ?? '');
+  const [email, setEmail] = useState<string>(savedForm.email ?? '');
+  const [tel, setTel] = useState<string>(savedForm.tel ?? '');
   const [dadosError, setDadosError] = useState('');
 
   // Step 3 fields
-  const [cep, setCep] = useState('');
-  const [numero, setNumero] = useState('');
-  const [rua, setRua] = useState('');
-  const [bairro, setBairro] = useState('');
-  const [cidade, setCidade] = useState('');
-  const [estado, setEstado] = useState('');
-  const [complemento, setComplemento] = useState('');
+  const [cep, setCep] = useState<string>(savedForm.cep ?? '');
+  const [numero, setNumero] = useState<string>(savedForm.numero ?? '');
+  const [rua, setRua] = useState<string>(savedForm.rua ?? '');
+  const [bairro, setBairro] = useState<string>(savedForm.bairro ?? '');
+  const [cidade, setCidade] = useState<string>(savedForm.cidade ?? '');
+  const [estado, setEstado] = useState<string>(savedForm.estado ?? '');
+  const [complemento, setComplemento] = useState<string>(savedForm.complemento ?? '');
   const [freteLoading, setFreteLoading] = useState(false);
   const [freteResult, setFreteResult] = useState<{ price: number; priceFormatted: string; expiresAt?: number } | null>(null);
   const [freteError, setFreteError] = useState('');
@@ -54,6 +58,11 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
   const [pagLoading, setPagLoading] = useState(false);
   const [cardLoading, setCardLoading] = useState(false);
   const [pagError, setPagError] = useState('');
+
+  // Persiste os dados do formulário na sessão sempre que mudam
+  useEffect(() => {
+    sessionStorage.setItem('checkoutForm', JSON.stringify({ nome, email, tel, cep, numero, rua, bairro, cidade, estado, complemento }));
+  }, [nome, email, tel, cep, numero, rua, bairro, cidade, estado, complemento]);
 
   // Sync localCart with prop changes (e.g. external cart updates)
   useEffect(() => {
@@ -186,11 +195,13 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
       });
       localStorage.setItem('pedidoAtual', JSON.stringify({
         orderId: result.orderId,
+        orderNumber: result.orderNumber,
         accessToken: result.accessToken,
         items: localCart.map(i => `${i.productName} (${i.variantName})`),
         address: `${rua}, ${numero}${complemento ? ', ' + complemento : ''}, ${bairro}, ${cidade} - ${estado}`,
       }));
       onUpdateCart([]);
+      sessionStorage.removeItem('checkoutForm');
       window.open(result.checkoutUrl, '_blank');
     } catch (e: unknown) {
       setPagError(e instanceof Error ? e.message : 'Erro ao iniciar pagamento.');
@@ -224,6 +235,8 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
       });
       localStorage.setItem('pedidoAtual', JSON.stringify({
         paymentType: 'card',
+        orderId: result.orderId,
+        orderNumber: result.orderNumber,
         items: localCart.map(i => `${i.productName} (${i.variantName})`),
         address: `${rua}, ${numero}${complemento ? ', ' + complemento : ''}, ${bairro}, ${cidade} - ${estado}`,
       }));
