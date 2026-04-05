@@ -383,7 +383,6 @@ export default function AdminDashboard() {
             { id:'dashboard', icon:'📊', label:'Dashboard' },
             { id:'pedidos',   icon:'📦', label:'Pedidos' },
             { id:'clientes',  icon:'👥', label:'Clientes' },
-            { id:'config',    icon:'⚙️', label:'Configurações' },
           ] as { id: Page; icon: string; label: string }[]).map(item => (
             <div key={item.id}
               onClick={() => setPage(item.id)}
