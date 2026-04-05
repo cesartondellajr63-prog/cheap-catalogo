@@ -1197,7 +1197,7 @@ function OrderModal({ order: o, onClose, onStatusChange, onShippingChange, onTra
   };
 
   const produtos = o.items.map(i => `${i.productName} — ${i.variantName} ×${i.quantity}`);
-  const frete = ((o as any).shippingStatus as FreteOption | undefined) ?? statusToFrete(o.status);
+  const frete = ((o as any).shippingStatus as FreteOption | undefined) ?? '🔴 Pendente';
   const freteColor =
     frete === '🟢 Entregue' ? '#4cff72' :
     frete === '🟡 A Caminho' ? '#ffe500' :
@@ -1277,8 +1277,13 @@ function OrderModal({ order: o, onClose, onStatusChange, onShippingChange, onTra
               <div style={{ background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.07)',borderRadius:12,padding:'12px 14px' }}>
                 <div style={{ fontSize:10,fontWeight:700,letterSpacing:1,textTransform:'uppercase',color:'#8a8a8a',marginBottom:8 }}>Pagamento</div>
                 {isPaid(o.status)
-                  ? <span style={{ display:'inline-flex',gap:5,padding:'5px 12px',borderRadius:8,fontSize:11,fontWeight:700,background:'rgba(200,255,0,0.1)',color:'#c8ff00',border:'1px solid rgba(200,255,0,0.2)' }}>✅ Pago</span>
-                  : <span style={{ display:'inline-flex',gap:5,padding:'5px 12px',borderRadius:8,fontSize:11,fontWeight:700,background:'rgba(255,181,69,0.1)',color:'#ffb545',border:'1px solid rgba(255,181,69,0.2)' }}>⏳ Pendente</span>
+                  ? <span style={{ display:'inline-flex',flexDirection:'column',gap:2,padding:'5px 12px',borderRadius:8,fontSize:11,fontWeight:700,background:'rgba(200,255,0,0.1)',color:'#c8ff00',border:'1px solid rgba(200,255,0,0.2)',lineHeight:1.4 }}>
+                      <span>✅ Pago</span>
+                      <span style={{ fontSize:10,fontWeight:500,color:'#8a8a8a' }}>{o.mpPaymentId ? '🟡 Mercado Pago' : '🔵 Cielo'}</span>
+                    </span>
+                  : o.status === 'CANCELLED'
+                    ? <span style={{ display:'inline-flex',gap:5,padding:'5px 12px',borderRadius:8,fontSize:11,fontWeight:700,background:'rgba(255,77,77,0.1)',color:'#ff4d4d',border:'1px solid rgba(255,77,77,0.2)' }}>❌ Cancelado</span>
+                    : <span style={{ display:'inline-flex',gap:5,padding:'5px 12px',borderRadius:8,fontSize:11,fontWeight:700,background:'rgba(255,181,69,0.1)',color:'#ffb545',border:'1px solid rgba(255,181,69,0.2)' }}>⏳ Pendente</span>
                 }
               </div>
               <div style={{ background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.07)',borderRadius:12,padding:'12px 14px' }}>
