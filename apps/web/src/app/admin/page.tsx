@@ -226,13 +226,11 @@ export default function AdminDashboard() {
     if (!ctx) return;
     const w = canvasRef.current.width;
     const h = canvasRef.current.height;
-    const concluidos = orders.filter(o => o.status === 'DELIVERED').length;
-    const pagos = orders.filter(o => o.status === 'PAID' || o.status === 'SHIPPED').length;
-    const pendentes = orders.filter(o => o.status === 'PENDING').length;
-    const outros = orders.filter(o => o.status === 'CANCELLED' || o.status === 'REFUNDED').length;
+    const concluidos = orders.filter(o => (o as any).shippingStatus === '🟢 Entregue').length;
+    const pendentes = orders.filter(o => (o as any).shippingStatus !== '🟢 Entregue').length;
     drawDonut(ctx, w, h,
-      [concluidos, pagos, pendentes, outros].filter((_, i) => [concluidos, pagos, pendentes, outros][i] > 0),
-      ['#c8ff00', '#7efff5', '#ffb545', '#6a6a6a'].filter((_, i) => [concluidos, pagos, pendentes, outros][i] > 0)
+      [concluidos, pendentes].filter((_, i) => [concluidos, pendentes][i] > 0),
+      ['#4cff72', '#ffb545'].filter((_, i) => [concluidos, pendentes][i] > 0)
     );
   }, [orders, loading, page]);
 
@@ -341,10 +339,8 @@ export default function AdminDashboard() {
   const concluidos = orders.filter(o => o.status === 'DELIVERED').length;
   const pctConcluidos = totalPedidos ? Math.round((concluidos / totalPedidos) * 100) : 0;
 
-  const chartConcluidos = concluidos;
-  const chartPagos = pendentes;
-  const chartPendentes = aguardando;
-  const chartOutros = orders.filter(o => o.status === 'CANCELLED' || o.status === 'REFUNDED').length;
+  const chartConcluidos = orders.filter(o => (o as any).shippingStatus === '🟢 Entregue').length;
+  const chartPendentes = orders.filter(o => (o as any).shippingStatus !== '🟢 Entregue').length;
 
   // ── Render ──
   return (
@@ -453,10 +449,8 @@ export default function AdminDashboard() {
                   </div>
                   <div style={{ display:'flex',flexDirection:'column',gap:11 }}>
                     {[
-                      { label:'Concluídos', val:chartConcluidos, color:'#c8ff00' },
-                      { label:'Pagos/Enviados', val:chartPagos, color:'#7efff5' },
-                      { label:'Pendentes', val:chartPendentes, color:'#ffb545' },
-                      { label:'Outros', val:chartOutros, color:'#6a6a6a' },
+                      { label:'🟢 Entregues', val:chartConcluidos, color:'#4cff72' },
+                      { label:'⏳ Pendentes', val:chartPendentes, color:'#ffb545' },
                     ].map(item => (
                       <div key={item.label} style={{ display:'flex',alignItems:'center',gap:10 }}>
                         <div style={{ width:10,height:10,borderRadius:4,background:item.color,flexShrink:0 }}></div>
@@ -828,7 +822,15 @@ function OrderRow({ o, onRowClick, onStatusChange, onShippingChange, onMotoboyCh
       <td style={{ ...tdMono, fontWeight: 700, color: '#fff' }}>{fmtR(o.total ?? 0)}</td>
       <td style={td}>
         {isPaid(o.status)
-          ? <span style={{ display:'inline-flex',gap:5,padding:'5px 12px',borderRadius:8,fontSize:11,fontWeight:700,background:'rgba(200,255,0,0.1)',color:'#c8ff00',border:'1px solid rgba(200,255,0,0.2)' }}>✅ Pago</span>
+          ? (() => {
+              const isMp = !!o.mpPaymentId;
+              return (
+                <span style={{ display:'inline-flex',flexDirection:'column',gap:2,padding:'5px 12px',borderRadius:8,fontSize:11,fontWeight:700,background:'rgba(200,255,0,0.1)',color:'#c8ff00',border:'1px solid rgba(200,255,0,0.2)',lineHeight:1.4 }}>
+                  <span>✅ Pago</span>
+                  <span style={{ fontSize:10,fontWeight:500,color:'#8a8a8a' }}>{isMp ? '🟡 Mercado Pago' : '🔵 Cielo'}</span>
+                </span>
+              );
+            })()
           : o.status === 'CANCELLED'
             ? <span style={{ display:'inline-flex',gap:5,padding:'5px 12px',borderRadius:8,fontSize:11,fontWeight:700,background:'rgba(255,77,77,0.1)',color:'#ff4d4d',border:'1px solid rgba(255,77,77,0.2)' }}>❌ Cancelado</span>
             : <span style={{ display:'inline-flex',gap:5,padding:'5px 12px',borderRadius:8,fontSize:11,fontWeight:700,background:'rgba(255,181,69,0.1)',color:'#ffb545',border:'1px solid rgba(255,181,69,0.2)' }}>⏳ Pendente</span>
