@@ -63,7 +63,10 @@ export class GoogleSheetsService implements OnModuleInit {
 
     try {
       const date = new Date(order.createdAt);
-      const dataHora = date.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+      const pad = (n: number) => String(n).padStart(2, '0');
+      // UTC-3 (Brasília)
+      const br = new Date(date.getTime() - 3 * 60 * 60 * 1000);
+      const dataHora = `${pad(br.getUTCDate())}/${pad(br.getUTCMonth() + 1)}/${br.getUTCFullYear()} ${pad(br.getUTCHours())}:${pad(br.getUTCMinutes())}`;
 
       const produtos = order.items
         .map((i) => `${i.quantity}x ${i.productName}`)
