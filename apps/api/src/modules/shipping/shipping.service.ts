@@ -141,6 +141,9 @@ export class ShippingService {
     const priceStr = data.data?.priceBreakdown?.total || data.priceBreakdown?.total || '0';
     const totalReais = parseFloat(priceStr) / 100;
 
+    this.logger.log(`Lalamove raw response: ${JSON.stringify(data)}`);
+    this.logger.log(`Lalamove price string: "${priceStr}" → R$ ${totalReais}`);
+
     if (isNaN(totalReais) || totalReais <= 0) {
       throw new InternalServerErrorException('Preço de frete inválido recebido da Lalamove.');
     }
