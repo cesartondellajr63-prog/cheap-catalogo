@@ -50,6 +50,13 @@ export default function CheckoutPage() {
   const [pagLoading, setPagLoading] = useState(false);
   const [pagError, setPagError] = useState('');
 
+  // Volta ao step 3 automaticamente se o frete expirar enquanto estiver no step 4
+  useEffect(() => {
+    if (freteExpired && step === 4) {
+      setStep(3);
+    }
+  }, [freteExpired, step]);
+
   useEffect(() => {
     const c = loadCart();
     if (!c.length) { router.replace('/'); return; }
@@ -362,22 +369,34 @@ export default function CheckoutPage() {
               <div className="pay-row"><span className="l">Frete</span><span className="v">{freteResult ? freteResult.priceFormatted : '—'}</span></div>
               <div className="pay-row grand"><span className="l">Total a pagar</span><span className="v">{fmtBRLFromDecimal(total)}</span></div>
             </div>
+            {freteTimer && !freteExpired && (
+              <div className="frete-eta" style={{ marginBottom: 12 }}>
+                ⏰ Cotação válida por: <b style={{ color: freteTimer.startsWith('0:') ? '#ff9900' : 'var(--accent2)' }}>{freteTimer}</b>
+              </div>
+            )}
+            {freteExpired && (
+              <div className="error-msg visible">⏰ Cotação expirada. Recalcule o frete para continuar.</div>
+            )}
             <div className="secure-badge">
               🔒 Pagamento seguro via <strong style={{ color: '#fff', marginLeft: 4 }}>Mercado Pago</strong>
             </div>
             {pagError && <div className="error-msg visible">{pagError}</div>}
             <div className="modal-actions">
-              <button
-                className="btn-primary"
-                onClick={iniciarPagamento}
-                disabled={pagLoading}
-                style={{ background: '#FF8C00' }}
-              >
-                {pagLoading
-                  ? <><span className="spinner"></span> Aguarde...</>
-                  : '🔷 Pagar com PIX'
-                }
-              </button>
+              {freteExpired ? (
+                <button className="btn-primary" onClick={() => goToStep(3)}>🔄 Recalcular frete</button>
+              ) : (
+                <button
+                  className="btn-primary"
+                  onClick={iniciarPagamento}
+                  disabled={pagLoading}
+                  style={{ background: '#FF8C00' }}
+                >
+                  {pagLoading
+                    ? <><span className="spinner"></span> Aguarde...</>
+                    : '🔷 Pagar com PIX'
+                  }
+                </button>
+              )}
               <button className="btn-secondary" onClick={() => router.push('/')}>← Voltar à loja</button>
             </div>
           </>
