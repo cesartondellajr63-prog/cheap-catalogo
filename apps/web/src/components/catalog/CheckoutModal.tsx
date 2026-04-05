@@ -209,7 +209,7 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
       }));
       onUpdateCart([]);
       sessionStorage.removeItem('checkoutForm');
-      window.open(result.checkoutUrl, '_blank');
+      window.location.href = result.checkoutUrl;
     } catch (e: unknown) {
       setPagError(e instanceof Error ? e.message : 'Erro ao iniciar pagamento.');
     } finally {
@@ -247,7 +247,7 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
         items: localCart.map(i => `${i.productName} (${i.variantName})`),
         address: `${rua}, ${numero}${complemento ? ', ' + complemento : ''}, ${bairro}, ${cidade} - ${estado}`,
       }));
-      window.open(result.checkoutUrl, '_blank');
+      window.location.href = result.checkoutUrl;
     } catch (e: unknown) {
       setPagError(e instanceof Error ? e.message : 'Erro ao iniciar pagamento com cartão.');
     } finally {
