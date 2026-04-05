@@ -90,6 +90,7 @@ export interface PaymentResult {
   preferenceId: string;
   accessToken: string;
   orderId: string;
+  orderNumber: string;
 }
 
 export interface PaymentStatus {
