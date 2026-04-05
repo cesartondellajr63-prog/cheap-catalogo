@@ -9,12 +9,14 @@ import { ShippingModule } from './modules/shipping/shipping.module';
 import { WebhooksModule } from './modules/webhooks/webhooks.module';
 import { CustomersModule } from './modules/customers/customers.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { BrandsModule } from './modules/brands/brands.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     FirebaseModule,
     AuthModule,
+    BrandsModule,
     ProductsModule,
     OrdersModule,
     PaymentsModule,

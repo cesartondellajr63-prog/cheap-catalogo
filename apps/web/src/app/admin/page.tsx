@@ -1354,6 +1354,39 @@ function ProductModal({ mode, product, onSaved, onClose }: {
     variants: (product.variants ?? []).map(v => ({ _key: v.id || String(Math.random()), name: v.name, stock: String(v.stock), priceOverride: v.priceOverride != null ? String(v.priceOverride) : '', active: v.active, image: v.image ?? '' })),
   } : emptyForm);
   const [saving, setSaving] = React.useState(false);
+  const [brands, setBrands] = React.useState<{ id: string; name: string; color: string }[]>([...BRANDS_STATIC]);
+  const [newBrand, setNewBrand] = React.useState<{ name: string; color: string } | null>(null);
+  const [savingBrand, setSavingBrand] = React.useState(false);
+
+  React.useEffect(() => {
+    const token = getToken();
+    apiFetch<{ id: string; name: string; color: string }[]>('/brands', token)
+      .then(data => {
+        if (data.length > 0) {
+          const staticIds = new Set(BRANDS_STATIC.map(b => b.id));
+          const extra = data.filter(b => !staticIds.has(b.id));
+          setBrands([...BRANDS_STATIC, ...extra]);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  async function saveNewBrand() {
+    if (!newBrand?.name) return;
+    setSavingBrand(true);
+    const token = getToken();
+    try {
+      const slug = newBrand.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      const created = await apiFetch<{ id: string; name: string; color: string }>(
+        '/brands', token,
+        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: newBrand.name, slug, color: newBrand.color, active: true }) }
+      );
+      setBrands(prev => [...prev, created]);
+      setForm(f => ({ ...f, brandId: created.id }));
+      setNewBrand(null);
+    } catch { alert('Erro ao criar marca.'); }
+    finally { setSavingBrand(false); }
+  }
 
   const inp: React.CSSProperties = { width:'100%',boxSizing:'border-box',background:'rgba(255,255,255,0.04)',border:'1px solid rgba(255,255,255,0.12)',borderRadius:10,padding:'9px 12px',fontFamily:'Satoshi,sans-serif',fontSize:13,color:'#e0e0e0',outline:'none' };
 
@@ -1416,9 +1449,30 @@ function ProductModal({ mode, product, onSaved, onClose }: {
           <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:12,alignItems:'end' }}>
             <div>
               <label style={{ fontSize:10,fontWeight:700,letterSpacing:1,textTransform:'uppercase',color:'#8a8a8a',display:'block',marginBottom:6 }}>Marca *</label>
-              <select style={{ ...inp,cursor:'pointer' }} value={form.brandId} onChange={e => setForm(f => ({ ...f, brandId: e.target.value }))}>
-                {BRANDS_STATIC.map(b => <option key={b.id} value={b.id} style={{ background:'#1a1a1a' }}>{b.name}</option>)}
+              <select style={{ ...inp,cursor:'pointer' }} value={form.brandId}
+                onChange={e => {
+                  if (e.target.value === '__nova__') { setNewBrand({ name:'', color:'#ffffff' }); }
+                  else { setForm(f => ({ ...f, brandId: e.target.value })); setNewBrand(null); }
+                }}>
+                {brands.map(b => <option key={b.id} value={b.id} style={{ background:'#1a1a1a' }}>{b.name}</option>)}
+                <option value="__nova__" style={{ background:'#1a1a1a', color:'#c8ff00' }}>➕ Nova marca...</option>
               </select>
+              {newBrand !== null && (
+                <div style={{ marginTop:8,padding:'10px 12px',background:'rgba(200,255,0,0.05)',border:'1px solid rgba(200,255,0,0.2)',borderRadius:10,display:'flex',flexDirection:'column',gap:8 }}>
+                  <div style={{ fontSize:10,fontWeight:700,color:'#c8ff00',letterSpacing:1,textTransform:'uppercase' }}>Nova Marca</div>
+                  <div style={{ display:'flex',gap:8,alignItems:'center' }}>
+                    <input style={{ ...inp,flex:1,padding:'6px 10px',fontSize:12 }} value={newBrand.name} onChange={e => setNewBrand(n => n ? { ...n, name: e.target.value } : n)} placeholder="Nome da marca" autoFocus />
+                    <div style={{ display:'flex',alignItems:'center',gap:6 }}>
+                      <span style={{ fontSize:10,color:'#8a8a8a',whiteSpace:'nowrap' }}>Cor</span>
+                      <input type="color" value={newBrand.color} onChange={e => setNewBrand(n => n ? { ...n, color: e.target.value } : n)} style={{ width:36,height:32,padding:2,borderRadius:8,border:'1px solid rgba(255,255,255,0.12)',background:'transparent',cursor:'pointer' }} />
+                    </div>
+                    <button onClick={saveNewBrand} disabled={savingBrand || !newBrand.name} style={{ padding:'6px 14px',borderRadius:8,background:'rgba(200,255,0,0.15)',border:'1px solid rgba(200,255,0,0.3)',color:'#c8ff00',fontFamily:'Satoshi,sans-serif',fontSize:11,fontWeight:700,cursor:'pointer',whiteSpace:'nowrap',opacity:!newBrand.name?0.5:1 }}>
+                      {savingBrand ? '...' : 'Criar'}
+                    </button>
+                    <button onClick={() => setNewBrand(null)} style={{ background:'none',border:'none',color:'#6a6a6a',fontSize:18,cursor:'pointer',lineHeight:1 }}>×</button>
+                  </div>
+                </div>
+              )}
             </div>
             <div>
               <label style={{ fontSize:10,fontWeight:700,letterSpacing:1,textTransform:'uppercase',color:'#8a8a8a',display:'block',marginBottom:6 }}>Preço Base (R$) *</label>
