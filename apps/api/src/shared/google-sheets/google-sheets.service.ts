@@ -19,7 +19,13 @@ export class GoogleSheetsService implements OnModuleInit {
 
     if (!spreadsheetId || !clientEmail || !privateKey) {
       this.logger.warn(
-        'Google Sheets not configured — set GOOGLE_SHEETS_SPREADSHEET_ID, GOOGLE_SHEETS_CLIENT_EMAIL and GOOGLE_SHEETS_PRIVATE_KEY to enable sync.',
+        `Google Sheets not configured — missing: ${[
+          !spreadsheetId && 'GOOGLE_SHEETS_SPREADSHEET_ID',
+          !clientEmail && 'GOOGLE_SHEETS_CLIENT_EMAIL',
+          !privateKey && 'GOOGLE_SHEETS_PRIVATE_KEY',
+        ]
+          .filter(Boolean)
+          .join(', ')}`,
       );
       return;
     }
