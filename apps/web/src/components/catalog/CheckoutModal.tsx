@@ -529,11 +529,11 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
                 className="btn-primary"
                 onClick={pagarCartao}
                 disabled={pagLoading || cardLoading}
-                style={{ background: '#1a56db' }}
+                style={{ background: '#1a56db', flexDirection: 'column', gap: 2, padding: '14px 16px' }}
               >
                 {cardLoading
                   ? <><span className="spinner"></span> Aguarde...</>
-                  : <><span>💳 Pagar com Cartão</span><span style={{ display: 'block', fontSize: '0.72rem', opacity: 0.85, marginTop: 2 }}>Taxa de 7% será aplicada</span></>
+                  : <><span>💳 Pagar com Cartão</span><span style={{ fontSize: '0.7rem', opacity: 0.8, fontWeight: 400 }}>Taxa de 7% será aplicada</span></>
                 }
               </button>
               <button className="btn-secondary" onClick={() => goToStep(3)}>← Voltar à entrega</button>
