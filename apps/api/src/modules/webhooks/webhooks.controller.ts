@@ -180,8 +180,13 @@ export class WebhooksController {
   async handleCielo(@Req() req: any): Promise<{ received: boolean }> {
     const body = req.body;
 
-    const receivedKey = String(req.headers['merchantkey'] || req.headers['MerchantKey'] || body?.MerchantKey || '');
+    // Cielo pode enviar a MerchantKey no header ou no body (form-urlencoded)
+    // form-urlencoded converte '+' em espaço — restauramos com replace
+    const rawKey = String(req.headers['merchantkey'] || req.headers['MerchantKey'] || body?.MerchantKey || '');
+    const receivedKey = rawKey.replace(/ /g, '+');
     const expectedKey = String(process.env.CIELO_MERCHANT_KEY || '');
+
+    this.logger.debug(`Cielo webhook key debug — received length: ${receivedKey.length}, expected length: ${expectedKey.length}, match: ${receivedKey === expectedKey}`);
 
     let keyValid = false;
     if (receivedKey.length > 0 && receivedKey.length === expectedKey.length) {
@@ -193,7 +198,7 @@ export class WebhooksController {
     }
 
     if (!keyValid) {
-      this.logger.warn('Cielo webhook: invalid or missing MerchantKey');
+      this.logger.warn(`Cielo webhook: invalid or missing MerchantKey (received len=${receivedKey.length}, expected len=${expectedKey.length})`);
       throw new ForbiddenException('Invalid MerchantKey.');
     }
 
