@@ -25,8 +25,8 @@ export class PaymentsService {
       throw new InternalServerErrorException('Mercado Pago access token not configured.');
     }
 
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-    const backendUrl = process.env.BACKEND_URL || 'http://localhost:3001';
+    const frontendUrl = process.env.FRONTEND_URL!;
+    const backendUrl = process.env.BACKEND_URL!;
 
     const phone = dto.customerPhone.replace(/\D/g, '');
     const areaCode = phone.substring(0, 2);
