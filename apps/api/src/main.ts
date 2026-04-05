@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
+import * as express from 'express';
 import { AppModule } from './app.module';
 import { validateEnv } from './config/env.validation';
 
@@ -10,6 +11,9 @@ async function bootstrap() {
   }
 
   const app = await NestFactory.create(AppModule);
+
+  // Garante parsing de form-urlencoded (necessário para webhook da Cielo)
+  app.use(express.urlencoded({ extended: true }));
 
   app.use(helmet({
     contentSecurityPolicy: {

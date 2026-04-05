@@ -180,9 +180,12 @@ export class WebhooksController {
   async handleCielo(@Req() req: any): Promise<{ received: boolean }> {
     const body = req.body;
 
+    this.logger.debug(`Cielo webhook raw body: ${JSON.stringify(body)}`);
+    this.logger.debug(`Cielo webhook headers: content-type=${req.headers['content-type']}`);
+
     // Cielo pode enviar a MerchantKey no header ou no body (form-urlencoded)
     // form-urlencoded converte '+' em espaço — restauramos com replace
-    const rawKey = String(req.headers['merchantkey'] || req.headers['MerchantKey'] || body?.MerchantKey || '');
+    const rawKey = String(req.headers['merchantkey'] || req.headers['MerchantKey'] || body?.MerchantKey || body?.merchant_key || '');
     const receivedKey = rawKey.replace(/ /g, '+');
     const expectedKey = String(process.env.CIELO_MERCHANT_KEY || '');
 
