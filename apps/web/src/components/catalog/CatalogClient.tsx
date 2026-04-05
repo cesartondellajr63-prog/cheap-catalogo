@@ -214,7 +214,6 @@ export default function CatalogClient() {
                         </span>
                         <span className="puffs-tag">{p.puffs}</span>
                       </div>
-                      {p.dual && <span className="dual-tag">2 sabores</span>}
                     </div>
                     <div className="model-body">
                       <div className="model-name">{p.model}</div>

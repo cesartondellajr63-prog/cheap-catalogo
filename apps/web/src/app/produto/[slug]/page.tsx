@@ -91,9 +91,6 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
               </span>
               <span className="product-puffs-tag">{product.puffs} puffs</span>
             </div>
-            {product.dual && (
-              <div className="dual-badge">🔀 2 sabores em 1</div>
-            )}
           </div>
         </div>
 
@@ -110,8 +107,8 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
           </div>
 
           <div className="flavor-section">
-            <div className="flavor-title">{product.dual ? 'Escolha a combinação' : 'Escolha o sabor'}</div>
-            <div className="flavor-subtitle">{product.dual ? 'Cada unidade vem com 2 sabores juntos' : 'Selecione uma opção abaixo'}</div>
+            <div className="flavor-title">Escolha o sabor</div>
+            <div className="flavor-subtitle">Selecione uma opção abaixo</div>
             <div className="flavor-grid">
               {product.flavors.map(f => (
                 <div
@@ -123,7 +120,6 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                     <div className="flavor-radio-dot"></div>
                   </div>
                   <span className="flavor-name">{f}</span>
-                  {product.dual && <span className="dual-combo-label">COMBO</span>}
                 </div>
               ))}
             </div>
