@@ -230,7 +230,7 @@ export default function AdminDashboard() {
     const pendentes = orders.filter(o => (o as any).shippingStatus !== '🟢 Entregue').length;
     drawDonut(ctx, w, h,
       [concluidos, pendentes].filter((_, i) => [concluidos, pendentes][i] > 0),
-      ['#4cff72', '#ffb545'].filter((_, i) => [concluidos, pendentes][i] > 0)
+      ['#c8ff00', '#ff4d4d'].filter((_, i) => [concluidos, pendentes][i] > 0)
     );
   }, [orders, loading, page]);
 
@@ -450,8 +450,8 @@ export default function AdminDashboard() {
                   </div>
                   <div style={{ display:'flex',flexDirection:'column',gap:11 }}>
                     {[
-                      { label:'🟢 Entregues', val:chartConcluidos, color:'#4cff72' },
-                      { label:'⏳ Pendentes', val:chartPendentes, color:'#ffb545' },
+                      { label:'🟢 Entregues', val:chartConcluidos, color:'#c8ff00' },
+                      { label:'⏳ Pendentes', val:chartPendentes, color:'#ff4d4d' },
                     ].map(item => (
                       <div key={item.label} style={{ display:'flex',alignItems:'center',gap:10 }}>
                         <div style={{ width:10,height:10,borderRadius:4,background:item.color,flexShrink:0 }}></div>
