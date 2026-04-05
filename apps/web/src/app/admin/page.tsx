@@ -357,18 +357,6 @@ export default function AdminDashboard() {
     return r;
   }
 
-  function getBrandFromOrder(o: Order): string {
-    const name = (o.items?.[0]?.productName ?? '').toLowerCase();
-    if (name.includes('elfbar') || name.startsWith('elf ')) return 'Elf Bar';
-    if (name.includes('lost')) return 'Lost Mary';
-    if (name.includes('black sheep')) return 'Black Sheep';
-    if (name.includes('oxbar')) return 'Oxbar';
-    if (name.includes('ignite')) return 'Ignite';
-    return 'Outros';
-  }
-
-  const BRAND_ORDER = ['Elf Bar', 'Ignite', 'Lost Mary', 'Oxbar', 'Black Sheep', 'Outros'];
-
   function filterPedidos(list: Order[], f: typeof pFiltro, search: string) {
     let r = [...list];
     if (f === 'pendente') r = r.filter(o => (o as any).shippingStatus !== '🟢 Entregue');
@@ -382,7 +370,6 @@ export default function AdminDashboard() {
         o.items?.some(i => i.productName?.toLowerCase().includes(q))
       );
     }
-    r.sort((a, b) => BRAND_ORDER.indexOf(getBrandFromOrder(a)) - BRAND_ORDER.indexOf(getBrandFromOrder(b)));
     return r;
   }
 
@@ -729,7 +716,10 @@ export default function AdminDashboard() {
                         <tr><td colSpan={6}><StateBox loading /></td></tr>
                       ) : products.length === 0 ? (
                         <tr><td colSpan={6}><StateBox icon="🛍️" text="Nenhum produto cadastrado ainda." /></td></tr>
-                      ) : products.map(p => {
+                      ) : [...products].sort((a, b) => {
+                          const order = ['elfbar','ignite','lostmary','oxbar','blacksheep'];
+                          return (order.indexOf(a.brandId) ?? 99) - (order.indexOf(b.brandId) ?? 99);
+                        }).map(p => {
                         const brand = BRANDS_STATIC.find(b => b.id === p.brandId);
                         return (
                           <tr key={p.id} style={{ borderBottom:'1px solid rgba(255,255,255,0.07)',transition:'background 0.15s' }}
