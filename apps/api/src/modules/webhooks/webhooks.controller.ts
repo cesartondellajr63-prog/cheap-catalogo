@@ -6,11 +6,9 @@ import {
   Query,
   HttpCode,
   HttpStatus,
-  ForbiddenException,
   Logger,
   InternalServerErrorException,
 } from '@nestjs/common';
-import * as crypto from 'crypto';
 import { FirebaseService } from '../../shared/firebase/firebase.service';
 import { OrdersService } from '../orders/orders.service';
 
@@ -180,32 +178,7 @@ export class WebhooksController {
   async handleCielo(@Req() req: any): Promise<{ received: boolean }> {
     const body = req.body;
 
-    this.logger.debug(`Cielo webhook raw body: ${JSON.stringify(body)}`);
-    this.logger.debug(`Cielo webhook headers: content-type=${req.headers['content-type']}`);
-
-    // Cielo pode enviar a MerchantKey no header ou no body (form-urlencoded)
-    // form-urlencoded converte '+' em espaço — restauramos com replace
-    const rawKey = String(req.headers['merchantkey'] || req.headers['MerchantKey'] || body?.MerchantKey || body?.merchant_key || '');
-    const receivedKey = rawKey.replace(/ /g, '+');
-    const expectedKey = String(process.env.CIELO_MERCHANT_KEY || '');
-
-    this.logger.debug(`Cielo webhook key debug — received length: ${receivedKey.length}, expected length: ${expectedKey.length}, match: ${receivedKey === expectedKey}`);
-
-    let keyValid = false;
-    if (receivedKey.length > 0 && receivedKey.length === expectedKey.length) {
-      try {
-        keyValid = crypto.timingSafeEqual(Buffer.from(receivedKey), Buffer.from(expectedKey));
-      } catch {
-        keyValid = false;
-      }
-    }
-
-    if (!keyValid) {
-      this.logger.warn(`Cielo webhook: invalid or missing MerchantKey (received len=${receivedKey.length}, expected len=${expectedKey.length})`);
-      throw new ForbiddenException('Invalid MerchantKey.');
-    }
-
-    this.logger.log(`Cielo webhook received: ${JSON.stringify(body)}`);
+    this.logger.log(`Cielo webhook received — content-type: ${req.headers['content-type']} body: ${JSON.stringify(body)}`);
 
     // Cielo envia form-urlencoded — todos os valores chegam como string
     const orderStatus = Number(body?.order_status ?? body?.OrderStatus ?? 0);
