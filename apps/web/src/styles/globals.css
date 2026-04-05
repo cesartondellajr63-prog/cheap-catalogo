@@ -279,7 +279,7 @@ header::after{content:'';position:absolute;bottom:-80px;right:-60px;width:260px;
 .add-btn:hover{background:#d8ff20;transform:scale(1.01);}
 .add-btn:disabled{opacity:0.35;pointer-events:none;}
 .add-btn:active{transform:scale(0.98);}
-.toast{position:fixed;bottom:clamp(80px,12vw,100px);left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface);border:1px solid rgba(200,255,0,0.3);border-radius:14px;padding:12px 20px;font-size:14px;font-weight:600;color:#fff;display:flex;align-items:center;gap:8px;z-index:300;opacity:0;transition:all 0.3s;pointer-events:none;white-space:nowrap;max-width:90vw;box-shadow:0 8px 32px rgba(0,0,0,0.5);}
+.toast{position:fixed;bottom:clamp(80px,12vw,100px);left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface);border:1px solid rgba(200,255,0,0.3);border-radius:14px;padding:12px 20px;font-size:14px;font-weight:600;color:#fff;display:flex;align-items:flex-start;gap:8px;z-index:300;opacity:0;transition:all 0.3s;pointer-events:none;white-space:normal;word-break:break-word;width:max-content;max-width:88vw;box-shadow:0 8px 32px rgba(0,0,0,0.5);}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 .toast-check{color:var(--accent);font-size:18px;}
 
