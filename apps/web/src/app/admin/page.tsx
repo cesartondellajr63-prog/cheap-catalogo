@@ -150,6 +150,16 @@ export default function AdminDashboard() {
   // Modal
   const [modalOrder, setModalOrder] = useState<Order | null>(null);
 
+  // Mobile
+  const [isMobile, setIsMobile] = React.useState(false);
+  const [sidebarOpen, setSidebarOpen] = React.useState(false);
+  useEffect(() => {
+    const check = () => { setIsMobile(window.innerWidth < 768); if (window.innerWidth >= 768) setSidebarOpen(false); };
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -418,13 +428,29 @@ export default function AdminDashboard() {
     <>
       <style>{adminCSS}</style>
 
+      {/* Hamburger (mobile only) */}
+      {isMobile && (
+        <button onClick={() => setSidebarOpen(o => !o)} style={{
+          position:'fixed',top:14,left:14,zIndex:300,
+          background:'rgba(20,20,20,0.92)',border:'1px solid rgba(255,255,255,0.15)',
+          borderRadius:10,padding:'8px 11px',cursor:'pointer',fontSize:18,lineHeight:1,color:'#fff',
+        }}>☰</button>
+      )}
+
+      {/* Overlay (mobile sidebar open) */}
+      {isMobile && sidebarOpen && (
+        <div onClick={() => setSidebarOpen(false)} style={{ position:'fixed',inset:0,background:'rgba(0,0,0,0.65)',zIndex:150,backdropFilter:'blur(2px)' }} />
+      )}
+
       {/* Sidebar */}
       <aside style={{
-        position: 'fixed', top: 0, left: 0, bottom: 0, width: 232,
-        background: 'rgba(8,8,8,0.95)', backdropFilter: 'blur(30px)',
+        position: 'fixed', top: 0, bottom: 0, width: 232,
+        left: isMobile ? (sidebarOpen ? 0 : -240) : 0,
+        transition: 'left 0.28s cubic-bezier(0.4,0,0.2,1)',
+        background: 'rgba(8,8,8,0.98)', backdropFilter: 'blur(30px)',
         borderRight: '1px solid rgba(255,255,255,0.07)',
         display: 'flex', flexDirection: 'column',
-        zIndex: 100, padding: '28px 16px',
+        zIndex: 200, padding: '28px 16px',
       }}>
         <div style={{ display:'flex',alignItems:'center',gap:12,padding:'0 10px',marginBottom:40 }}>
           <div style={{ width:40,height:40,background:'linear-gradient(135deg,rgba(200,255,0,0.18),rgba(126,255,245,0.12))',border:'1px solid rgba(200,255,0,0.25)',borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',fontSize:17 }}>⚡</div>
@@ -472,20 +498,20 @@ export default function AdminDashboard() {
       </aside>
 
       {/* Main */}
-      <div style={{ marginLeft: 232, minHeight: '100vh', display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 1 }}>
+      <div style={{ marginLeft: isMobile ? 0 : 232, minHeight: '100vh', display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 1 }}>
 
         {/* ── DASHBOARD PAGE ── */}
         {page === 'dashboard' && (
           <>
-            <header style={topbar}>
+            <header className="admin-topbar" style={topbar}>
               <div style={{ fontSize:15,fontWeight:700,color:'#fff',letterSpacing:-0.3 }}>
                 Dashboard <span style={{ color:'#6a6a6a',fontWeight:400 }}>/ Visão Geral</span>
               </div>
             </header>
 
-            <div style={{ padding:'28px 32px',flex:1 }}>
+            <div style={{ padding: isMobile ? '16px' : '28px 32px', flex:1 }}>
               {/* KPI Cards */}
-              <div style={{ display:'grid',gridTemplateColumns:'2fr 1fr 1fr 1fr 1fr',gap:14,marginBottom:24 }}>
+              <div style={{ display:'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : '2fr 1fr 1fr 1fr 1fr', gap:14, marginBottom:24 }}>
                 <StatCard label="Total Vendido" value={fmtR(totalVendido)} sub="pagos + enviados" color="#c8ff00" icon="💰" featured />
                 <StatCard label="Total Pedidos" value={String(totalPedidos)} sub="todos os status" color="#7efff5" icon="📦" onClick={() => setFiltro('todos')} active={filtro === 'todos'} />
                 <StatCard label="Aguardando Pagamento" value={String(aguardando)} sub="pagamento pendente" color="#7efff5" icon="💳" onClick={() => setFiltro(filtro === 'aguardando' ? 'todos' : 'aguardando')} active={filtro === 'aguardando'} />
@@ -494,7 +520,7 @@ export default function AdminDashboard() {
               </div>
 
               {/* Chart + Filters row */}
-              <div style={{ display:'grid',gridTemplateColumns:'290px 1fr',gap:16,marginBottom:24,alignItems:'start' }}>
+              <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '290px 1fr', gap:16, marginBottom:24, alignItems:'start' }}>
                 {/* Chart */}
                 <div style={glassCard}>
                   <div style={cardTitle}><span style={cardTitleBar}></span>Distribuição de Status</div>
@@ -581,7 +607,7 @@ export default function AdminDashboard() {
         {/* ── PEDIDOS PAGE ── */}
         {page === 'pedidos' && (
           <>
-            <header style={topbar}>
+            <header className="admin-topbar" style={topbar}>
               <div style={{ fontSize:15,fontWeight:700,color:'#fff',letterSpacing:-0.3 }}>
                 Pedidos <span style={{ color:'#6a6a6a',fontWeight:400 }}>/ Lista Completa</span>
               </div>
@@ -600,8 +626,8 @@ export default function AdminDashboard() {
               </button>
             </header>
 
-            <div style={{ padding:'28px 32px',flex:1 }}>
-              <div style={{ display:'flex',alignItems:'center',gap:10,marginBottom:20,flexWrap:'wrap' }}>
+            <div style={{ padding: isMobile ? '16px' : '28px 32px', flex:1 }}>
+              <div style={{ display:'flex',alignItems:'center',gap:8,marginBottom:16,flexWrap:'wrap' }}>
                 {([
                   { key:'todos',      label:'Todos',             cls:'green' },
                   { key:'aguardando', label:'💳 Aguard. Pagamento', cls:'cyan'  },
@@ -637,7 +663,7 @@ export default function AdminDashboard() {
         {/* ── CLIENTES PAGE ── */}
         {page === 'clientes' && (
           <>
-            <header style={topbar}>
+            <header className="admin-topbar" style={topbar}>
               <div style={{ fontSize:15,fontWeight:700,color:'#fff',letterSpacing:-0.3 }}>
                 Clientes <span style={{ color:'#6a6a6a',fontWeight:400 }}>/ Base de Clientes</span>
               </div>
@@ -650,7 +676,7 @@ export default function AdminDashboard() {
               </button>
             </header>
 
-            <div style={{ padding:'28px 32px',flex:1 }}>
+            <div style={{ padding: isMobile ? '16px' : '28px 32px', flex:1 }}>
               <div style={tableCard}>
                 <div style={tableHead}>
                   <span style={{ fontSize:13,fontWeight:800,color:'#fff' }}>👥 Clientes Cadastrados</span>
@@ -710,7 +736,7 @@ export default function AdminDashboard() {
         {/* ── PRODUTOS PAGE ── */}
         {page === 'produtos' && (
           <>
-            <header style={topbar}>
+            <header className="admin-topbar" style={topbar}>
               <div style={{ fontSize:15,fontWeight:700,color:'#fff',letterSpacing:-0.3 }}>
                 Produtos <span style={{ color:'#6a6a6a',fontWeight:400 }}>/ Catálogo</span>
               </div>
@@ -732,7 +758,7 @@ export default function AdminDashboard() {
               </div>
             </header>
 
-            <div style={{ padding:'28px 32px',flex:1 }}>
+            <div style={{ padding: isMobile ? '16px' : '28px 32px', flex:1 }}>
               <div style={tableCard}>
                 <div style={tableHead}>
                   <span style={{ fontSize:13,fontWeight:800,color:'#fff' }}>🛍️ Produtos Cadastrados</span>
@@ -1130,7 +1156,7 @@ function OrdersTable({ orders, loading, onRowClick, onStatusChange, onShippingCh
           <span style={tableCount}>{orders.length} pedido{orders.length !== 1 ? 's' : ''}</span>
         </div>
       </div>
-      <div style={{ overflowX:'auto' }}>
+      <div className="admin-table-wrap" style={{ overflowX:'auto',WebkitOverflowScrolling:'touch' } as any}>
         <table style={{ width:'100%',borderCollapse:'collapse' }}>
           <thead>
             <tr>
@@ -1225,12 +1251,12 @@ function OrderModal({ order: o, onClose, onStatusChange, onShippingChange, onMot
         </div>
 
         {/* Body */}
-        <div style={{ padding:'24px 28px',display:'flex',flexDirection:'column',gap:20 }}>
+        <div className="admin-modal-body" style={{ padding:'24px 28px',display:'flex',flexDirection:'column',gap:20 }}>
 
           {/* Identificação */}
           <div>
             <ModalSection label="Identificação" />
-            <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:12 }}>
+            <div className="admin-modal-grid2" style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:12 }}>
               <div style={{ gridColumn:'1/-1' }}><ModalField label="Nº Pedido" value={o.orderNumber} mono /></div>
               <ModalField label="Data / Hora" value={fmtDate(o.createdAt)} mono />
               <ModalField label="Pagamento via" value={o.mpPaymentId ? '🟡 Mercado Pago' : '🔵 Cielo'} />
@@ -1240,7 +1266,7 @@ function OrderModal({ order: o, onClose, onStatusChange, onShippingChange, onMot
           {/* Cliente */}
           <div>
             <ModalSection label="Cliente" />
-            <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:12 }}>
+            <div className="admin-modal-grid2" style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:12 }}>
               <ModalField label="Nome" value={o.customer?.name} />
               <ModalField label="WhatsApp" value={o.customer?.phone} mono />
               {o.customer?.email && <div style={{ gridColumn:'1/-1' }}><ModalField label="Email" value={o.customer.email} /></div>}
@@ -1264,7 +1290,7 @@ function OrderModal({ order: o, onClose, onStatusChange, onShippingChange, onMot
           {/* Valores */}
           <div>
             <ModalSection label="Valores" />
-            <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:12 }}>
+            <div className="admin-modal-grid2" style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:12 }}>
               <ModalField label="Subtotal" value={fmtR(o.subtotal)} mono />
               <ModalField label="Frete" value={fmtR(o.shippingCost)} mono />
               <div style={{ gridColumn:'1/-1' }}><ModalField label="Total" value={fmtR(o.total)} mono lime big /></div>
@@ -1274,7 +1300,7 @@ function OrderModal({ order: o, onClose, onStatusChange, onShippingChange, onMot
           {/* Status */}
           <div>
             <ModalSection label="Status" />
-            <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:12 }}>
+            <div className="admin-modal-grid2" style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:12 }}>
               <div style={{ background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.07)',borderRadius:12,padding:'12px 14px' }}>
                 <div style={{ fontSize:10,fontWeight:700,letterSpacing:1,textTransform:'uppercase',color:'#8a8a8a',marginBottom:8 }}>Motoboy</div>
                 {(() => {
@@ -1490,7 +1516,7 @@ function ProductModal({ mode, product, onSaved, onClose }: {
 
         <div style={{ padding:'22px 28px',display:'flex',flexDirection:'column',gap:16 }}>
           {/* Name + Slug */}
-          <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:12 }}>
+          <div className="admin-modal-grid2" style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:12 }}>
             <div>
               <label style={{ fontSize:10,fontWeight:700,letterSpacing:1,textTransform:'uppercase',color:'#8a8a8a',display:'block',marginBottom:6 }}>Nome *</label>
               <input style={inp} value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value, slug: mode === 'create' ? autoSlug(e.target.value) : f.slug }))} placeholder="ex: Ignite V600" />
@@ -1621,5 +1647,29 @@ const adminCSS = `
   @keyframes dotb {
     0%,100%{opacity:0.15;transform:scale(0.8)}
     50%{opacity:1;transform:scale(1)}
+  }
+
+  /* ── MOBILE ── */
+  @media (max-width: 767px) {
+    /* Topbar: recuo para hamburger + esconde texto secundário */
+    .admin-topbar {
+      padding: 0 14px 0 56px !important;
+      gap: 8px !important;
+    }
+    .admin-topbar .admin-btn-refresh span,
+    .admin-topbar .admin-btn-refresh svg + * { display:none; }
+    .admin-btn-refresh { padding: 9px 12px !important; border-radius:10px !important; }
+
+    /* Busca no topbar da página Pedidos: esconder em telas muito pequenas */
+    .admin-topbar > div[style*="maxWidth:400"] { display:none !important; }
+
+    /* Modal: padding reduzido */
+    .admin-modal-body { padding: 14px 14px !important; }
+
+    /* Modal grids: colapsar para 1 coluna */
+    .admin-modal-grid2 { grid-template-columns: 1fr !important; }
+
+    /* Tabelas: scroll horizontal suave */
+    .admin-table-wrap { overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
   }
 `;
