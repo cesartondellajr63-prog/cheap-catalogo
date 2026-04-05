@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import * as crypto from 'crypto';
 import { FirebaseService } from '../../shared/firebase/firebase.service';
 import { CustomersService } from '../customers/customers.service';
 import { GoogleSheetsService } from '../../shared/google-sheets/google-sheets.service';
@@ -19,7 +20,7 @@ export class OrdersService {
   }
 
   private generateOrderNumber(): string {
-    const digits = Math.floor(10000000 + Math.random() * 90000000);
+    const digits = crypto.randomInt(10000000, 100000000);
     return `CP-${digits}`;
   }
 

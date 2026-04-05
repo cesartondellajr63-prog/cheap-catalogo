@@ -18,7 +18,7 @@ export default function AdminLoginPage() {
     setLoading(true);
     try {
       const result = await api.admin.login({ usuario, senha });
-      document.cookie = `admin-token=${result.token}; path=/; max-age=${60 * 60 * 24}; SameSite=Strict`;
+      sessionStorage.setItem('admin-token', result.token);
       router.push('/admin');
     } catch {
       setError('Usuário ou senha incorretos.');

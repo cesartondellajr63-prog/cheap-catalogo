@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Param, Post } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { CreateCardPaymentDto } from './dto/create-card-payment.dto';
@@ -20,7 +20,7 @@ export class PaymentsController {
   @Get('status/:orderId')
   getPaymentStatus(
     @Param('orderId') orderId: string,
-    @Query('accessToken') accessToken: string,
+    @Headers('x-access-token') accessToken: string,
   ) {
     return this.paymentsService.getPaymentStatus(orderId, accessToken);
   }

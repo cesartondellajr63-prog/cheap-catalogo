@@ -7,8 +7,8 @@ import type { Order, OrderStatus } from '@/types';
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
 function getToken(): string {
-  if (typeof document === 'undefined') return '';
-  return document.cookie.match(/admin-token=([^;]+)/)?.[1] ?? '';
+  if (typeof window === 'undefined') return '';
+  return sessionStorage.getItem('admin-token') ?? '';
 }
 
 async function apiFetch<T>(path: string, token: string, init?: RequestInit): Promise<T> {
@@ -316,7 +316,8 @@ export default function AdminDashboard() {
   }, [orders, modalOrder]);
 
   const logout = () => {
-    document.cookie = 'admin-token=; max-age=0; path=/';
+    sessionStorage.removeItem('admin-token');
+    fetch(`${BASE}/auth/logout`, { method: 'POST', credentials: 'include' }).catch(() => {});
     router.push('/admin/login');
   };
 

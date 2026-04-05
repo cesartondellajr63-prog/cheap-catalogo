@@ -12,7 +12,11 @@ export class JwtAuthGuard implements CanActivate {
 
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();
-    const token = request.headers['x-auth-token'] as string;
+    const headerToken = request.headers['x-auth-token'] as string;
+    const cookieHeader = request.headers['cookie'] as string || '';
+    const cookieMatch = cookieHeader.match(/admin-token=([^;]+)/);
+    const cookieToken = cookieMatch ? decodeURIComponent(cookieMatch[1]) : '';
+    const token = headerToken || cookieToken;
 
     if (!token) {
       throw new UnauthorizedException('No authentication token provided.');

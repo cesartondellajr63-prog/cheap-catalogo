@@ -162,6 +162,7 @@ export default function CheckoutPage() {
       });
       sessionStorage.setItem('pedidoAtual', JSON.stringify({
         orderId: result.orderId,
+        orderNumber: result.orderNumber,
         accessToken: result.accessToken,
       }));
       saveCart([]);

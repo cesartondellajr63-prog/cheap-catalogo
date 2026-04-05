@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef, Suspense, use } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { api } from '@/lib/api';
 import confetti from 'canvas-confetti';
 import type { PaymentStatus } from '@/types';
@@ -125,7 +124,6 @@ function CieloPoller({
 }
 
 function PedidoContent({ orderId: orderIdProp }: { orderId: string }) {
-  const searchParams = useSearchParams();
   const [status, setStatus] = useState<'pending' | 'approved' | 'rejected' | 'timeout'>('pending');
 
   useEffect(() => {
@@ -159,13 +157,9 @@ function PedidoContent({ orderId: orderIdProp }: { orderId: string }) {
     } catch { return {}; }
   })();
 
-  const orderId = orderIdProp
-    || searchParams.get('external_reference')
-    || (pedidoAtual.orderId ?? '');
+  const orderId = orderIdProp || (pedidoAtual.orderId as string | undefined) || '';
 
-  const accessToken = searchParams.get('token')
-    || searchParams.get('accessToken')
-    || (pedidoAtual.accessToken ?? '');
+  const accessToken = (pedidoAtual.accessToken as string | undefined) ?? '';
 
   // Se paymentType === 'card' ou não há accessToken → veio da Cielo (cartão)
   const isCard = pedidoAtual.paymentType === 'card' || !accessToken;

@@ -54,29 +54,35 @@ export class WebhooksController {
     const signatureHeader = req.headers['x-signature'] as string;
     const requestId = req.headers['x-request-id'] as string;
 
-    if (signatureHeader) {
-      const parts = signatureHeader.split(',');
-      let ts = '';
-      let hash = '';
+    if (!signatureHeader) {
+      this.logger.warn('Webhook received without x-signature header');
+      throw new ForbiddenException('Missing webhook signature.');
+    }
 
-      for (const part of parts) {
-        const [key, value] = part.trim().split('=');
-        if (key === 'ts') ts = value;
-        if (key === 'v1') hash = value;
-      }
+    const parts = signatureHeader.split(',');
+    let ts = '';
+    let hash = '';
 
-      if (ts && hash) {
-        const manifest = `id:${paymentId};request-id:${requestId || ''};ts:${ts};`;
-        const expectedHmac = crypto
-          .createHmac('sha256', this.webhookSecret)
-          .update(manifest)
-          .digest('hex');
+    for (const part of parts) {
+      const [key, value] = part.trim().split('=');
+      if (key === 'ts') ts = value;
+      if (key === 'v1') hash = value;
+    }
 
-        if (expectedHmac !== hash) {
-          this.logger.warn('Invalid webhook signature');
-          throw new ForbiddenException('Invalid webhook signature.');
-        }
-      }
+    if (!ts || !hash) {
+      this.logger.warn('Webhook signature header malformed');
+      throw new ForbiddenException('Invalid webhook signature format.');
+    }
+
+    const manifest = `id:${paymentId};request-id:${requestId || ''};ts:${ts};`;
+    const expectedHmac = crypto
+      .createHmac('sha256', this.webhookSecret)
+      .update(manifest)
+      .digest('hex');
+
+    if (expectedHmac !== hash) {
+      this.logger.warn('Invalid webhook signature');
+      throw new ForbiddenException('Invalid webhook signature.');
     }
 
     const mpToken = process.env.MERCADOPAGO_ACCESS_TOKEN;
@@ -179,9 +185,19 @@ export class WebhooksController {
   async handleCielo(@Req() req: any): Promise<{ received: boolean }> {
     const body = req.body;
 
-    const receivedKey = req.headers['merchantkey'] || req.headers['MerchantKey'] || body?.MerchantKey || '';
-    const expectedKey = process.env.CIELO_MERCHANT_KEY || '';
-    if (!receivedKey || receivedKey !== expectedKey) {
+    const receivedKey = String(req.headers['merchantkey'] || req.headers['MerchantKey'] || body?.MerchantKey || '');
+    const expectedKey = String(process.env.CIELO_MERCHANT_KEY || '');
+
+    let keyValid = false;
+    if (receivedKey.length > 0 && receivedKey.length === expectedKey.length) {
+      try {
+        keyValid = crypto.timingSafeEqual(Buffer.from(receivedKey), Buffer.from(expectedKey));
+      } catch {
+        keyValid = false;
+      }
+    }
+
+    if (!keyValid) {
       this.logger.warn('Cielo webhook: invalid or missing MerchantKey');
       throw new ForbiddenException('Invalid MerchantKey.');
     }

@@ -36,7 +36,8 @@ export class ThrottleGuard implements CanActivate {
     const { limit, windowSeconds, lockoutSeconds } = throttleConfig;
 
     const request = context.switchToHttp().getRequest();
-    const forwarded = request.headers['x-forwarded-for'];
+    const trustProxy = process.env.TRUST_PROXY === 'true';
+    const forwarded = trustProxy ? request.headers['x-forwarded-for'] : null;
     const ip: string = forwarded
       ? (forwarded as string).split(',')[0].trim()
       : request.socket?.remoteAddress || 'unknown';

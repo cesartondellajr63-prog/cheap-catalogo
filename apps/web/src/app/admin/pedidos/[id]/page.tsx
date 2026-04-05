@@ -6,8 +6,8 @@ import { api, fmtBRL } from '@/lib/api';
 import type { Order, OrderStatus } from '@/types';
 
 function getToken(): string {
-  if (typeof document === 'undefined') return '';
-  return document.cookie.match(/admin-token=([^;]+)/)?.[1] ?? '';
+  if (typeof window === 'undefined') return '';
+  return sessionStorage.getItem('admin-token') ?? '';
 }
 
 const STATUS_OPTIONS: { value: OrderStatus; label: string }[] = [

@@ -52,7 +52,9 @@ export const api = {
         body: JSON.stringify(body),
       }),
     getStatus: (orderId: string, accessToken: string): Promise<PaymentStatus> =>
-      request(`/payments/status/${orderId}?accessToken=${encodeURIComponent(accessToken)}`),
+      request(`/payments/status/${orderId}`, {
+        headers: { 'x-access-token': accessToken },
+      }),
     getCardStatus: (orderId: string): Promise<{ status: string; orderNumber: string }> =>
       request(`/payments/card-status/${orderId}`),
     createCard: (body: {

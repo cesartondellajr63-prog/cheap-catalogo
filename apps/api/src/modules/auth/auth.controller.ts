@@ -6,10 +6,12 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  Res,
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import { SetMetadata } from '@nestjs/common';
+import { Response } from 'express';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { ThrottleGuard, Throttle, ThrottleKey } from '../../shared/guards/throttle.guard';
@@ -23,13 +25,32 @@ export class AuthController {
   @UseGuards(ThrottleGuard)
   @Throttle({ limit: 5, windowSeconds: 900, lockoutSeconds: 900 })
   @ThrottleKey('auth_login')
-  login(@Body() dto: LoginDto) {
+  login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
     const { token, usuario } = this.authService.login(dto);
+    res.cookie('admin-token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 24 * 60 * 60 * 1000,
+      path: '/',
+    });
     return { ok: true, token, usuario };
   }
 
+  @Post('logout')
+  @HttpCode(HttpStatus.OK)
+  logout(@Res({ passthrough: true }) res: Response) {
+    res.clearCookie('admin-token', { path: '/' });
+    return { ok: true };
+  }
+
   @Get('verify')
-  verify(@Headers('x-auth-token') token: string) {
+  verify(@Headers('x-auth-token') headerToken: string, @Headers('cookie') cookieHeader: string) {
+    const cookieToken = cookieHeader?.match(/admin-token=([^;]+)/)?.[1]
+      ? decodeURIComponent(cookieHeader.match(/admin-token=([^;]+)/)![1])
+      : '';
+    const token = headerToken || cookieToken;
+
     if (!token) {
       throw new UnauthorizedException('No token provided.');
     }
