@@ -203,6 +203,22 @@ export class OrdersService {
     return { id, ...updated.data() };
   }
 
+  async archive(id: string): Promise<{ success: boolean }> {
+    const docRef = this.firebaseService.db.collection('orders').doc(id);
+    const docSnap = await docRef.get();
+    if (!docSnap.exists) throw new NotFoundException(`Order with id "${id}" not found.`);
+    await docRef.update({ archived: true, updatedAt: Date.now() });
+    return { success: true };
+  }
+
+  async unarchive(id: string): Promise<{ success: boolean }> {
+    const docRef = this.firebaseService.db.collection('orders').doc(id);
+    const docSnap = await docRef.get();
+    if (!docSnap.exists) throw new NotFoundException(`Order with id "${id}" not found.`);
+    await docRef.update({ archived: false, updatedAt: Date.now() });
+    return { success: true };
+  }
+
   async updatePaymentInfo(
     id: string,
     mpPaymentId: string | null,

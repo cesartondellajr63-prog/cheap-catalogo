@@ -71,4 +71,16 @@ export class OrdersController {
   ) {
     return this.ordersService.updateMotoboy(id, motoboy);
   }
+
+  @Patch(':id/archive')
+  @UseGuards(JwtAuthGuard)
+  archive(@Param('id') id: string) {
+    return this.ordersService.archive(id);
+  }
+
+  @Patch(':id/unarchive')
+  @UseGuards(JwtAuthGuard)
+  unarchive(@Param('id') id: string) {
+    return this.ordersService.unarchive(id);
+  }
 }

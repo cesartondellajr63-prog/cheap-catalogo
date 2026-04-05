@@ -131,13 +131,13 @@ export default function AdminDashboard() {
   const [usuario, setUsuario] = useState('');
 
   // Filters — dashboard
-  const [filtro, setFiltro] = useState<'todos' | 'aguardando' | 'pendente' | 'concluido'>('todos');
+  const [filtro, setFiltro] = useState<'todos' | 'aguardando' | 'pendente' | 'concluido' | 'arquivado'>('todos');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
 
   // Filters — pedidos page
   const [pSearch, setPSearch] = useState('');
-  const [pFiltro, setPFiltro] = useState<'todos' | 'aguardando' | 'pendente' | 'concluido'>('todos');
+  const [pFiltro, setPFiltro] = useState<'todos' | 'aguardando' | 'pendente' | 'concluido' | 'arquivado'>('todos');
 
   // Filters — clientes
   const [cSearch, setCSearch] = useState('');
@@ -341,6 +341,17 @@ export default function AdminDashboard() {
     }
   }, [orders, modalOrder]);
 
+  const archiveOrder = useCallback(async (id: string, archived: boolean) => {
+    const token = getToken();
+    setOrders(list => list.map(o => o.id === id ? { ...o, archived } as any : o));
+    try {
+      await apiFetch(`/orders/${id}/${archived ? 'archive' : 'unarchive'}`, token, { method: 'PATCH' });
+    } catch (e) {
+      setOrders(list => list.map(o => o.id === id ? { ...o, archived: !archived } as any : o));
+      alert('Erro ao arquivar pedido.');
+    }
+  }, []);
+
   const logout = () => {
     sessionStorage.removeItem('admin-token');
     fetch(`${BASE}/auth/logout`, { method: 'POST', credentials: 'include' }).catch(() => {});
@@ -350,9 +361,13 @@ export default function AdminDashboard() {
   // ── Filtered lists ──
   function filterOrders(list: Order[], f: typeof filtro, dFrom: string, dTo: string) {
     let r = [...list];
-    if (f === 'aguardando') r = r.filter(o => o.status === 'PENDING');
-    else if (f === 'pendente') r = r.filter(o => o.status !== 'PENDING' && (o as any).shippingStatus !== '🟢 Entregue');
-    else if (f === 'concluido') r = r.filter(o => (o as any).shippingStatus === '🟢 Entregue');
+    if (f === 'arquivado') r = r.filter(o => (o as any).archived);
+    else {
+      r = r.filter(o => !(o as any).archived);
+      if (f === 'aguardando') r = r.filter(o => o.status === 'PENDING');
+      else if (f === 'pendente') r = r.filter(o => o.status !== 'PENDING' && (o as any).shippingStatus !== '🟢 Entregue');
+      else if (f === 'concluido') r = r.filter(o => (o as any).shippingStatus === '🟢 Entregue');
+    }
     if (dFrom) r = r.filter(o => new Date(o.createdAt) >= new Date(dFrom));
     if (dTo) r = r.filter(o => new Date(o.createdAt) <= new Date(dTo + 'T23:59:59'));
     return r;
@@ -360,9 +375,13 @@ export default function AdminDashboard() {
 
   function filterPedidos(list: Order[], f: typeof pFiltro, search: string) {
     let r = [...list];
-    if (f === 'aguardando') r = r.filter(o => o.status === 'PENDING');
-    else if (f === 'pendente') r = r.filter(o => o.status !== 'PENDING' && (o as any).shippingStatus !== '🟢 Entregue');
-    else if (f === 'concluido') r = r.filter(o => (o as any).shippingStatus === '🟢 Entregue');
+    if (f === 'arquivado') r = r.filter(o => (o as any).archived);
+    else {
+      r = r.filter(o => !(o as any).archived);
+      if (f === 'aguardando') r = r.filter(o => o.status === 'PENDING');
+      else if (f === 'pendente') r = r.filter(o => o.status !== 'PENDING' && (o as any).shippingStatus !== '🟢 Entregue');
+      else if (f === 'concluido') r = r.filter(o => (o as any).shippingStatus === '🟢 Entregue');
+    }
     if (search) {
       const q = search.toLowerCase();
       r = r.filter(o =>
@@ -503,8 +522,9 @@ export default function AdminDashboard() {
                     <div style={{ display:'flex',flexWrap:'wrap',gap:8 }}>
                       {([
                         { key:'todos',     label:'Todos',          cls:'green' },
-                        { key:'aguardando',label:'💳 Aguard. Pagamento', cls:'cyan'  },
-                        { key:'pendente',  label:'🏍️ Aguard. Entrega',  cls:'amber' },
+                        { key:'aguardando', label:'💳 Aguard. Pagamento', cls:'cyan'  },
+                        { key:'pendente',   label:'🏍️ Aguard. Entrega',  cls:'amber' },
+                        { key:'arquivado',  label:'📦 Arquivados',        cls:'gray'  },
                         { key:'concluido', label:'✅ Concluídos',  cls:'green' },
                       ] as const).map(f => (
                         <button key={f.key} onClick={() => setFiltro(f.key)}
@@ -512,6 +532,7 @@ export default function AdminDashboard() {
                             ...(filtro === f.key
                               ? f.cls==='amber' ? { background:'rgba(255,181,69,0.1)',borderColor:'rgba(255,181,69,0.3)',color:'#ffb545' }
                               : f.cls==='cyan'  ? { background:'rgba(126,255,245,0.1)',borderColor:'rgba(126,255,245,0.3)',color:'#7efff5' }
+                              : f.cls==='gray'  ? { background:'rgba(160,160,160,0.1)',borderColor:'rgba(160,160,160,0.3)',color:'#b0b0b0' }
                               : { background:'rgba(200,255,0,0.1)',borderColor:'rgba(200,255,0,0.3)',color:'#c8ff00' }
                               : { background:'rgba(255,255,255,0.04)',borderColor:'rgba(255,255,255,0.12)',color:'#b0b0b0' })
                           }}>
@@ -577,6 +598,7 @@ export default function AdminDashboard() {
                   { key:'todos',      label:'Todos',             cls:'green' },
                   { key:'aguardando', label:'💳 Aguard. Pagamento', cls:'cyan'  },
                   { key:'pendente',   label:'🏍️ Aguard. Entrega',  cls:'amber' },
+                  { key:'arquivado',  label:'📦 Arquivados',        cls:'gray'  },
                   { key:'concluido',  label:'✅ Concluídos',     cls:'green' },
                 ] as const).map(f => (
                   <button key={f.key} onClick={() => setPFiltro(f.key)}
@@ -822,7 +844,7 @@ export default function AdminDashboard() {
 
       {/* ── ORDER DETAIL MODAL ── */}
       {modalOrder && (
-        <OrderModal order={modalOrder} onClose={() => setModalOrder(null)} onStatusChange={updateOrderStatus} onTrackingChange={updateTrackingLink} />
+        <OrderModal order={modalOrder} onClose={() => setModalOrder(null)} onStatusChange={updateOrderStatus} onTrackingChange={updateTrackingLink} onArchive={archiveOrder} />
       )}
 
       {/* ── PRODUCT MODAL ── */}
@@ -1147,11 +1169,12 @@ function StateBox({ icon, text, loading }: { icon?: string; text?: string; loadi
 }
 
 // ── Order Detail Modal ──
-function OrderModal({ order: o, onClose, onStatusChange, onTrackingChange }: {
+function OrderModal({ order: o, onClose, onStatusChange, onTrackingChange, onArchive }: {
   order: Order;
   onClose: () => void;
   onStatusChange: (id: string, status: OrderStatus) => Promise<void>;
   onTrackingChange: (id: string, trackingLink: string) => void;
+  onArchive: (id: string, archived: boolean) => void;
 }) {
   const [trackingInput, setTrackingInput] = React.useState<string>((o as any).trackingLink ?? '');
   const [trackingSaved, setTrackingSaved] = React.useState(false);
@@ -1304,6 +1327,14 @@ function OrderModal({ order: o, onClose, onStatusChange, onTrackingChange }: {
               💬 WhatsApp
             </a>
           )}
+          <button onClick={() => { onArchive(o.id, !(o as any).archived); onClose(); }}
+            style={{ display:'flex',alignItems:'center',gap:8,padding:'10px 20px',borderRadius:10,
+              background:(o as any).archived ? 'rgba(200,255,0,0.08)' : 'rgba(255,181,69,0.08)',
+              border:(o as any).archived ? '1px solid rgba(200,255,0,0.25)' : '1px solid rgba(255,181,69,0.25)',
+              color:(o as any).archived ? '#c8ff00' : '#ffb545',
+              fontFamily:'Satoshi,sans-serif',fontSize:13,fontWeight:700,cursor:'pointer',transition:'all 0.2s' }}>
+            {(o as any).archived ? '📤 Desarquivar' : '📦 Arquivar'}
+          </button>
           <button onClick={onClose} style={{ display:'flex',alignItems:'center',gap:8,padding:'10px 20px',borderRadius:10,background:'transparent',border:'1px solid rgba(255,255,255,0.12)',color:'#b0b0b0',fontFamily:'Satoshi,sans-serif',fontSize:13,fontWeight:600,cursor:'pointer',transition:'all 0.2s' }}>
             Fechar
           </button>
