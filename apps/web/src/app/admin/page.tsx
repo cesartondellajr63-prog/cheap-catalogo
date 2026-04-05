@@ -1460,14 +1460,14 @@ function ProductModal({ mode, product, onSaved, onClose }: {
               {newBrand !== null && (
                 <div style={{ marginTop:8,padding:'10px 12px',background:'rgba(200,255,0,0.05)',border:'1px solid rgba(200,255,0,0.2)',borderRadius:10,display:'flex',flexDirection:'column',gap:8 }}>
                   <div style={{ fontSize:10,fontWeight:700,color:'#c8ff00',letterSpacing:1,textTransform:'uppercase' }}>Nova Marca</div>
+                  <input style={{ ...inp,padding:'8px 12px',fontSize:13 }} value={newBrand.name} onChange={e => setNewBrand(n => n ? { ...n, name: e.target.value } : n)} placeholder="Nome da marca" autoFocus />
                   <div style={{ display:'flex',gap:8,alignItems:'center' }}>
-                    <input style={{ ...inp,flex:1,padding:'6px 10px',fontSize:12 }} value={newBrand.name} onChange={e => setNewBrand(n => n ? { ...n, name: e.target.value } : n)} placeholder="Nome da marca" autoFocus />
                     <div style={{ display:'flex',alignItems:'center',gap:6 }}>
                       <span style={{ fontSize:10,color:'#8a8a8a',whiteSpace:'nowrap' }}>Cor</span>
                       <input type="color" value={newBrand.color} onChange={e => setNewBrand(n => n ? { ...n, color: e.target.value } : n)} style={{ width:36,height:32,padding:2,borderRadius:8,border:'1px solid rgba(255,255,255,0.12)',background:'transparent',cursor:'pointer' }} />
                     </div>
-                    <button onClick={saveNewBrand} disabled={savingBrand || !newBrand.name} style={{ padding:'6px 14px',borderRadius:8,background:'rgba(200,255,0,0.15)',border:'1px solid rgba(200,255,0,0.3)',color:'#c8ff00',fontFamily:'Satoshi,sans-serif',fontSize:11,fontWeight:700,cursor:'pointer',whiteSpace:'nowrap',opacity:!newBrand.name?0.5:1 }}>
-                      {savingBrand ? '...' : 'Criar'}
+                    <button onClick={saveNewBrand} disabled={savingBrand || !newBrand.name} style={{ flex:1,padding:'8px 14px',borderRadius:8,background:'rgba(200,255,0,0.15)',border:'1px solid rgba(200,255,0,0.3)',color:'#c8ff00',fontFamily:'Satoshi,sans-serif',fontSize:12,fontWeight:700,cursor:'pointer',whiteSpace:'nowrap',opacity:!newBrand.name?0.5:1 }}>
+                      {savingBrand ? '...' : 'Criar marca'}
                     </button>
                     <button onClick={() => setNewBrand(null)} style={{ background:'none',border:'none',color:'#6a6a6a',fontSize:18,cursor:'pointer',lineHeight:1 }}>×</button>
                   </div>
