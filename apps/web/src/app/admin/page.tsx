@@ -238,51 +238,69 @@ export default function AdminDashboard() {
 
   const updateShippingStatus = useCallback(async (id: string, shippingStatus: string) => {
     const token = getToken();
+    const prev = orders.find(o => o.id === id);
+    // Optimistic update
+    setOrders(list => list.map(o => o.id === id ? { ...o, shippingStatus } : o));
+    if (modalOrder?.id === id) setModalOrder(m => m ? { ...m, shippingStatus } as any : m);
     try {
-      const raw = await apiFetch<any>(`/orders/${id}/shipping-status`, token, {
+      await apiFetch<any>(`/orders/${id}/shipping-status`, token, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ shippingStatus }),
       });
-      const updated = normalizeOrder(raw);
-      setOrders(prev => prev.map(o => o.id === id ? updated : o));
-      if (modalOrder?.id === id) setModalOrder(updated);
     } catch (e) {
+      // Revert on error
+      if (prev) {
+        setOrders(list => list.map(o => o.id === id ? prev : o));
+        if (modalOrder?.id === id) setModalOrder(prev);
+      }
       alert('Erro ao atualizar frete: ' + (e instanceof Error ? e.message : 'desconhecido'));
     }
-  }, [modalOrder]);
+  }, [orders, modalOrder]);
 
   const updateMotoboy = useCallback(async (id: string, motoboy: string) => {
     const token = getToken();
+    const prev = orders.find(o => o.id === id);
+    // Optimistic update
+    setOrders(list => list.map(o => o.id === id ? { ...o, motoboy } : o));
+    if (modalOrder?.id === id) setModalOrder(m => m ? { ...m, motoboy } as any : m);
     try {
-      const raw = await apiFetch<any>(`/orders/${id}/motoboy`, token, {
+      await apiFetch<any>(`/orders/${id}/motoboy`, token, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ motoboy }),
       });
-      const updated = normalizeOrder(raw);
-      setOrders(prev => prev.map(o => o.id === id ? updated : o));
-      if (modalOrder?.id === id) setModalOrder(updated);
     } catch (e) {
+      // Revert on error
+      if (prev) {
+        setOrders(list => list.map(o => o.id === id ? prev : o));
+        if (modalOrder?.id === id) setModalOrder(prev);
+      }
       alert('Erro ao atualizar motoboy: ' + (e instanceof Error ? e.message : 'desconhecido'));
     }
-  }, [modalOrder]);
+  }, [orders, modalOrder]);
 
   const updateOrderStatus = useCallback(async (id: string, status: OrderStatus) => {
     const token = getToken();
+    const prev = orders.find(o => o.id === id);
+    // Optimistic update
+    setOrders(list => list.map(o => o.id === id ? { ...o, status } : o));
+    if (modalOrder?.id === id) setModalOrder(m => m ? { ...m, status } : m);
     try {
-      const raw = await apiFetch<any>(`/orders/${id}/status`, token, {
+      await apiFetch<any>(`/orders/${id}/status`, token, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
       });
-      const updated = normalizeOrder(raw);
-      setOrders(prev => prev.map(o => o.id === id ? updated : o));
-      if (modalOrder?.id === id) setModalOrder(updated);
     } catch (e) {
+      // Revert on error
+      if (prev) {
+        setOrders(list => list.map(o => o.id === id ? prev : o));
+        if (modalOrder?.id === id) setModalOrder(prev);
+      }
       alert('Erro ao atualizar: ' + (e instanceof Error ? e.message : 'desconhecido'));
     }
-  }, [modalOrder]);
+  }, [orders, modalOrder]);
 
   const logout = () => {
     document.cookie = 'admin-token=; max-age=0; path=/';
