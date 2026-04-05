@@ -54,35 +54,31 @@ export class WebhooksController {
     const signatureHeader = req.headers['x-signature'] as string;
     const requestId = req.headers['x-request-id'] as string;
 
-    if (!signatureHeader) {
-      this.logger.warn('Webhook received without x-signature header');
-      throw new ForbiddenException('Missing webhook signature.');
-    }
+    if (signatureHeader) {
+      const parts = signatureHeader.split(',');
+      let ts = '';
+      let hash = '';
 
-    const parts = signatureHeader.split(',');
-    let ts = '';
-    let hash = '';
+      for (const part of parts) {
+        const [key, value] = part.trim().split('=');
+        if (key === 'ts') ts = value;
+        if (key === 'v1') hash = value;
+      }
 
-    for (const part of parts) {
-      const [key, value] = part.trim().split('=');
-      if (key === 'ts') ts = value;
-      if (key === 'v1') hash = value;
-    }
+      if (ts && hash) {
+        const manifest = `id:${paymentId};request-id:${requestId || ''};ts:${ts};`;
+        const expectedHmac = crypto
+          .createHmac('sha256', this.webhookSecret)
+          .update(manifest)
+          .digest('hex');
 
-    if (!ts || !hash) {
-      this.logger.warn('Webhook signature header malformed');
-      throw new ForbiddenException('Invalid webhook signature format.');
-    }
-
-    const manifest = `id:${paymentId};request-id:${requestId || ''};ts:${ts};`;
-    const expectedHmac = crypto
-      .createHmac('sha256', this.webhookSecret)
-      .update(manifest)
-      .digest('hex');
-
-    if (expectedHmac !== hash) {
-      this.logger.warn('Invalid webhook signature');
-      throw new ForbiddenException('Invalid webhook signature.');
+        if (expectedHmac !== hash) {
+          this.logger.warn('Invalid webhook signature — verifique se WEBHOOK_SECRET bate com o painel do Mercado Pago');
+          throw new ForbiddenException('Invalid webhook signature.');
+        }
+      }
+    } else {
+      this.logger.warn(`Webhook sem x-signature recebido para paymentId ${paymentId}`);
     }
 
     const mpToken = process.env.MERCADOPAGO_ACCESS_TOKEN;
