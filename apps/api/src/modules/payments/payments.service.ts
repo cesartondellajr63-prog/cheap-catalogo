@@ -95,7 +95,7 @@ export class PaymentsService {
     if (!mpResponse.ok) {
       const errorBody = await mpResponse.text();
       this.logger.error(`MercadoPago preference creation failed [${mpResponse.status}]: ${errorBody}`);
-      throw new InternalServerErrorException(`MercadoPago error ${mpResponse.status}: ${errorBody}`);
+      throw new InternalServerErrorException('Erro ao criar preferência de pagamento. Tente novamente.');
     }
 
     const data = (await mpResponse.json()) as any;
@@ -103,9 +103,16 @@ export class PaymentsService {
     const sessionAccessToken = crypto.randomBytes(32).toString('hex');
     const tokenHash = crypto.createHash('sha256').update(sessionAccessToken).digest('hex');
 
-    // Cria o pedido no Firestore com todas as informações do cliente
-    const existingOrder = await this.firebaseService.db.collection('orders').doc(dto.orderId).get();
-    if (!existingOrder.exists) {
+    // Cria o pedido atomicamente para evitar race condition com requests duplicados
+    const orderRef = this.firebaseService.db.collection('orders').doc(dto.orderId);
+    let orderCreated = false;
+    await this.firebaseService.db.runTransaction(async (tx) => {
+      const snap = await tx.get(orderRef);
+      if (!snap.exists) {
+        orderCreated = true;
+      }
+    });
+    if (orderCreated) {
       await this.ordersService.createWithId(dto.orderId, {
         customerName: dto.customerName,
         customerPhone: dto.customerPhone.replace(/\D/g, ''),
@@ -233,7 +240,7 @@ export class PaymentsService {
     if (!cieloRes.ok) {
       const err = await cieloRes.text();
       this.logger.error(`Cielo error [${cieloRes.status}]: ${err}`);
-      throw new InternalServerErrorException(`Cielo error ${cieloRes.status}: ${err}`);
+      throw new InternalServerErrorException('Erro ao criar pagamento com cartão. Tente novamente.');
     }
 
     const data = (await cieloRes.json()) as any;
@@ -278,7 +285,15 @@ export class PaymentsService {
 
     const providedHash = crypto.createHash('sha256').update(accessToken).digest('hex');
 
-    if (providedHash !== session.tokenHash) {
+    let tokenValid = false;
+    try {
+      const a = Buffer.from(providedHash);
+      const b = Buffer.from(session.tokenHash);
+      tokenValid = a.length === b.length && crypto.timingSafeEqual(a, b);
+    } catch {
+      tokenValid = false;
+    }
+    if (!tokenValid) {
       throw new ForbiddenException('Invalid access token.');
     }
 

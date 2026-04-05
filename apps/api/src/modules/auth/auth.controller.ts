@@ -46,9 +46,8 @@ export class AuthController {
 
   @Get('verify')
   verify(@Headers('x-auth-token') headerToken: string, @Headers('cookie') cookieHeader: string) {
-    const cookieToken = cookieHeader?.match(/admin-token=([^;]+)/)?.[1]
-      ? decodeURIComponent(cookieHeader.match(/admin-token=([^;]+)/)![1])
-      : '';
+    const cookieMatch = cookieHeader?.match(/admin-token=([^;]+)/);
+    const cookieToken = cookieMatch ? decodeURIComponent(cookieMatch[1]) : '';
     const token = headerToken || cookieToken;
 
     if (!token) {

@@ -32,7 +32,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   useEffect(() => {
     const token = getToken();
     if (!token) { router.replace('/admin/login'); return; }
-    api.orders.getById(id)
+    api.orders.getById(id, token)
       .then(o => { setOrder(o); setNewStatus(o.status); })
       .catch(() => setError('Pedido não encontrado.'))
       .finally(() => setLoading(false));

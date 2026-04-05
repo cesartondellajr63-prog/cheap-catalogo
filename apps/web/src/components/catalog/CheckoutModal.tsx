@@ -200,7 +200,7 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
         address: `${rua}, ${numero}${complemento ? ', ' + complemento : ''}, ${bairro}`,
         city: cidade,
       });
-      localStorage.setItem('pedidoAtual', JSON.stringify({
+      sessionStorage.setItem('pedidoAtual', JSON.stringify({
         orderId: result.orderId,
         orderNumber: result.orderNumber,
         accessToken: result.accessToken,
@@ -240,7 +240,7 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
         estado,
         cep,
       });
-      localStorage.setItem('pedidoAtual', JSON.stringify({
+      sessionStorage.setItem('pedidoAtual', JSON.stringify({
         paymentType: 'card',
         orderId: result.orderId,
         orderNumber: result.orderNumber,

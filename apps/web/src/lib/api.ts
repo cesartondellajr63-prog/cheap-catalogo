@@ -93,8 +93,8 @@ export const api = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       }),
-    getById: (id: string): Promise<Order> =>
-      request(`/orders/${id}`),
+    getById: (id: string, token: string): Promise<Order> =>
+      request(`/orders/${id}`, { headers: { 'x-auth-token': token } }),
     list: (token: string): Promise<Order[]> =>
       request('/orders', { headers: { 'x-auth-token': token } }),
     updateStatus: (id: string, status: string, token: string): Promise<Order> =>

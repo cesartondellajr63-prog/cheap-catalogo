@@ -13,9 +13,9 @@ export class JwtAuthGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();
     const headerToken = request.headers['x-auth-token'] as string;
-    const cookieHeader = request.headers['cookie'] as string || '';
+    const cookieHeader = (request.headers['cookie'] as string) || '';
     const cookieMatch = cookieHeader.match(/admin-token=([^;]+)/);
-    const cookieToken = cookieMatch ? decodeURIComponent(cookieMatch[1]) : '';
+    const cookieToken = cookieMatch?.[1] ? decodeURIComponent(cookieMatch[1]) : '';
     const token = headerToken || cookieToken;
 
     if (!token) {

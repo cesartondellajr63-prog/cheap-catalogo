@@ -29,6 +29,7 @@ export class OrdersController {
   }
 
   @Get(':id')
+  @UseGuards(JwtAuthGuard)
   findById(@Param('id') id: string) {
     return this.ordersService.findById(id);
   }

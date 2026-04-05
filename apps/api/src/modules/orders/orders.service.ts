@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import * as crypto from 'crypto';
 import { FirebaseService } from '../../shared/firebase/firebase.service';
 import { CustomersService } from '../customers/customers.service';
@@ -9,6 +9,8 @@ const VALID_STATUSES = ['PENDING', 'PAID', 'SHIPPED', 'DELIVERED', 'CANCELLED', 
 
 @Injectable()
 export class OrdersService {
+  private readonly logger = new Logger(OrdersService.name);
+
   constructor(
     private readonly firebaseService: FirebaseService,
     private readonly customersService: CustomersService,
@@ -57,10 +59,10 @@ export class OrdersService {
       phone: dto.customerPhone,
       email: dto.customerEmail,
       address: `${dto.address}, ${dto.city}`,
-    }).catch(() => {});
+    }).catch((err: Error) => this.logger.error(`Failed to upsert customer: ${err.message}`));
 
     // Sincroniza com Google Sheets
-    this.googleSheetsService.appendOrderRow(order).catch(() => {});
+    this.googleSheetsService.appendOrderRow(order).catch((err: Error) => this.logger.error(`Failed to sync Google Sheets: ${err.message}`));
 
     return order;
   }
@@ -99,10 +101,10 @@ export class OrdersService {
       phone: dto.customerPhone,
       email: dto.customerEmail,
       address: `${dto.address}, ${dto.city}`,
-    }).catch(() => {});
+    }).catch((err: Error) => this.logger.error(`Failed to upsert customer: ${err.message}`));
 
     // Sincroniza com Google Sheets
-    this.googleSheetsService.appendOrderRow(order).catch(() => {});
+    this.googleSheetsService.appendOrderRow(order).catch((err: Error) => this.logger.error(`Failed to sync Google Sheets: ${err.message}`));
 
     return order;
   }
