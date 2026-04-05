@@ -1,12 +1,16 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { FirebaseService } from '../../shared/firebase/firebase.service';
+import { CustomersService } from '../customers/customers.service';
 import { CreateOrderDto, OrderItemDto } from './dto/create-order.dto';
 
 const VALID_STATUSES = ['PENDING', 'PAID', 'SHIPPED', 'DELIVERED', 'CANCELLED', 'REFUNDED'];
 
 @Injectable()
 export class OrdersService {
-  constructor(private readonly firebaseService: FirebaseService) {}
+  constructor(
+    private readonly firebaseService: FirebaseService,
+    private readonly customersService: CustomersService,
+  ) {}
 
   private calculateSubtotal(items: OrderItemDto[]): number {
     return items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
@@ -43,6 +47,15 @@ export class OrdersService {
     };
 
     await this.firebaseService.db.collection('orders').doc(id).set(order);
+
+    // Registra/atualiza cliente deduplcado por telefone
+    this.customersService.upsertFromOrder({
+      name: dto.customerName,
+      phone: dto.customerPhone,
+      email: dto.customerEmail,
+      address: `${dto.address}, ${dto.city}`,
+    }).catch(() => {});
+
     return order;
   }
 
@@ -73,6 +86,15 @@ export class OrdersService {
     };
 
     await this.firebaseService.db.collection('orders').doc(id).set(order);
+
+    // Registra/atualiza cliente deduplcado por telefone
+    this.customersService.upsertFromOrder({
+      name: dto.customerName,
+      phone: dto.customerPhone,
+      email: dto.customerEmail,
+      address: `${dto.address}, ${dto.city}`,
+    }).catch(() => {});
+
     return order;
   }
 
