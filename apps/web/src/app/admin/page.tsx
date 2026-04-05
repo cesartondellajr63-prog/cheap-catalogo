@@ -137,7 +137,7 @@ export default function AdminDashboard() {
 
   // Filters — pedidos page
   const [pSearch, setPSearch] = useState('');
-  const [pFiltro, setPFiltro] = useState<'todos' | 'pendente' | 'concluido'>('todos');
+  const [pFiltro, setPFiltro] = useState<'todos' | 'aguardando' | 'pendente' | 'concluido'>('todos');
 
   // Filters — clientes
   const [cSearch, setCSearch] = useState('');
@@ -351,7 +351,7 @@ export default function AdminDashboard() {
   function filterOrders(list: Order[], f: typeof filtro, dFrom: string, dTo: string) {
     let r = [...list];
     if (f === 'aguardando') r = r.filter(o => o.status === 'PENDING');
-    else if (f === 'pendente') r = r.filter(o => (o as any).shippingStatus !== '🟢 Entregue');
+    else if (f === 'pendente') r = r.filter(o => o.status !== 'PENDING' && (o as any).shippingStatus !== '🟢 Entregue');
     else if (f === 'concluido') r = r.filter(o => (o as any).shippingStatus === '🟢 Entregue');
     if (dFrom) r = r.filter(o => new Date(o.createdAt) >= new Date(dFrom));
     if (dTo) r = r.filter(o => new Date(o.createdAt) <= new Date(dTo + 'T23:59:59'));
@@ -360,7 +360,8 @@ export default function AdminDashboard() {
 
   function filterPedidos(list: Order[], f: typeof pFiltro, search: string) {
     let r = [...list];
-    if (f === 'pendente') r = r.filter(o => (o as any).shippingStatus !== '🟢 Entregue');
+    if (f === 'aguardando') r = r.filter(o => o.status === 'PENDING');
+    else if (f === 'pendente') r = r.filter(o => o.status !== 'PENDING' && (o as any).shippingStatus !== '🟢 Entregue');
     else if (f === 'concluido') r = r.filter(o => (o as any).shippingStatus === '🟢 Entregue');
     if (search) {
       const q = search.toLowerCase();
@@ -573,14 +574,16 @@ export default function AdminDashboard() {
             <div style={{ padding:'28px 32px',flex:1 }}>
               <div style={{ display:'flex',alignItems:'center',gap:10,marginBottom:20,flexWrap:'wrap' }}>
                 {([
-                  { key:'todos', label:'Todos', cls:'green' },
-                  { key:'pendente', label:'⏳ Pendentes', cls:'amber' },
-                  { key:'concluido', label:'✅ Concluídos', cls:'green' },
+                  { key:'todos',      label:'Todos',             cls:'green' },
+                  { key:'aguardando', label:'🔗 Aguardando',     cls:'cyan'  },
+                  { key:'pendente',   label:'⏳ Aguard. Entrega', cls:'amber' },
+                  { key:'concluido',  label:'✅ Concluídos',     cls:'green' },
                 ] as const).map(f => (
                   <button key={f.key} onClick={() => setPFiltro(f.key)}
                     style={{ padding:'7px 16px',borderRadius:10,border:'1px solid',fontFamily:'Satoshi,sans-serif',fontSize:12,fontWeight:700,cursor:'pointer',transition:'all 0.2s',whiteSpace:'nowrap',
                       ...(pFiltro === f.key
                         ? f.cls==='amber' ? { background:'rgba(255,181,69,0.1)',borderColor:'rgba(255,181,69,0.3)',color:'#ffb545' }
+                        : f.cls==='cyan'  ? { background:'rgba(126,255,245,0.1)',borderColor:'rgba(126,255,245,0.3)',color:'#7efff5' }
                         : { background:'rgba(200,255,0,0.1)',borderColor:'rgba(200,255,0,0.3)',color:'#c8ff00' }
                         : { background:'rgba(255,255,255,0.04)',borderColor:'rgba(255,255,255,0.12)',color:'#b0b0b0' })
                     }}>
