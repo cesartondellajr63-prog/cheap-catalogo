@@ -312,7 +312,7 @@ export default function AdminDashboard() {
     else if (f === 'concluido') r = r.filter(o => (o as any).shippingStatus === '🟢 Entregue');
     if (dFrom) r = r.filter(o => new Date(o.createdAt) >= new Date(dFrom));
     if (dTo) r = r.filter(o => new Date(o.createdAt) <= new Date(dTo + 'T23:59:59'));
-    return r.reverse();
+    return r;
   }
 
   function filterPedidos(list: Order[], f: typeof pFiltro, search: string) {
@@ -328,7 +328,7 @@ export default function AdminDashboard() {
         o.items?.some(i => i.productName?.toLowerCase().includes(q))
       );
     }
-    return r.reverse();
+    return r;
   }
 
   // KPIs
