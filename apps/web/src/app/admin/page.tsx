@@ -985,7 +985,7 @@ function OrderModal({ order: o, onClose, onStatusChange }: {
             <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:12 }}>
               <div style={{ gridColumn:'1/-1' }}><ModalField label="Nº Pedido" value={o.orderNumber} mono /></div>
               <ModalField label="Data / Hora" value={fmtDate(o.createdAt)} mono />
-              <ModalField label="Payment ID" value={o.mpPaymentId ?? o.mpPreferenceId ?? '—'} mono small />
+              <ModalField label="Pagamento via" value={o.mpPaymentId ? '🟡 Mercado Pago' : '🔵 Cielo'} />
             </div>
           </div>
 
