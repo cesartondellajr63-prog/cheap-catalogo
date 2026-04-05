@@ -378,8 +378,8 @@ export default function AdminDashboard() {
   const totalVendido = orders.filter(o => isPaid(o.status)).reduce((s, o) => s + o.total, 0);
   const totalPedidos = orders.length;
   const aguardando = orders.filter(o => o.status === 'PENDING').length;
-  const pendentes = orders.filter(o => o.status === 'PAID' || o.status === 'SHIPPED').length;
-  const concluidos = orders.filter(o => o.status === 'DELIVERED').length;
+  const concluidos = orders.filter(o => (o as any).shippingStatus === '🟢 Entregue').length;
+  const pendentes = orders.filter(o => (o as any).shippingStatus !== '🟢 Entregue' && o.status !== 'PENDING').length;
   const pctConcluidos = totalPedidos ? Math.round((concluidos / totalPedidos) * 100) : 0;
 
   const chartConcluidos = orders.filter(o => (o as any).shippingStatus === '🟢 Entregue').length;
