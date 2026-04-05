@@ -515,17 +515,17 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
                 <span className="l">Total a pagar</span>
                 <span className="v">{fmtBRLFromDecimal(total)}</span>
               </div>
-            </div>
-            {freteTimer && !freteExpired && (
-              <div className="frete-result visible" style={{ marginBottom: 12 }}>
-                <div className="frete-eta">
+              {freteTimer && !freteExpired && (
+                <div className="frete-eta" style={{ marginTop: 10 }}>
                   ⏰ Válido por: <b style={{ color: freteTimer.startsWith('0:') ? '#ff9900' : 'var(--accent2)' }}>{freteTimer}</b>
                 </div>
-              </div>
-            )}
-            {freteExpired && (
-              <div className="error-msg visible">⏰ Cotação expirada. Recalcule o frete para continuar.</div>
-            )}
+              )}
+              {freteExpired && (
+                <div className="frete-eta" style={{ marginTop: 10, color: '#ff4d4d' }}>
+                  ⏰ Cotação expirada. Recalcule o frete para continuar.
+                </div>
+              )}
+            </div>
             <div className="secure-badge">
               🔒 Pagamento seguro via <strong style={{ color: '#fff', marginLeft: 4 }}>Mercado Pago / Cielo</strong>
             </div>
