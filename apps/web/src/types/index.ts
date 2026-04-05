@@ -13,6 +13,7 @@ export interface ProductVariant {
   stock: number;
   priceOverride?: number;
   active: boolean;
+  image?: string;
 }
 
 export interface Product {

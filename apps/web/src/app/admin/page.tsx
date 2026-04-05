@@ -1334,7 +1334,7 @@ function ModalField({ label, value, mono, lime, big, small }: {
 }
 
 // ── ProductModal ──
-interface ProdVariantForm { _key: string; name: string; stock: string; priceOverride: string; active: boolean; }
+interface ProdVariantForm { _key: string; name: string; stock: string; priceOverride: string; active: boolean; image: string; }
 
 function ProductModal({ mode, product, onSaved, onClose }: {
   mode: 'create' | 'edit';
@@ -1351,7 +1351,7 @@ function ProductModal({ mode, product, onSaved, onClose }: {
     basePrice: String(product.basePrice),
     images: (product.images ?? []).join('\n'),
     active: product.active,
-    variants: (product.variants ?? []).map(v => ({ _key: v.id || String(Math.random()), name: v.name, stock: String(v.stock), priceOverride: v.priceOverride != null ? String(v.priceOverride) : '', active: v.active })),
+    variants: (product.variants ?? []).map(v => ({ _key: v.id || String(Math.random()), name: v.name, stock: String(v.stock), priceOverride: v.priceOverride != null ? String(v.priceOverride) : '', active: v.active, image: v.image ?? '' })),
   } : emptyForm);
   const [saving, setSaving] = React.useState(false);
 
@@ -1362,7 +1362,7 @@ function ProductModal({ mode, product, onSaved, onClose }: {
   }
 
   function addVariant() {
-    setForm(f => ({ ...f, variants: [...f.variants, { _key: String(Date.now()), name:'', stock:'0', priceOverride:'', active:true }] }));
+    setForm(f => ({ ...f, variants: [...f.variants, { _key: String(Date.now()), name:'', stock:'0', priceOverride:'', active:true, image:'' }] }));
   }
   function removeVariant(key: string) {
     setForm(f => ({ ...f, variants: f.variants.filter(v => v._key !== key) }));
@@ -1377,7 +1377,7 @@ function ProductModal({ mode, product, onSaved, onClose }: {
     const token = getToken();
     try {
       const images = form.images.split(/[\n,]/).map(s => s.trim()).filter(Boolean);
-      const variants = form.variants.map(v => ({ id: v._key, name: v.name, stock: parseInt(v.stock) || 0, priceOverride: v.priceOverride ? parseFloat(v.priceOverride) : undefined, active: v.active }));
+      const variants = form.variants.map(v => ({ id: v._key, name: v.name, stock: parseInt(v.stock) || 0, priceOverride: v.priceOverride ? parseFloat(v.priceOverride) : undefined, active: v.active, image: v.image || undefined }));
       const body = { name: form.name, slug: form.slug, brandId: form.brandId, description: form.description, basePrice: parseFloat(form.basePrice) || 0, images, active: form.active, variants };
       const result = mode === 'create'
         ? await apiFetch<Product>('/products', token, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) })
@@ -1455,15 +1455,22 @@ function ProductModal({ mode, product, onSaved, onClose }: {
             )}
             <div style={{ display:'flex',flexDirection:'column',gap:8 }}>
               {form.variants.map(v => (
-                <div key={v._key} style={{ display:'grid',gridTemplateColumns:'2fr 80px 100px 60px 28px',gap:8,alignItems:'center',padding:'8px 10px',background:'rgba(255,255,255,0.03)',borderRadius:10,border:'1px solid rgba(255,255,255,0.07)' }}>
-                  <input style={{ ...inp,padding:'6px 10px',fontSize:12 }} value={v.name} onChange={e => updateVariant(v._key,'name',e.target.value)} placeholder="Nome do sabor" />
-                  <input style={{ ...inp,padding:'6px 10px',fontSize:12 }} type="number" min="0" value={v.stock} onChange={e => updateVariant(v._key,'stock',e.target.value)} placeholder="Estoque" />
-                  <input style={{ ...inp,padding:'6px 10px',fontSize:12 }} type="number" min="0" step="0.01" value={v.priceOverride} onChange={e => updateVariant(v._key,'priceOverride',e.target.value)} placeholder="Preço (R$)" />
-                  <label style={{ display:'flex',alignItems:'center',justifyContent:'center',gap:5,fontSize:11,color:'#b0b0b0',cursor:'pointer' }}>
-                    <input type="checkbox" checked={v.active} onChange={e => updateVariant(v._key,'active',e.target.checked)} />
-                    Ativo
-                  </label>
-                  <button onClick={() => removeVariant(v._key)} style={{ background:'none',border:'none',color:'#ff4d4d',fontSize:16,cursor:'pointer',padding:0,lineHeight:1 }}>×</button>
+                <div key={v._key} style={{ display:'flex',flexDirection:'column',gap:6,padding:'10px 12px',background:'rgba(255,255,255,0.03)',borderRadius:10,border:'1px solid rgba(255,255,255,0.07)' }}>
+                  <div style={{ display:'grid',gridTemplateColumns:'2fr 80px 100px 60px 28px',gap:8,alignItems:'center' }}>
+                    <input style={{ ...inp,padding:'6px 10px',fontSize:12 }} value={v.name} onChange={e => updateVariant(v._key,'name',e.target.value)} placeholder="Nome do sabor" />
+                    <input style={{ ...inp,padding:'6px 10px',fontSize:12 }} type="number" min="0" value={v.stock} onChange={e => updateVariant(v._key,'stock',e.target.value)} placeholder="Estoque" />
+                    <input style={{ ...inp,padding:'6px 10px',fontSize:12 }} type="number" min="0" step="0.01" value={v.priceOverride} onChange={e => updateVariant(v._key,'priceOverride',e.target.value)} placeholder="Preço (R$)" />
+                    <label style={{ display:'flex',alignItems:'center',justifyContent:'center',gap:5,fontSize:11,color:'#b0b0b0',cursor:'pointer' }}>
+                      <input type="checkbox" checked={v.active} onChange={e => updateVariant(v._key,'active',e.target.checked)} />
+                      Ativo
+                    </label>
+                    <button onClick={() => removeVariant(v._key)} style={{ background:'none',border:'none',color:'#ff4d4d',fontSize:16,cursor:'pointer',padding:0,lineHeight:1 }}>×</button>
+                  </div>
+                  <div style={{ display:'flex',alignItems:'center',gap:8 }}>
+                    <span style={{ fontSize:10,color:'#6a6a6a',whiteSpace:'nowrap',fontWeight:600 }}>📷 Foto:</span>
+                    <input style={{ ...inp,padding:'5px 10px',fontSize:11,flex:1 }} value={v.image} onChange={e => updateVariant(v._key,'image',e.target.value)} placeholder="https://... (link da imagem deste sabor)" />
+                    {v.image && <img src={v.image} alt="" style={{ width:32,height:32,borderRadius:6,objectFit:'cover',border:'1px solid rgba(255,255,255,0.12)',flexShrink:0 }} onError={e => (e.currentTarget.style.display='none')} />}
+                  </div>
                 </div>
               ))}
             </div>
