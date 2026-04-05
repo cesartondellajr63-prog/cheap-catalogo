@@ -131,7 +131,7 @@ export default function AdminDashboard() {
   const [usuario, setUsuario] = useState('');
 
   // Filters — dashboard
-  const [filtro, setFiltro] = useState<'todos' | 'pendente' | 'concluido'>('todos');
+  const [filtro, setFiltro] = useState<'todos' | 'aguardando' | 'pendente' | 'concluido'>('todos');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
 
@@ -350,7 +350,8 @@ export default function AdminDashboard() {
   // ── Filtered lists ──
   function filterOrders(list: Order[], f: typeof filtro, dFrom: string, dTo: string) {
     let r = [...list];
-    if (f === 'pendente') r = r.filter(o => (o as any).shippingStatus !== '🟢 Entregue');
+    if (f === 'aguardando') r = r.filter(o => o.status === 'PENDING');
+    else if (f === 'pendente') r = r.filter(o => (o as any).shippingStatus !== '🟢 Entregue');
     else if (f === 'concluido') r = r.filter(o => (o as any).shippingStatus === '🟢 Entregue');
     if (dFrom) r = r.filter(o => new Date(o.createdAt) >= new Date(dFrom));
     if (dTo) r = r.filter(o => new Date(o.createdAt) <= new Date(dTo + 'T23:59:59'));
@@ -458,10 +459,10 @@ export default function AdminDashboard() {
               {/* KPI Cards */}
               <div style={{ display:'grid',gridTemplateColumns:'2fr 1fr 1fr 1fr 1fr',gap:14,marginBottom:24 }}>
                 <StatCard label="Total Vendido" value={fmtR(totalVendido)} sub="pagos + enviados" color="#c8ff00" icon="💰" featured />
-                <StatCard label="Total Pedidos" value={String(totalPedidos)} sub="todos os status" color="#7efff5" icon="📦" />
-                <StatCard label="Aguardando" value={String(aguardando)} sub="pagamento pendente" color="#7efff5" icon="🔗" />
-                <StatCard label="Pendentes" value={String(pendentes)} sub="não entregues" color="#ffb545" icon="⏳" />
-                <StatCard label="Concluídos" value={String(concluidos)} sub={`${pctConcluidos}% do total`} color="#c8ff00" icon="✅" />
+                <StatCard label="Total Pedidos" value={String(totalPedidos)} sub="todos os status" color="#7efff5" icon="📦" onClick={() => setFiltro('todos')} active={filtro === 'todos'} />
+                <StatCard label="Aguardando" value={String(aguardando)} sub="pagamento pendente" color="#7efff5" icon="🔗" onClick={() => setFiltro(filtro === 'aguardando' ? 'todos' : 'aguardando')} active={filtro === 'aguardando'} />
+                <StatCard label="Pendentes" value={String(pendentes)} sub="não entregues" color="#ffb545" icon="⏳" onClick={() => setFiltro(filtro === 'pendente' ? 'todos' : 'pendente')} active={filtro === 'pendente'} />
+                <StatCard label="Concluídos" value={String(concluidos)} sub={`${pctConcluidos}% do total`} color="#c8ff00" icon="✅" onClick={() => setFiltro(filtro === 'concluido' ? 'todos' : 'concluido')} active={filtro === 'concluido'} />
               </div>
 
               {/* Chart + Filters row */}
@@ -500,14 +501,16 @@ export default function AdminDashboard() {
                     <div style={{ fontSize:10,fontWeight:700,letterSpacing:'1.2px',textTransform:'uppercase',color:'#8a8a8a',marginBottom:12 }}>Status</div>
                     <div style={{ display:'flex',flexWrap:'wrap',gap:8 }}>
                       {([
-                        { key:'todos', label:'Todos', cls:'green' },
-                        { key:'pendente', label:'⏳ Pendentes', cls:'amber' },
-                        { key:'concluido', label:'✅ Concluídos', cls:'green' },
+                        { key:'todos',     label:'Todos',          cls:'green' },
+                        { key:'aguardando',label:'🔗 Aguardando',  cls:'cyan'  },
+                        { key:'pendente',  label:'⏳ Pendentes',   cls:'amber' },
+                        { key:'concluido', label:'✅ Concluídos',  cls:'green' },
                       ] as const).map(f => (
                         <button key={f.key} onClick={() => setFiltro(f.key)}
                           style={{ padding:'7px 16px',borderRadius:10,border:'1px solid',fontFamily:'Satoshi,sans-serif',fontSize:12,fontWeight:700,cursor:'pointer',transition:'all 0.2s',whiteSpace:'nowrap',
                             ...(filtro === f.key
                               ? f.cls==='amber' ? { background:'rgba(255,181,69,0.1)',borderColor:'rgba(255,181,69,0.3)',color:'#ffb545' }
+                              : f.cls==='cyan'  ? { background:'rgba(126,255,245,0.1)',borderColor:'rgba(126,255,245,0.3)',color:'#7efff5' }
                               : { background:'rgba(200,255,0,0.1)',borderColor:'rgba(200,255,0,0.3)',color:'#c8ff00' }
                               : { background:'rgba(255,255,255,0.04)',borderColor:'rgba(255,255,255,0.12)',color:'#b0b0b0' })
                           }}>
@@ -902,21 +905,24 @@ const dateInput: React.CSSProperties = {
 function truncate(s: string, n: number) { return s.length > n ? s.slice(0, n) + '…' : s; }
 
 // ── StatCard ──
-function StatCard({ label, value, sub, color, icon, featured }: {
-  label: string; value: string; sub: string; color: string; icon: string; featured?: boolean;
+function StatCard({ label, value, sub, color, icon, featured, onClick, active }: {
+  label: string; value: string; sub: string; color: string; icon: string; featured?: boolean; onClick?: () => void; active?: boolean;
 }) {
   return (
-    <div style={{
+    <div onClick={onClick} style={{
       background: featured
         ? `linear-gradient(135deg,rgba(200,255,0,0.10),rgba(200,255,0,0.04),rgba(255,255,255,0.05))`
-        : 'linear-gradient(135deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03),rgba(255,255,255,0.06))',
+        : active
+          ? `linear-gradient(135deg,${color}18,${color}08,rgba(255,255,255,0.05))`
+          : 'linear-gradient(135deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03),rgba(255,255,255,0.06))',
       backdropFilter: 'blur(32px)',
-      border: featured ? '1px solid rgba(200,255,0,0.18)' : '1px solid rgba(255,255,255,0.13)',
-      borderTop: featured ? '1px solid rgba(200,255,0,0.35)' : '1px solid rgba(255,255,255,0.22)',
+      border: featured ? '1px solid rgba(200,255,0,0.18)' : active ? `1px solid ${color}44` : '1px solid rgba(255,255,255,0.13)',
+      borderTop: featured ? '1px solid rgba(200,255,0,0.35)' : active ? `1px solid ${color}88` : '1px solid rgba(255,255,255,0.22)',
       borderRadius: 16, padding: 22,
       position: 'relative', overflow: 'hidden',
-      boxShadow: '0 8px 32px rgba(0,0,0,0.35)',
-      transition: 'transform 0.3s',
+      boxShadow: active ? `0 8px 32px ${color}22` : '0 8px 32px rgba(0,0,0,0.35)',
+      transition: 'all 0.2s',
+      cursor: onClick ? 'pointer' : 'default',
     }}>
       {/* top glow line */}
       <div style={{ position:'absolute',top:0,left:0,right:0,height:1,background:`linear-gradient(90deg,transparent,${color}55,transparent)`,pointerEvents:'none' }}></div>
