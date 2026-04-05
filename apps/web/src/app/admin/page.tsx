@@ -234,6 +234,21 @@ export default function AdminDashboard() {
     );
   }, [orders, loading, page]);
 
+  const updateTrackingLink = useCallback(async (id: string, trackingLink: string) => {
+    const token = getToken();
+    setOrders(list => list.map(o => o.id === id ? { ...o, trackingLink } as any : o));
+    if (modalOrder?.id === id) setModalOrder(m => m ? { ...m, trackingLink } as any : m);
+    try {
+      await apiFetch<any>(`/orders/${id}/tracking`, token, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ trackingLink }),
+      });
+    } catch (e) {
+      alert('Erro ao salvar link de rastreio: ' + (e instanceof Error ? e.message : 'desconhecido'));
+    }
+  }, [modalOrder]);
+
   const updateShippingStatus = useCallback(async (id: string, shippingStatus: string) => {
     const token = getToken();
     const prev = orders.find(o => o.id === id);
@@ -672,7 +687,7 @@ export default function AdminDashboard() {
 
       {/* ── ORDER DETAIL MODAL ── */}
       {modalOrder && (
-        <OrderModal order={modalOrder} onClose={() => setModalOrder(null)} onStatusChange={updateOrderStatus} />
+        <OrderModal order={modalOrder} onClose={() => setModalOrder(null)} onStatusChange={updateOrderStatus} onTrackingChange={updateTrackingLink} />
       )}
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
@@ -944,11 +959,23 @@ function StateBox({ icon, text, loading }: { icon?: string; text?: string; loadi
 }
 
 // ── Order Detail Modal ──
-function OrderModal({ order: o, onClose, onStatusChange }: {
+function OrderModal({ order: o, onClose, onStatusChange, onTrackingChange }: {
   order: Order;
   onClose: () => void;
   onStatusChange: (id: string, status: OrderStatus) => Promise<void>;
+  onTrackingChange: (id: string, trackingLink: string) => void;
 }) {
+  const [trackingInput, setTrackingInput] = React.useState<string>((o as any).trackingLink ?? '');
+  const [trackingSaved, setTrackingSaved] = React.useState(false);
+
+  const saveTracking = () => {
+    if (trackingInput !== ((o as any).trackingLink ?? '')) {
+      onTrackingChange(o.id, trackingInput);
+      setTrackingSaved(true);
+      setTimeout(() => setTrackingSaved(false), 2000);
+    }
+  };
+
   const produtos = o.items.map(i => `${i.productName} — ${i.variantName} ×${i.quantity}`);
   const frete = statusToFrete(o.status);
   const freteColor =
@@ -1050,6 +1077,34 @@ function OrderModal({ order: o, onClose, onStatusChange }: {
                 </select>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Link de Rastreio */}
+        <div style={{ padding:'0 28px 20px' }}>
+          <ModalSection label="Link de Rastreio" />
+          <div style={{ display:'flex',gap:8,alignItems:'center' }}>
+            <input
+              type="text"
+              value={trackingInput}
+              onChange={e => setTrackingInput(e.target.value)}
+              onBlur={saveTracking}
+              onKeyDown={e => e.key === 'Enter' && saveTracking()}
+              placeholder="Cole o link de rastreio aqui..."
+              style={{
+                flex:1, background:'rgba(255,255,255,0.04)',
+                border:'1px solid rgba(255,255,255,0.12)', borderRadius:10,
+                padding:'10px 14px', fontFamily:'Satoshi,sans-serif',
+                fontSize:13, color:'#e0e0e0', outline:'none',
+              }}
+              onFocus={e => (e.currentTarget.style.borderColor = 'rgba(200,255,0,0.4)')}
+            />
+            <button
+              onClick={saveTracking}
+              style={{ padding:'10px 16px',borderRadius:10,background:'rgba(200,255,0,0.1)',border:'1px solid rgba(200,255,0,0.25)',color:'#c8ff00',fontFamily:'Satoshi,sans-serif',fontSize:12,fontWeight:700,cursor:'pointer',whiteSpace:'nowrap',transition:'all 0.2s' }}
+            >
+              {trackingSaved ? '✅ Salvo' : 'Salvar'}
+            </button>
           </div>
         </div>
 

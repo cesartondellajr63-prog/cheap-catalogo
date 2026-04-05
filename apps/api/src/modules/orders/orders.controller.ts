@@ -53,6 +53,15 @@ export class OrdersController {
     return this.ordersService.updateShippingStatus(id, shippingStatus);
   }
 
+  @Patch(':id/tracking')
+  @UseGuards(JwtAuthGuard)
+  updateTrackingLink(
+    @Param('id') id: string,
+    @Body('trackingLink') trackingLink: string,
+  ) {
+    return this.ordersService.updateTrackingLink(id, trackingLink);
+  }
+
   @Patch(':id/motoboy')
   @UseGuards(JwtAuthGuard)
   updateMotoboy(
