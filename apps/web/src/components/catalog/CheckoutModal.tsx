@@ -200,13 +200,15 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
         address: `${rua}, ${numero}${complemento ? ', ' + complemento : ''}, ${bairro}`,
         city: cidade,
       });
-      sessionStorage.setItem('pedidoAtual', JSON.stringify({
+      const pedidoPix = JSON.stringify({
         orderId: result.orderId,
         orderNumber: result.orderNumber,
         accessToken: result.accessToken,
         items: localCart.map(i => `${i.productName} (${i.variantName})`),
         address: `${rua}, ${numero}${complemento ? ', ' + complemento : ''}, ${bairro}, ${cidade} - ${estado}`,
-      }));
+      });
+      sessionStorage.setItem('pedidoAtual', pedidoPix);
+      localStorage.setItem('pedidoAtual', pedidoPix);
       onUpdateCart([]);
       sessionStorage.removeItem('checkoutForm');
       window.location.href = result.checkoutUrl;
@@ -240,13 +242,15 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
         estado,
         cep,
       });
-      sessionStorage.setItem('pedidoAtual', JSON.stringify({
+      const pedidoCard = JSON.stringify({
         paymentType: 'card',
         orderId: result.orderId,
         orderNumber: result.orderNumber,
         items: localCart.map(i => `${i.productName} (${i.variantName})`),
         address: `${rua}, ${numero}${complemento ? ', ' + complemento : ''}, ${bairro}, ${cidade} - ${estado}`,
-      }));
+      });
+      sessionStorage.setItem('pedidoAtual', pedidoCard);
+      localStorage.setItem('pedidoAtual', pedidoCard);
       window.location.href = result.checkoutUrl;
     } catch (e: unknown) {
       setPagError(e instanceof Error ? e.message : 'Erro ao iniciar pagamento com cartão.');

@@ -167,11 +167,13 @@ export default function CheckoutPage() {
         address: `${rua}, ${numero}${complemento ? ', ' + complemento : ''}, ${bairro}`,
         city: cidade,
       });
-      sessionStorage.setItem('pedidoAtual', JSON.stringify({
+      const pedidoData = JSON.stringify({
         orderId: result.orderId,
         orderNumber: result.orderNumber,
         accessToken: result.accessToken,
-      }));
+      });
+      sessionStorage.setItem('pedidoAtual', pedidoData);
+      localStorage.setItem('pedidoAtual', pedidoData);
       saveCart([]);
       window.location.href = result.checkoutUrl;
     } catch (e: unknown) {
