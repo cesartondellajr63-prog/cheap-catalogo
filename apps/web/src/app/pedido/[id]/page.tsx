@@ -113,12 +113,6 @@ function CieloPoller({
           boxShadow: '0 0 8px rgba(200,255,0,0.5)',
         }} />
       </div>
-      <button
-        onClick={poll}
-        style={{ fontSize:12, color:'var(--muted)', background:'transparent', border:'1px solid var(--border)', borderRadius:8, padding:'6px 14px', cursor:'pointer' }}
-      >
-        Verificar agora
-      </button>
     </div>
   );
 }
