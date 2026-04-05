@@ -512,7 +512,9 @@ export default function AdminDashboard() {
             <div style={{ padding: isMobile ? '16px' : '28px 32px', flex:1 }}>
               {/* KPI Cards */}
               <div style={{ display:'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : '2fr 1fr 1fr 1fr 1fr', gap:14, marginBottom:24 }}>
-                <StatCard label="Total Vendido" value={fmtR(totalVendido)} sub="pagos + enviados" color="#c8ff00" icon="💰" featured />
+                <div style={{ gridColumn: isMobile ? '1 / -1' : undefined }}>
+                  <StatCard label="Total Vendido" value={fmtR(totalVendido)} sub="pagos + enviados" color="#c8ff00" icon="💰" featured />
+                </div>
                 <StatCard label="Total Pedidos" value={String(totalPedidos)} sub="todos os status" color="#7efff5" icon="📦" onClick={() => setFiltro('todos')} active={filtro === 'todos'} />
                 <StatCard label="Aguardando Pagamento" value={String(aguardando)} sub="pagamento pendente" color="#7efff5" icon="💳" onClick={() => setFiltro(filtro === 'aguardando' ? 'todos' : 'aguardando')} active={filtro === 'aguardando'} />
                 <StatCard label="Aguardando Entrega" value={String(pendentes)} sub="pagos, não entregues" color="#ffb545" icon="🏍️" onClick={() => setFiltro(filtro === 'pendente' ? 'todos' : 'pendente')} active={filtro === 'pendente'} />
