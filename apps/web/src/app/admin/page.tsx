@@ -532,8 +532,8 @@ export default function AdminDashboard() {
                         { key:'todos',     label:'Todos',          cls:'green' },
                         { key:'aguardando', label:'💳 Aguard. Pagamento', cls:'cyan'  },
                         { key:'pendente',   label:'🏍️ Aguard. Entrega',  cls:'amber' },
-                        { key:'arquivado',  label:'📦 Arquivados',        cls:'gray'  },
                         { key:'concluido', label:'✅ Concluídos',  cls:'green' },
+                        { key:'arquivado',  label:'📦 Arquivados',        cls:'gray'  },
                       ] as const).map(f => (
                         <button key={f.key} onClick={() => setFiltro(f.key)}
                           style={{ padding:'7px 16px',borderRadius:10,border:'1px solid',fontFamily:'Satoshi,sans-serif',fontSize:12,fontWeight:700,cursor:'pointer',transition:'all 0.2s',whiteSpace:'nowrap',
@@ -606,8 +606,8 @@ export default function AdminDashboard() {
                   { key:'todos',      label:'Todos',             cls:'green' },
                   { key:'aguardando', label:'💳 Aguard. Pagamento', cls:'cyan'  },
                   { key:'pendente',   label:'🏍️ Aguard. Entrega',  cls:'amber' },
-                  { key:'arquivado',  label:'📦 Arquivados',        cls:'gray'  },
                   { key:'concluido',  label:'✅ Concluídos',     cls:'green' },
+                  { key:'arquivado',  label:'📦 Arquivados',        cls:'gray'  },
                 ] as const).map(f => (
                   <button key={f.key} onClick={() => setPFiltro(f.key)}
                     style={{ padding:'7px 16px',borderRadius:10,border:'1px solid',fontFamily:'Satoshi,sans-serif',fontSize:12,fontWeight:700,cursor:'pointer',transition:'all 0.2s',whiteSpace:'nowrap',
