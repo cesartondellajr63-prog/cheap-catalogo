@@ -124,7 +124,6 @@ export default function CheckoutPage() {
         setBairro(data.bairro ?? '');
         setCidade(data.localidade ?? '');
         setEstado(data.uf ?? '');
-        setCepHint('');
       }
     } catch {}
   };
@@ -324,7 +323,7 @@ export default function CheckoutPage() {
                   <input
                     type="text"
                     value={cep}
-                    onChange={e => { setCep(maskCEP(e.target.value)); setCepHint(''); }}
+                    onChange={e => { setCep(maskCEP(e.target.value)); }}
                     onBlur={fetchCEP}
                     placeholder="00000-000"
                     maxLength={9}
