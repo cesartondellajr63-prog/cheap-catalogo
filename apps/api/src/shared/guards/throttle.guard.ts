@@ -36,7 +36,9 @@ export class ThrottleGuard implements CanActivate {
     const { limit, windowSeconds, lockoutSeconds } = throttleConfig;
 
     const request = context.switchToHttp().getRequest();
-    const trustProxy = process.env.TRUST_PROXY === 'true';
+    // F12: no Render/Vercel o app fica atrás de proxy — sempre tenta x-forwarded-for primeiro,
+    // com fallback para remoteAddress. TRUST_PROXY=false desativa esse comportamento se necessário.
+    const trustProxy = process.env.TRUST_PROXY !== 'false';
     const forwarded = trustProxy ? request.headers['x-forwarded-for'] : null;
     const ip: string = forwarded
       ? (forwarded as string).split(',')[0].trim()

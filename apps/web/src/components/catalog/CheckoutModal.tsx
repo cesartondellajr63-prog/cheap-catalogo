@@ -174,7 +174,14 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
       setFreteTimer('');
       setFreteExpiresAt(Date.now() + 5 * 60 * 1000);
     } catch (e: unknown) {
-      setFreteError(e instanceof Error ? e.message : 'Erro ao calcular frete.');
+      const msg = e instanceof Error ? e.message : 'Erro ao calcular frete.';
+      // Tenta extrair mensagem legível de JSON de erro (ex: NestJS { message: "..." })
+      try {
+        const json = JSON.parse(msg);
+        setFreteError(json?.message ?? msg);
+      } catch {
+        setFreteError(msg);
+      }
     } finally {
       setFreteLoading(false);
     }

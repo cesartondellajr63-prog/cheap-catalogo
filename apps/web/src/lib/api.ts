@@ -13,6 +13,23 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, init);
   if (!res.ok) {
     const body = await res.text();
+    // F19: tenta extrair mensagem amigável do JSON de erro (inclui 429 rate limit)
+    try {
+      const json = JSON.parse(body);
+      const msg = json?.message;
+      if (msg) {
+        // Traduz mensagem de rate limit para português
+        const translated = typeof msg === 'string'
+          ? msg.replace(
+              /Too many requests\. Try again in (\d+) minute\(s\)\./i,
+              (_, m) => `Muitas tentativas. Tente novamente em ${m} minuto${Number(m) > 1 ? 's' : ''}.`,
+            )
+          : Array.isArray(msg) ? msg.join(', ') : String(msg);
+        throw new Error(translated);
+      }
+    } catch (e) {
+      if (e instanceof Error && e.message !== body) throw e;
+    }
     throw new Error(body || `HTTP ${res.status}`);
   }
   return res.json() as Promise<T>;
