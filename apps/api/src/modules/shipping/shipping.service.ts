@@ -201,7 +201,7 @@ export class ShippingService {
 
     const data = (await lalamoveResponse.json()) as any;
     const priceStr = data.data?.priceBreakdown?.total || data.priceBreakdown?.total || '0';
-    const totalReais = parseFloat(priceStr) / 100;
+    const totalReais = parseFloat(priceStr); // Lalamove BR retorna valor já em reais
 
     this.logger.log(`[FRETE] Lalamove priceStr="${priceStr}" totalReais=${totalReais}`);
 
