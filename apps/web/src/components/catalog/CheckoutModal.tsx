@@ -53,8 +53,6 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
   const [freteTimer, setFreteTimer] = useState<string>('');
   const [freteExpired, setFreteExpired] = useState(false);
   const [freteExpiresAt, setFreteExpiresAt] = useState<number | null>(null);
-  const [cepLoading, setCepLoading] = useState(false);
-  const [cepHint, setCepHint] = useState('');
 
   // Step 4
   const [pagLoading, setPagLoading] = useState(false);
@@ -162,33 +160,6 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
       if (data.length) return { lat: data[0].lat, lng: data[0].lon };
     } catch {}
     return null;
-  };
-
-  // Busca o CEP automaticamente quando rua + cidade + estado estão preenchidos
-  const reverseLookupCEP = async () => {
-    if (cep.replace(/\D/g, '').length === 8) return; // já tem CEP
-    if (!rua.trim() || !cidade.trim() || !estado.trim()) return;
-    setCepLoading(true);
-    setCepHint('');
-    try {
-      const uf = estado.trim().toUpperCase().slice(0, 2);
-      const cidadeEnc = encodeURIComponent(cidade.trim());
-      const ruaEnc = encodeURIComponent(rua.trim());
-      const res = await fetch(`https://viacep.com.br/ws/${uf}/${cidadeEnc}/${ruaEnc}/json/`);
-      const data = await res.json();
-      if (Array.isArray(data) && data.length > 0) {
-        const found = data[0].cep as string;
-        setCep(maskCEP(found));
-        setCepHint(`CEP encontrado: ${found}`);
-        resetFrete();
-      } else {
-        setCepHint('CEP não encontrado — prossiga sem ele.');
-      }
-    } catch {
-      setCepHint('');
-    } finally {
-      setCepLoading(false);
-    }
   };
 
   const resetFrete = () => {
@@ -481,21 +452,12 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
                   />
                 </div>
               </div>
-              {cepHint && (
-                <div style={{ fontSize: 12, marginTop: -8, marginBottom: 4, color: cepHint.startsWith('CEP encontrado') ? 'var(--accent)' : 'var(--muted)' }}>
-                  {cepLoading ? '🔍 Buscando CEP...' : cepHint}
-                </div>
-              )}
-              {cepLoading && (
-                <div style={{ fontSize: 12, marginTop: -8, marginBottom: 4, color: 'var(--muted)' }}>🔍 Buscando CEP automaticamente...</div>
-              )}
               <div className="form-group">
                 <label>Rua</label>
                 <input
                   type="text"
                   value={rua}
                   onChange={e => { setRua(e.target.value); resetFrete(); }}
-                  onBlur={reverseLookupCEP}
                   placeholder="Nome da rua"
                 />
               </div>
@@ -506,7 +468,6 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
                     type="text"
                     value={bairro}
                     onChange={e => { setBairro(e.target.value); resetFrete(); }}
-                    onBlur={reverseLookupCEP}
                     placeholder="Bairro"
                   />
                 </div>
@@ -516,7 +477,6 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
                     type="text"
                     value={cidade}
                     onChange={e => { setCidade(e.target.value); resetFrete(); }}
-                    onBlur={reverseLookupCEP}
                     placeholder="Cidade"
                   />
                 </div>
@@ -528,7 +488,6 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
                     type="text"
                     value={estado}
                     onChange={e => { setEstado(e.target.value.toUpperCase().slice(0, 2)); resetFrete(); }}
-                    onBlur={reverseLookupCEP}
                     placeholder="SP"
                     maxLength={2}
                   />

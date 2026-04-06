@@ -46,8 +46,6 @@ export default function CheckoutPage() {
   const [freteConfirmed, setFreteConfirmed] = useState(false);
   const [freteTimer, setFreteTimer] = useState<string>('');
   const [freteExpired, setFreteExpired] = useState(false);
-  const [cepLoading, setCepLoading] = useState(false);
-  const [cepHint, setCepHint] = useState('');
 
   // Step 4
   const [pagLoading, setPagLoading] = useState(false);
@@ -140,29 +138,6 @@ export default function CheckoutPage() {
       if (data.length) return { lat: data[0].lat, lng: data[0].lon };
     } catch {}
     return null;
-  };
-
-  const reverseLookupCEP = async () => {
-    if (cep.replace(/\D/g, '').length === 8) return;
-    if (!rua.trim() || !cidade.trim() || !estado.trim()) return;
-    setCepLoading(true);
-    setCepHint('');
-    try {
-      const uf = estado.trim().toUpperCase().slice(0, 2);
-      const res = await fetch(`https://viacep.com.br/ws/${uf}/${encodeURIComponent(cidade.trim())}/${encodeURIComponent(rua.trim())}/json/`);
-      const data = await res.json();
-      if (Array.isArray(data) && data.length > 0) {
-        const found = data[0].cep as string;
-        setCep(maskCEP(found));
-        setCepHint(`CEP encontrado: ${found}`);
-      } else {
-        setCepHint('CEP não encontrado — prossiga sem ele.');
-      }
-    } catch {
-      setCepHint('');
-    } finally {
-      setCepLoading(false);
-    }
   };
 
   const calcularFrete = async () => {
@@ -361,23 +336,18 @@ export default function CheckoutPage() {
                   <input type="text" value={numero} onChange={e => setNumero(e.target.value)} placeholder="123" inputMode="numeric" />
                 </div>
               </div>
-              {(cepLoading || cepHint) && (
-                <div style={{ fontSize: 12, marginTop: -8, marginBottom: 4, color: cepHint.startsWith('CEP encontrado') ? 'var(--accent)' : 'var(--muted)' }}>
-                  {cepLoading ? '🔍 Buscando CEP automaticamente...' : cepHint}
-                </div>
-              )}
               <div className="form-group">
                 <label>Rua</label>
-                <input type="text" value={rua} onChange={e => setRua(e.target.value)} onBlur={reverseLookupCEP} placeholder="Nome da rua" />
+                <input type="text" value={rua} onChange={e => setRua(e.target.value)} placeholder="Nome da rua" />
               </div>
               <div className="form-row">
                 <div className="form-group">
                   <label>Bairro</label>
-                  <input type="text" value={bairro} onChange={e => setBairro(e.target.value)} onBlur={reverseLookupCEP} placeholder="Bairro" />
+                  <input type="text" value={bairro} onChange={e => setBairro(e.target.value)} placeholder="Bairro" />
                 </div>
                 <div className="form-group">
                   <label>Cidade</label>
-                  <input type="text" value={cidade} onChange={e => setCidade(e.target.value)} onBlur={reverseLookupCEP} placeholder="Cidade" />
+                  <input type="text" value={cidade} onChange={e => setCidade(e.target.value)} placeholder="Cidade" />
                 </div>
               </div>
               <div className="form-row">
@@ -387,7 +357,6 @@ export default function CheckoutPage() {
                     type="text"
                     value={estado}
                     onChange={e => setEstado(e.target.value.toUpperCase().slice(0, 2))}
-                    onBlur={reverseLookupCEP}
                     placeholder="SP"
                     maxLength={2}
                   />
