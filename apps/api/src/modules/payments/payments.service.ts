@@ -200,7 +200,7 @@ export class PaymentsService {
       Shipping: {
         Type:          'FixedAmount',
         TargetZipCode: dto.cep.replace(/\D/g, ''),
-        Services: [{ Name: 'Entrega Motoboy', Price: toCents(dto.shippingPrice) }],
+        Services: [{ Name: 'Entrega Motoboy', Price: toCents(withFee(dto.shippingPrice)) }],
         Address: {
           Street:     dto.rua,
           Number:     dto.numero,
