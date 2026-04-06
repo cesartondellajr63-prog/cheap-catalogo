@@ -38,6 +38,7 @@ export default function CheckoutPage() {
   const [rua, setRua] = useState('');
   const [bairro, setBairro] = useState('');
   const [cidade, setCidade] = useState('');
+  const [estado, setEstado] = useState('');
   const [complemento, setComplemento] = useState('');
   const [freteLoading, setFreteLoading] = useState(false);
   const [freteResult, setFreteResult] = useState<{ price: number; priceFormatted: string; expiresAt?: number } | null>(null);
@@ -45,6 +46,8 @@ export default function CheckoutPage() {
   const [freteConfirmed, setFreteConfirmed] = useState(false);
   const [freteTimer, setFreteTimer] = useState<string>('');
   const [freteExpired, setFreteExpired] = useState(false);
+  const [cepLoading, setCepLoading] = useState(false);
+  const [cepHint, setCepHint] = useState('');
 
   // Step 4
   const [pagLoading, setPagLoading] = useState(false);
@@ -122,19 +125,51 @@ export default function CheckoutPage() {
         setRua(data.logradouro ?? '');
         setBairro(data.bairro ?? '');
         setCidade(data.localidade ?? '');
+        setEstado(data.uf ?? '');
+        setCepHint('');
       }
     } catch {}
   };
 
+  const reverseLookupCEP = async () => {
+    if (cep.replace(/\D/g, '').length === 8) return;
+    if (!rua.trim() || !cidade.trim() || !estado.trim()) return;
+    setCepLoading(true);
+    setCepHint('');
+    try {
+      const uf = estado.trim().toUpperCase().slice(0, 2);
+      const res = await fetch(`https://viacep.com.br/ws/${uf}/${encodeURIComponent(cidade.trim())}/${encodeURIComponent(rua.trim())}/json/`);
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        const found = data[0].cep as string;
+        setCep(maskCEP(found));
+        setCepHint(`CEP encontrado: ${found}`);
+      } else {
+        setCepHint('CEP não encontrado — prossiga sem ele.');
+      }
+    } catch {
+      setCepHint('');
+    } finally {
+      setCepLoading(false);
+    }
+  };
+
   const calcularFrete = async () => {
-    if (cep.replace(/\D/g, '').length !== 8) { setFreteError('CEP inválido.'); return; }
+    const cepRaw = cep.replace(/\D/g, '');
+    const temCep = cepRaw.length === 8;
+    if (!temCep && (!cidade.trim() || !estado.trim())) {
+      setFreteError('Informe o CEP ou a cidade e o estado.');
+      return;
+    }
     if (!rua.trim()) { setFreteError('Informe a rua.'); return; }
     setFreteError('');
     setFreteLoading(true);
     try {
       const result = await api.shipping.quote({
-        zipCode: cep,
+        zipCode: temCep ? cep : undefined,
         address: `${rua}, ${numero}, ${bairro}, ${cidade}`,
+        cidade: temCep ? undefined : cidade,
+        uf: temCep ? undefined : estado.trim().toUpperCase().slice(0, 2),
       });
       setFreteResult(result);
       setFreteExpired(false);
@@ -298,11 +333,11 @@ export default function CheckoutPage() {
             <div className="address-form">
               <div className="form-row">
                 <div className="form-group">
-                  <label>CEP</label>
+                  <label>CEP <span style={{ color: 'var(--muted)', fontWeight: 400, fontSize: '0.8em' }}>(opcional)</span></label>
                   <input
                     type="text"
                     value={cep}
-                    onChange={e => setCep(maskCEP(e.target.value))}
+                    onChange={e => { setCep(maskCEP(e.target.value)); setCepHint(''); }}
                     onBlur={fetchCEP}
                     placeholder="00000-000"
                     maxLength={9}
@@ -314,23 +349,41 @@ export default function CheckoutPage() {
                   <input type="text" value={numero} onChange={e => setNumero(e.target.value)} placeholder="123" inputMode="numeric" />
                 </div>
               </div>
+              {(cepLoading || cepHint) && (
+                <div style={{ fontSize: 12, marginTop: -8, marginBottom: 4, color: cepHint.startsWith('CEP encontrado') ? 'var(--accent)' : 'var(--muted)' }}>
+                  {cepLoading ? '🔍 Buscando CEP automaticamente...' : cepHint}
+                </div>
+              )}
               <div className="form-group">
                 <label>Rua</label>
-                <input type="text" value={rua} onChange={e => setRua(e.target.value)} placeholder="Preenchido pelo CEP" />
+                <input type="text" value={rua} onChange={e => setRua(e.target.value)} onBlur={reverseLookupCEP} placeholder="Nome da rua" />
               </div>
               <div className="form-row">
                 <div className="form-group">
                   <label>Bairro</label>
-                  <input type="text" value={bairro} onChange={e => setBairro(e.target.value)} placeholder="Bairro" />
+                  <input type="text" value={bairro} onChange={e => setBairro(e.target.value)} onBlur={reverseLookupCEP} placeholder="Bairro" />
                 </div>
                 <div className="form-group">
                   <label>Cidade</label>
-                  <input type="text" value={cidade} onChange={e => setCidade(e.target.value)} placeholder="Cidade" />
+                  <input type="text" value={cidade} onChange={e => setCidade(e.target.value)} onBlur={reverseLookupCEP} placeholder="Cidade" />
                 </div>
               </div>
-              <div className="form-group">
-                <label>Complemento</label>
-                <input type="text" value={complemento} onChange={e => setComplemento(e.target.value)} placeholder="Apto, bloco... (opcional)" />
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Estado <span style={{ color: 'var(--muted)', fontWeight: 400, fontSize: '0.8em' }}>(UF)</span></label>
+                  <input
+                    type="text"
+                    value={estado}
+                    onChange={e => setEstado(e.target.value.toUpperCase().slice(0, 2))}
+                    onBlur={reverseLookupCEP}
+                    placeholder="SP"
+                    maxLength={2}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Complemento</label>
+                  <input type="text" value={complemento} onChange={e => setComplemento(e.target.value)} placeholder="Apto, bloco... (opcional)" />
+                </div>
               </div>
             </div>
             {freteError && <div className="error-msg visible">{freteError}</div>}

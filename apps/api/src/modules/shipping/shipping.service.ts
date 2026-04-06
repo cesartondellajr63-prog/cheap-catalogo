@@ -59,6 +59,38 @@ export class ShippingService {
     });
   }
 
+  // Geocodifica via Nominatim dado endereço + cidade + UF (sem precisar de CEP)
+  private async geocodeAddress(
+    address: string,
+    cidade: string,
+    uf: string,
+  ): Promise<{ lat: string; lng: string }> {
+    const query = encodeURIComponent(`${address}, ${cidade}, ${uf}, Brasil`);
+    const res = await this.fetchWithTimeout(
+      `https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1`,
+      { headers: { 'User-Agent': 'CheapsPods/1.0' } },
+      10000,
+    );
+    if (!res.ok) throw new InternalServerErrorException('Erro ao geocodificar endereço.');
+    const results = await res.json() as any[];
+
+    if (!results.length) {
+      // Fallback: só cidade/UF
+      const fallbackQuery = encodeURIComponent(`${cidade}, ${uf}, Brasil`);
+      const fallbackRes = await this.fetchWithTimeout(
+        `https://nominatim.openstreetmap.org/search?q=${fallbackQuery}&format=json&limit=1`,
+        { headers: { 'User-Agent': 'CheapsPods/1.0' } },
+        10000,
+      );
+      if (!fallbackRes.ok) throw new InternalServerErrorException('Erro ao geocodificar endereço.');
+      const fallback = await fallbackRes.json() as any[];
+      if (!fallback.length) throw new InternalServerErrorException('Endereço não encontrado.');
+      return { lat: String(fallback[0].lat), lng: String(fallback[0].lon) };
+    }
+
+    return { lat: String(results[0].lat), lng: String(results[0].lon) };
+  }
+
   private async geocodeZip(
     zipCode: string,
     address: string,
@@ -74,56 +106,48 @@ export class ShippingService {
     const cidade: string = viaCep.localidade ?? '';
     const uf: string = viaCep.uf ?? '';
 
-    // 2. Nominatim (OpenStreetMap) para geocodificar
-    const query = encodeURIComponent(`${address}, ${cidade}, ${uf}, Brasil`);
-    const nominatimRes = await this.fetchWithTimeout(
-      `https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1`,
-      { headers: { 'User-Agent': 'CheapsPods/1.0' } },
-      10000,
-    );
-    if (!nominatimRes.ok) throw new InternalServerErrorException('Erro ao geocodificar endereço.');
-    const nominatim = await nominatimRes.json() as any[];
-
-    if (!nominatim.length) {
-      // Fallback: geocodificar só pela cidade
-      const fallbackQuery = encodeURIComponent(`${cidade}, ${uf}, Brasil`);
-      const fallbackRes = await this.fetchWithTimeout(
-        `https://nominatim.openstreetmap.org/search?q=${fallbackQuery}&format=json&limit=1`,
-        { headers: { 'User-Agent': 'CheapsPods/1.0' } },
-        10000,
-      );
-      // F17: verificar HTTP error no fallback também
-      if (!fallbackRes.ok) throw new InternalServerErrorException('Erro ao geocodificar endereço.');
-      const fallback = await fallbackRes.json() as any[];
-      if (!fallback.length) throw new InternalServerErrorException('Endereço não encontrado.');
-      return { lat: String(fallback[0].lat), lng: String(fallback[0].lon), cidade, uf };
-    }
-
-    return { lat: String(nominatim[0].lat), lng: String(nominatim[0].lon), cidade, uf };
+    // 2. Nominatim para geocodificar
+    const coords = await this.geocodeAddress(address, cidade, uf);
+    return { ...coords, cidade, uf };
   }
 
   async getQuote(dto: QuoteShippingDto): Promise<any> {
-    const raw = dto.zipCode.replace(/\D/g, '');
-    const cacheRef = this.firebaseService.db.collection('shipping_quotes').doc(raw);
-    const cacheSnap = await cacheRef.get();
+    const raw = dto.zipCode ? dto.zipCode.replace(/\D/g, '') : null;
 
-    if (cacheSnap.exists) {
-      const cached = cacheSnap.data() as { price: number; expiresAt: number };
-      const expired = cached.expiresAt <= Date.now();
-      this.logger.log(`[FRETE] Cache CEP ${raw}: price=R$${cached.price} expired=${expired}`);
-      if (!expired) {
-        return {
-          price: cached.price,
-          priceFormatted: 'R$ ' + cached.price.toFixed(2).replace('.', ','),
-          expiresAt: cached.expiresAt,
-          cached: true,
-        };
+    // Cache só quando temos CEP (chave estável)
+    if (raw) {
+      const cacheRef = this.firebaseService.db.collection('shipping_quotes').doc(raw);
+      const cacheSnap = await cacheRef.get();
+
+      if (cacheSnap.exists) {
+        const cached = cacheSnap.data() as { price: number; expiresAt: number };
+        const expired = cached.expiresAt <= Date.now();
+        this.logger.log(`[FRETE] Cache CEP ${raw}: price=R$${cached.price} expired=${expired}`);
+        if (!expired) {
+          return {
+            price: cached.price,
+            priceFormatted: 'R$ ' + cached.price.toFixed(2).replace('.', ','),
+            expiresAt: cached.expiresAt,
+            cached: true,
+          };
+        }
+      } else {
+        this.logger.log(`[FRETE] Cache miss para CEP ${raw}`);
       }
-    } else {
-      this.logger.log(`[FRETE] Cache miss para CEP ${raw}`);
     }
 
-    const { lat, lng, cidade, uf } = await this.geocodeZip(dto.zipCode, dto.address);
+    // Geocodificação: com CEP ou direto por cidade/UF
+    let lat: string, lng: string, cidade: string, uf: string;
+    if (raw) {
+      ({ lat, lng, cidade, uf } = await this.geocodeZip(dto.zipCode!, dto.address));
+    } else {
+      if (!dto.cidade || !dto.uf) {
+        throw new InternalServerErrorException('Informe o CEP ou a cidade e o estado para calcular o frete.');
+      }
+      cidade = dto.cidade;
+      uf = dto.uf;
+      ({ lat, lng } = await this.geocodeAddress(dto.address, cidade, uf));
+    }
 
     // Validação de cobertura: verifica se a cidade está na área atendida pela Lalamove
     if (!this.isCovered(cidade, uf)) {
@@ -227,18 +251,20 @@ export class ShippingService {
 
     const expiresAt = Date.now() + 5 * 60 * 1000;
 
-    // F16: salva cache sem bloquear — erro não impede retorno do resultado
-    cacheRef.set({
-      price: finalPrice,
-      expiresAt,
-      zipCode: raw,
-      address: dto.address,
-      cidade,
-      uf,
-      createdAt: Date.now(),
-    }).catch((err: unknown) => {
-      this.logger.warn(`Falha ao salvar cache de frete para CEP ${raw}: ${err}`);
-    });
+    // F16: salva cache sem bloquear — só quando temos CEP como chave estável
+    if (raw) {
+      this.firebaseService.db.collection('shipping_quotes').doc(raw).set({
+        price: finalPrice,
+        expiresAt,
+        zipCode: raw,
+        address: dto.address,
+        cidade,
+        uf,
+        createdAt: Date.now(),
+      }).catch((err: unknown) => {
+        this.logger.warn(`Falha ao salvar cache de frete para CEP ${raw}: ${err}`);
+      });
+    }
 
     return {
       price: finalPrice,
