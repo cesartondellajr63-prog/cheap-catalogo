@@ -145,7 +145,6 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
         setBairro(data.bairro ?? '');
         setCidade(data.localidade ?? '');
         setEstado(data.uf ?? '');
-        setCepHint('');
       }
     } catch {}
   };
@@ -434,7 +433,7 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
                   <input
                     type="text"
                     value={cep}
-                    onChange={e => { setCep(maskCEP(e.target.value)); setCepHint(''); resetFrete(); }}
+                    onChange={e => { setCep(maskCEP(e.target.value)); resetFrete(); }}
                     onBlur={fetchCEP}
                     placeholder="00000-000"
                     maxLength={9}
