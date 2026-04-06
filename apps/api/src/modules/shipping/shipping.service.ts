@@ -109,7 +109,9 @@ export class ShippingService {
 
     if (cacheSnap.exists) {
       const cached = cacheSnap.data() as { price: number; expiresAt: number };
-      if (cached.expiresAt > Date.now()) {
+      const expired = cached.expiresAt <= Date.now();
+      this.logger.log(`[FRETE] Cache CEP ${raw}: price=R$${cached.price} expired=${expired}`);
+      if (!expired) {
         return {
           price: cached.price,
           priceFormatted: 'R$ ' + cached.price.toFixed(2).replace('.', ','),
@@ -117,6 +119,8 @@ export class ShippingService {
           cached: true,
         };
       }
+    } else {
+      this.logger.log(`[FRETE] Cache miss para CEP ${raw}`);
     }
 
     const { lat, lng, cidade, uf } = await this.geocodeZip(dto.zipCode, dto.address);
@@ -199,7 +203,7 @@ export class ShippingService {
     const priceStr = data.data?.priceBreakdown?.total || data.priceBreakdown?.total || '0';
     const totalReais = parseFloat(priceStr) / 100;
 
-    this.logger.log(`Lalamove cotação para ${cidade}/${uf}: "${priceStr}" → R$ ${totalReais}`);
+    this.logger.log(`[FRETE] Lalamove priceStr="${priceStr}" totalReais=${totalReais}`);
 
     if (isNaN(totalReais) || totalReais <= 0) {
       throw new InternalServerErrorException('Preço de frete inválido recebido da Lalamove.');
@@ -218,6 +222,8 @@ export class ShippingService {
       finalPrice = totalReais;
     }
     finalPrice = Math.round(finalPrice * 100) / 100;
+
+    this.logger.log(`[FRETE] Regra aplicada: totalReais=${totalReais} → finalPrice=${finalPrice}`);
 
     const expiresAt = Date.now() + 5 * 60 * 1000;
 
