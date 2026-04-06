@@ -11,7 +11,14 @@
       "Bash(npx tsc:*)",
       "Bash(gh repo:*)",
       "WebFetch(domain:github.com)",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(grep -rni combo 'C:\\\\Users\\\\CesarJunior\\\\Desktop\\\\Cheap Pods\\\\catalago-cheaps\\\\apps\\\\web\\\\src' --include=*.ts --include=*.tsx)",
+      "Bash(node -e \"require\\(''canvas''\\); console.log\\(''canvas OK''\\)\")",
+      "Bash(node -e \":*)",
+      "Bash(grep -r ShippingQuoteResult '/c/Users/CesarJunior/Desktop/Cheap Pods/catalago-cheaps/apps' --include=*.ts --include=*.tsx)",
+      "Bash(grep -r \"calculateFrete\\\\|calcularFrete\\\\|fetchCEP\" '/c/Users/CesarJunior/Desktop/Cheap Pods/catalago-cheaps/apps/web' --include=*.tsx --include=*.ts)",
+      "Bash(find '/c/Users/CesarJunior/Desktop/Cheap Pods/catalago-cheaps' -type f \\\\\\(-name *.md -o -name README* \\\\\\))",
+      "WebSearch"
     ]
   }
 }
