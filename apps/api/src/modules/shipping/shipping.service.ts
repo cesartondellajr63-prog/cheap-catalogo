@@ -8,11 +8,9 @@ import { FirebaseService } from '../../shared/firebase/firebase.service';
 import { QuoteShippingDto } from './dto/quote-shipping.dto';
 
 const ORIGIN = {
-  lat: process.env.ORIGIN_LAT || '-23.5329',
-  lng: process.env.ORIGIN_LNG || '-46.7889',
-  address:
-    process.env.ORIGIN_ADDRESS ||
-    'Avenida Analice Sakatauskas, 860, Bela Vista, Osasco, SP, Brasil',
+  lat: process.env.ORIGIN_LAT!,
+  lng: process.env.ORIGIN_LNG!,
+  address: process.env.ORIGIN_ADDRESS!,
 };
 
 @Injectable()
