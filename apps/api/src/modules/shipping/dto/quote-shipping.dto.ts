@@ -1,19 +1,16 @@
-import { IsOptional, IsString, Matches } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 
 export class QuoteShippingDto {
-  @IsOptional()
   @IsString()
-  @Matches(/^\d{5}-?\d{3}$/, { message: 'CEP inválido' })
-  zipCode?: string;
+  lat: string;
+
+  @IsString()
+  lng: string;
 
   @IsString()
   address: string;
 
   @IsOptional()
   @IsString()
-  cidade?: string;
-
-  @IsOptional()
-  @IsString()
-  uf?: string;
+  zipCode?: string; // usado como chave de cache quando disponível
 }

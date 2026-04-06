@@ -15,32 +15,13 @@ const ORIGIN = {
     'Avenida Analice Sakatauskas, 860, Bela Vista, Osasco, SP, Brasil',
 };
 
-// Cidades cobertas pela Lalamove no Brasil (regiões metropolitanas)
-const LALAMOVE_COVERED_CITIES: Record<string, string[]> = {
-  SP: ['são paulo', 'osasco', 'guarulhos', 'santo andré', 'são bernardo do campo',
-       'são caetano do sul', 'mauá', 'ribeirão pires', 'diadema', 'mogi das cruzes',
-       'suzano', 'itaquaquecetuba', 'ferraz de vasconcelos', 'poá', 'barueri',
-       'cotia', 'carapicuíba', 'taboão da serra', 'embu das artes', 'itapecerica da serra',
-       'santana de parnaíba', 'jandira', 'itapevi', 'cajamar', 'mairiporã',
-       'franco da rocha', 'francisco morato', 'caieiras', 'arujá', 'santa isabel'],
-  RJ: ['rio de janeiro', 'niterói', 'são gonçalo', 'duque de caxias', 'nova iguaçu',
-       'belford roxo', 'nilópolis', 'mesquita', 'queimados', 'japeri',
-       'itaguaí', 'seropédica', 'magé', 'guapimirim', 'itaboraí'],
-  MG: ['belo horizonte', 'contagem', 'betim', 'nova lima', 'sabará',
-       'ribeirão das neves', 'santa luzia', 'vespasiano', 'ibirité', 'brumadinho'],
-  PR: ['curitiba', 'são josé dos pinhais', 'colombo', 'araucária', 'fazenda rio grande',
-       'pinhais', 'piraquara', 'campo largo', 'almirante tamandaré', 'quatro barras'],
-  RS: ['porto alegre', 'canoas', 'novo hamburgo', 'são leopoldo', 'alvorada',
-       'viamão', 'gravataí', 'cachoeirinha', 'esteio', 'sapucaia do sul'],
-};
-
 @Injectable()
 export class ShippingService {
   private readonly logger = new Logger(ShippingService.name);
 
   constructor(private readonly firebaseService: FirebaseService) {}
 
-  private fetchWithTimeout(url: string, options: RequestInit = {}, ms = 10000): Promise<Response> {
+  private fetchWithTimeout(url: string, options: RequestInit = {}, ms = 15000): Promise<Response> {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), ms);
     return fetch(url, { ...options, signal: controller.signal }).finally(() =>
@@ -48,73 +29,10 @@ export class ShippingService {
     );
   }
 
-  // Valida se a cidade está dentro da cobertura da Lalamove
-  private isCovered(cidade: string, uf: string): boolean {
-    const covered = LALAMOVE_COVERED_CITIES[uf.toUpperCase()];
-    if (!covered) return false;
-    const cidadeNorm = cidade.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    return covered.some(c => {
-      const cNorm = c.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-      return cidadeNorm.includes(cNorm) || cNorm.includes(cidadeNorm);
-    });
-  }
-
-  // Geocodifica via Nominatim dado endereço + cidade + UF (sem precisar de CEP)
-  private async geocodeAddress(
-    address: string,
-    cidade: string,
-    uf: string,
-  ): Promise<{ lat: string; lng: string }> {
-    const query = encodeURIComponent(`${address}, ${cidade}, ${uf}, Brasil`);
-    const res = await this.fetchWithTimeout(
-      `https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1`,
-      { headers: { 'User-Agent': 'CheapsPods/1.0' } },
-      10000,
-    );
-    if (!res.ok) throw new InternalServerErrorException('Erro ao geocodificar endereço.');
-    const results = await res.json() as any[];
-
-    if (!results.length) {
-      // Fallback: só cidade/UF
-      const fallbackQuery = encodeURIComponent(`${cidade}, ${uf}, Brasil`);
-      const fallbackRes = await this.fetchWithTimeout(
-        `https://nominatim.openstreetmap.org/search?q=${fallbackQuery}&format=json&limit=1`,
-        { headers: { 'User-Agent': 'CheapsPods/1.0' } },
-        10000,
-      );
-      if (!fallbackRes.ok) throw new InternalServerErrorException('Erro ao geocodificar endereço.');
-      const fallback = await fallbackRes.json() as any[];
-      if (!fallback.length) throw new InternalServerErrorException('Endereço não encontrado.');
-      return { lat: String(fallback[0].lat), lng: String(fallback[0].lon) };
-    }
-
-    return { lat: String(results[0].lat), lng: String(results[0].lon) };
-  }
-
-  private async geocodeZip(
-    zipCode: string,
-    address: string,
-  ): Promise<{ lat: string; lng: string; cidade: string; uf: string }> {
-    const raw = zipCode.replace(/\D/g, '');
-
-    // 1. ViaCEP para obter cidade/estado
-    const viaCepRes = await this.fetchWithTimeout(`https://viacep.com.br/ws/${raw}/json/`, {}, 8000);
-    if (!viaCepRes.ok) throw new InternalServerErrorException('CEP não encontrado.');
-    const viaCep = await viaCepRes.json() as any;
-    if (viaCep.erro) throw new InternalServerErrorException('CEP não encontrado.');
-
-    const cidade: string = viaCep.localidade ?? '';
-    const uf: string = viaCep.uf ?? '';
-
-    // 2. Nominatim para geocodificar
-    const coords = await this.geocodeAddress(address, cidade, uf);
-    return { ...coords, cidade, uf };
-  }
-
   async getQuote(dto: QuoteShippingDto): Promise<any> {
-    const raw = dto.zipCode ? dto.zipCode.replace(/\D/g, '') : null;
+    const raw = dto.zipCode?.replace(/\D/g, '') ?? null;
 
-    // Cache só quando temos CEP (chave estável)
+    // Cache por CEP quando disponível
     if (raw) {
       const cacheRef = this.firebaseService.db.collection('shipping_quotes').doc(raw);
       const cacheSnap = await cacheRef.get();
@@ -122,7 +40,7 @@ export class ShippingService {
       if (cacheSnap.exists) {
         const cached = cacheSnap.data() as { price: number; expiresAt: number };
         const expired = cached.expiresAt <= Date.now();
-        this.logger.log(`[FRETE] Cache CEP ${raw}: price=R$${cached.price} expired=${expired}`);
+        this.logger.log(`[FRETE] Cache CEP ${raw}: R$${cached.price} expired=${expired}`);
         if (!expired) {
           return {
             price: cached.price,
@@ -132,31 +50,23 @@ export class ShippingService {
           };
         }
       } else {
-        this.logger.log(`[FRETE] Cache miss para CEP ${raw}`);
+        this.logger.log(`[FRETE] Cache miss CEP ${raw}`);
       }
     }
 
-    // Geocodificação: com CEP ou direto por cidade/UF
-    let lat: string, lng: string, cidade: string, uf: string;
-    if (raw) {
-      ({ lat, lng, cidade, uf } = await this.geocodeZip(dto.zipCode!, dto.address));
-    } else {
-      if (!dto.cidade || !dto.uf) {
-        throw new InternalServerErrorException('Informe o CEP ou a cidade e o estado para calcular o frete.');
-      }
-      cidade = dto.cidade;
-      uf = dto.uf;
-      ({ lat, lng } = await this.geocodeAddress(dto.address, cidade, uf));
+    // Validar que coordenadas são do Brasil
+    const latNum = parseFloat(dto.lat);
+    const lngNum = parseFloat(dto.lng);
+
+    if (isNaN(latNum) || isNaN(lngNum)) {
+      throw new InternalServerErrorException('Coordenadas inválidas.');
     }
 
-    // Validação de cobertura: verifica se a cidade está na área atendida pela Lalamove
-    if (!this.isCovered(cidade, uf)) {
-      this.logger.warn(`Cidade fora da cobertura Lalamove: ${cidade}/${uf}`);
-      throw new InternalServerErrorException(
-        `Entrega não disponível para ${cidade}/${uf}. Atendemos apenas regiões metropolitanas de SP, RJ, BH, Curitiba e Porto Alegre.`,
-      );
+    if (latNum < -33 || latNum > 5 || lngNum < -73 || lngNum > -35) {
+      throw new InternalServerErrorException('Endereço fora do Brasil ou coordenadas inválidas.');
     }
 
+    // Chamar Lalamove com lat/lng já geocodificados pelo frontend
     const apiKey = process.env.LALAMOVE_API_KEY as string;
     const apiSecret = process.env.LALAMOVE_API_SECRET as string;
     const timestamp = Date.now().toString();
@@ -171,7 +81,7 @@ export class ShippingService {
             address: ORIGIN.address,
           },
           {
-            coordinates: { lat, lng },
+            coordinates: { lat: String(latNum), lng: String(lngNum) },
             address: dto.address.replace(/[\r\n]/g, ' ').substring(0, 255),
           },
         ],
@@ -200,21 +110,24 @@ export class ShippingService {
         },
         body: bodyStr,
       },
-      15000,
+      30000,
     );
 
     if (!lalamoveResponse.ok) {
       const errorText = await lalamoveResponse.text();
-      this.logger.error(`Lalamove API error: ${errorText}`);
+      this.logger.error(`[FRETE] Lalamove error: ${errorText}`);
 
-      // Tenta extrair código de erro da Lalamove para mensagem amigável
       try {
         const errJson = JSON.parse(errorText);
-        const errCode: string = errJson?.message ?? errJson?.error ?? '';
-        if (errCode.includes('OUT_OF_SERVICE_AREA') || errCode.includes('SERVICE_AREA')) {
+        const code: string = errJson?.code ?? '';
+        const msg: string = errJson?.message ?? '';
+        if (code === 'DELIVERY_NOT_AVAILABLE' || msg.includes('OUT_OF_SERVICE_AREA')) {
           throw new InternalServerErrorException(
-            `Entrega não disponível para ${cidade}/${uf}. Atendemos apenas regiões metropolitanas de SP, RJ, BH, Curitiba e Porto Alegre.`,
+            'Entrega não disponível nesta região. Atendemos apenas regiões metropolitanas de SP, RJ, BH, Curitiba e Porto Alegre.',
           );
+        }
+        if (code === 'INVALID_LOCATION') {
+          throw new InternalServerErrorException('Localização inválida ou não encontrada.');
         }
       } catch (parseErr) {
         if (parseErr instanceof InternalServerErrorException) throw parseErr;
@@ -224,10 +137,16 @@ export class ShippingService {
     }
 
     const data = (await lalamoveResponse.json()) as any;
-    const priceStr = data.data?.priceBreakdown?.total || data.priceBreakdown?.total || '0';
-    const totalReais = parseFloat(priceStr); // Lalamove BR retorna valor já em reais
 
-    this.logger.log(`[FRETE] Lalamove priceStr="${priceStr}" totalReais=${totalReais}`);
+    // Lalamove BR retorna o valor já em reais (não centavos)
+    const totalReais = parseFloat(
+      data.data?.priceBreakdown?.total ||
+      data.priceBreakdown?.total ||
+      data.totalFee ||
+      0,
+    );
+
+    this.logger.log(`[FRETE] Lalamove retornou R$${totalReais}`);
 
     if (isNaN(totalReais) || totalReais <= 0) {
       throw new InternalServerErrorException('Preço de frete inválido recebido da Lalamove.');
@@ -247,22 +166,24 @@ export class ShippingService {
     }
     finalPrice = Math.round(finalPrice * 100) / 100;
 
-    this.logger.log(`[FRETE] Regra aplicada: totalReais=${totalReais} → finalPrice=${finalPrice}`);
+    this.logger.log(`[FRETE] finalPrice=R$${finalPrice}`);
 
-    const expiresAt = Date.now() + 5 * 60 * 1000;
+    // Expiração da cotação Lalamove (se disponível) ou 5 min
+    const llExpiresAt = data.data?.expiresAt;
+    const expiresAt = llExpiresAt
+      ? new Date(llExpiresAt).getTime()
+      : Date.now() + 5 * 60 * 1000;
 
-    // F16: salva cache sem bloquear — só quando temos CEP como chave estável
+    // Salva cache por CEP (sem bloquear retorno)
     if (raw) {
       this.firebaseService.db.collection('shipping_quotes').doc(raw).set({
         price: finalPrice,
         expiresAt,
         zipCode: raw,
         address: dto.address,
-        cidade,
-        uf,
         createdAt: Date.now(),
       }).catch((err: unknown) => {
-        this.logger.warn(`Falha ao salvar cache de frete para CEP ${raw}: ${err}`);
+        this.logger.warn(`[FRETE] Falha ao salvar cache CEP ${raw}: ${err}`);
       });
     }
 

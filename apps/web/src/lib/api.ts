@@ -44,7 +44,7 @@ export const api = {
   },
 
   shipping: {
-    quote: (body: { zipCode?: string; address: string; cidade?: string; uf?: string }): Promise<ShippingQuoteResult> =>
+    quote: (body: { lat: string; lng: string; address: string; zipCode?: string }): Promise<ShippingQuoteResult> =>
       request('/shipping/quote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

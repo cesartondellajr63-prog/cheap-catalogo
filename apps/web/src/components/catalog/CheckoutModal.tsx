@@ -152,6 +152,18 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
     } catch {}
   };
 
+  // Geocodifica endereço via Nominatim (browser → sem necessidade de proxy)
+  const geocodeEndereco = async (addr: string): Promise<{ lat: string; lng: string } | null> => {
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(addr)}&format=json&limit=1`,
+      );
+      const data = await res.json() as any[];
+      if (data.length) return { lat: data[0].lat, lng: data[0].lon };
+    } catch {}
+    return null;
+  };
+
   // Busca o CEP automaticamente quando rua + cidade + estado estão preenchidos
   const reverseLookupCEP = async () => {
     if (cep.replace(/\D/g, '').length === 8) return; // já tem CEP
@@ -190,21 +202,24 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
   };
 
   const calcularFrete = async () => {
-    const cepRaw = cep.replace(/\D/g, '');
-    const temCep = cepRaw.length === 8;
-    if (!temCep && (!cidade.trim() || !estado.trim())) {
-      setFreteError('Informe o CEP ou a cidade e o estado.');
-      return;
-    }
     if (!rua.trim()) { setFreteError('Informe a rua.'); return; }
+    if (!cidade.trim()) { setFreteError('Informe a cidade.'); return; }
     setFreteError('');
     setFreteLoading(true);
     try {
+      const addrCompleto = `${rua}, ${numero}, ${bairro}, ${cidade}, ${estado || 'SP'}, Brasil`;
+      let geo = await geocodeEndereco(addrCompleto);
+      if (!geo) {
+        geo = await geocodeEndereco(`${cidade}, ${estado || 'SP'}, Brasil`);
+      }
+      if (!geo) throw new Error('Endereço não encontrado. Verifique a cidade e tente novamente.');
+
+      const cepRaw = cep.replace(/\D/g, '');
       const result = await api.shipping.quote({
-        zipCode: temCep ? cep : undefined,
-        address: `${rua}, ${numero}, ${bairro}, ${cidade}`,
-        cidade: temCep ? undefined : cidade,
-        uf: temCep ? undefined : estado.trim().toUpperCase().slice(0, 2),
+        lat: geo.lat,
+        lng: geo.lng,
+        address: `${rua}, ${numero}, ${bairro}, ${cidade}, ${estado || 'SP'}, Brasil`,
+        zipCode: cepRaw.length === 8 ? cep : undefined,
       });
       setFreteResult(result);
       setFreteExpired(false);
