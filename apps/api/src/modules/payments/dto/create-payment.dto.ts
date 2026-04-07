@@ -12,10 +12,6 @@ export class PaymentItemDto {
   flavor: string;
 
   @IsNumber()
-  @Min(0.01)
-  price: number;
-
-  @IsNumber()
   @Min(1)
   qty: number;
 }

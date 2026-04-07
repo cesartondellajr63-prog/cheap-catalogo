@@ -72,7 +72,7 @@ export class PaymentsService {
           variantId: i.flavor,
           variantName: i.flavor,
           quantity: i.qty,
-          unitPrice: i.price,
+          unitPrice: 0, // placeholder — substituído pelo resolveItems() via Firebase
         })),
       });
     } else {
@@ -204,7 +204,7 @@ export class PaymentsService {
         variantId:   i.flavor,
         variantName: i.flavor,
         quantity:    i.qty,
-        unitPrice:   i.price,
+        unitPrice:   0, // placeholder — substituído pelo resolveItems() via Firebase
       })),
     });
 
@@ -365,6 +365,26 @@ export class PaymentsService {
       try {
         const order = await this.ordersService.findById(orderId);
         if (order.status !== 'PAID') {
+          // SECURITY: valida que o valor pago bate com o total do pedido (tolerância de R$ 0,01)
+          const paidAmount: number = payment.transaction_amount ?? 0;
+          const expectedTotal: number = order.total ?? 0;
+          const TOLERANCE = 0.01;
+
+          if (paidAmount < expectedTotal - TOLERANCE) {
+            this.logger.error(
+              `SECURITY ALERT [polling]: payment ${payment.id} pago R$${paidAmount} < pedido ${orderId} total R$${expectedTotal}. Pedido NÃO marcado como PAID.`,
+            );
+            await this.firebaseService.db.collection('audit_logs').add({
+              entityType: 'order',
+              entityId: orderId,
+              action: 'payment_amount_mismatch',
+              actorId: 'polling_mercadopago',
+              payload: { paymentId: payment.id, paidAmount, expectedTotal, status: payment.status },
+              createdAt: Date.now(),
+            });
+            return { status: 'pending', paymentId: payment.id, amount: payment.transaction_amount, metadata: null };
+          }
+
           await this.ordersService.updatePaymentInfo(orderId, String(payment.id), payment.preference_id || '');
           await this.ordersService.updateStatus(orderId, 'PAID', 'polling_mercadopago');
         }

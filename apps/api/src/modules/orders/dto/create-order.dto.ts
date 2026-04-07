@@ -19,7 +19,7 @@ export class OrderItemDto {
   quantity: number;
 
   @IsNumber()
-  @Min(1)
+  @Min(0)
   unitPrice: number;
 }
 

@@ -125,6 +125,39 @@ export class WebhooksController {
       return { received: true };
     }
 
+    // SECURITY: valida que o valor pago pelo Mercado Pago bate com o total do pedido
+    let order: any;
+    try {
+      order = await this.ordersService.findById(orderId);
+    } catch {
+      this.logger.error(`Webhook: pedido ${orderId} não encontrado para validação de valor.`);
+      return { received: true };
+    }
+
+    const paidAmount: number = payment.transaction_amount ?? 0;
+    const expectedTotal: number = order.total ?? 0;
+    const TOLERANCE = 0.01; // tolerância de R$ 0,01 para arredondamentos
+
+    if (paidAmount < expectedTotal - TOLERANCE) {
+      this.logger.error(
+        `SECURITY ALERT [webhook]: payment ${paymentId} pago R$${paidAmount} < pedido ${orderId} total R$${expectedTotal}. Pedido NÃO marcado como PAID.`,
+      );
+      await this.firebaseService.db.collection('audit_logs').add({
+        entityType: 'order',
+        entityId: orderId,
+        action: 'payment_amount_mismatch',
+        actorId: 'webhook_mercadopago',
+        payload: {
+          paymentId: payment.id,
+          paidAmount,
+          expectedTotal,
+          status: payment.status,
+        },
+        createdAt: Date.now(),
+      });
+      return { received: true };
+    }
+
     await this.ordersService.updatePaymentInfo(orderId, String(payment.id), payment.preference_id || '');
     await this.ordersService.updateStatus(orderId, 'PAID', 'webhook_mercadopago');
 
