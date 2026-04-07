@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams } from 'next/navigation';
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'https://cheap-catalogo.onrender.com';
@@ -79,6 +79,67 @@ function formatDate(ts: number) {
   });
 }
 
+// ─── Modal de rastreio ────────────────────────────────────────────────────────
+
+function TrackingModal({ url, onClose }: { url: string; onClose: () => void }) {
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  // Fechar com ESC
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [onClose]);
+
+  // Bloquear scroll do body enquanto modal aberto
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = ''; };
+  }, []);
+
+  return (
+    <div
+      onClick={onClose}
+      style={{ position:'fixed', inset:0, zIndex:100, background:'rgba(0,0,0,0.85)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:16 }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{ width:'100%', maxWidth:480, height:'80vh', display:'flex', flexDirection:'column', borderRadius:20, overflow:'hidden', border:'1px solid rgba(126,255,245,0.2)', background:'#111' }}
+      >
+        {/* Barra do modal */}
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 16px', borderBottom:'1px solid rgba(255,255,255,0.08)', flexShrink:0 }}>
+          <p style={{ fontFamily:'var(--font-syne),Syne,sans-serif', fontWeight:700, fontSize:14, color:'#7efff5' }}>
+            🚚 Rastreio da entrega
+          </p>
+          <button
+            onClick={onClose}
+            style={{ background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.1)', borderRadius:8, color:'rgba(255,255,255,0.6)', fontSize:18, lineHeight:1, width:32, height:32, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}
+          >
+            ×
+          </button>
+        </div>
+
+        {/* iframe */}
+        <iframe
+          ref={iframeRef}
+          src={url}
+          style={{ flex:1, border:'none', width:'100%' }}
+          title="Rastreio de entrega"
+          allow="geolocation"
+        />
+
+        {/* Fallback: abrir no navegador */}
+        <div style={{ padding:'10px 16px', borderTop:'1px solid rgba(255,255,255,0.06)', flexShrink:0, textAlign:'center' }}>
+          <a href={url} target="_blank" rel="noopener noreferrer"
+            style={{ fontSize:12, color:'rgba(255,255,255,0.35)', textDecoration:'underline' }}>
+            Abrir em nova aba
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Componente principal ─────────────────────────────────────────────────────
 
 export default function AcompanharPedidoPage() {
@@ -88,6 +149,7 @@ export default function AcompanharPedidoPage() {
   const [order, setOrder] = useState<TrackingOrder | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [trackingOpen, setTrackingOpen] = useState(false);
 
   const fetchOrder = useCallback(async () => {
     try {
@@ -131,6 +193,7 @@ export default function AcompanharPedidoPage() {
     );
   }
 
+  const showTracking = !!order.trackingLink && order.motoboy !== '🏍️ Motoboy Próprio';
   const paymentCfg = PAYMENT_CONFIG[order.status];
   const deliveryCfg = getDeliveryStatus(order.shippingStatus);
 
@@ -150,6 +213,10 @@ export default function AcompanharPedidoPage() {
   };
 
   return (
+    <>
+    {trackingOpen && order.trackingLink && (
+      <TrackingModal url={order.trackingLink} onClose={() => setTrackingOpen(false)} />
+    )}
     <main style={{ minHeight:'100vh', padding:'clamp(24px,4vw,48px) var(--pad)', position:'relative', zIndex:2 }}>
       <div style={{ maxWidth:520, margin:'0 auto', display:'flex', flexDirection:'column', gap:16 }}>
 
@@ -230,13 +297,15 @@ export default function AcompanharPedidoPage() {
               </p>
             </div>
 
-            {/* Link de rastreio — oculto para Motoboy Próprio */}
-            {order.trackingLink && order.motoboy !== '🏍️ Motoboy Próprio' && (
+            {/* Botão de rastreio — oculto para Motoboy Próprio */}
+            {showTracking && (
               <div style={{ marginTop:14, paddingTop:14, borderTop:`1px solid ${deliveryCfg.accent}22` }}>
-                <a href={order.trackingLink} target="_blank" rel="noopener noreferrer"
-                  style={{ display:'inline-flex', alignItems:'center', gap:6, fontSize:13, fontWeight:700, color: deliveryCfg.accent, textDecoration:'underline' }}>
+                <button
+                  onClick={() => setTrackingOpen(true)}
+                  style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'10px 20px', borderRadius:12, background: deliveryCfg.bg, border:`1px solid ${deliveryCfg.accent}55`, color: deliveryCfg.accent, fontSize:13, fontWeight:700, cursor:'pointer', fontFamily:'var(--font-syne),Syne,sans-serif' }}
+                >
                   🔗 Rastrear entrega em tempo real
-                </a>
+                </button>
               </div>
             )}
           </div>
@@ -252,5 +321,6 @@ export default function AcompanharPedidoPage() {
 
       </div>
     </main>
+    </>
   );
 }
