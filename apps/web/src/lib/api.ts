@@ -55,7 +55,7 @@ export const api = {
   payments: {
     createPix: (body: {
       orderId: string;
-      items: { model: string; flavor: string; price: number; qty: number }[];
+      items: { productId: string; model: string; flavor: string; price: number; qty: number }[];
       shippingPrice: number;
       customerEmail: string;
       customerName: string;

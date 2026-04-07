@@ -3,6 +3,9 @@ import { Type } from 'class-transformer';
 
 export class PaymentItemDto {
   @IsString()
+  productId: string;
+
+  @IsString()
   model: string;
 
   @IsString()
