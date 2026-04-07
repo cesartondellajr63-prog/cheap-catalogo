@@ -75,7 +75,7 @@ export const api = {
     getCardStatus: (orderId: string): Promise<{ status: string; orderNumber: string }> =>
       request(`/payments/card-status/${orderId}`),
     createCard: (body: {
-      items: { name: string; flavor: string; price: number; qty: number }[];
+      items: { productId: string; name: string; flavor: string; price: number; qty: number }[];
       shippingPrice: number;
       customerName: string;
       customerEmail: string;

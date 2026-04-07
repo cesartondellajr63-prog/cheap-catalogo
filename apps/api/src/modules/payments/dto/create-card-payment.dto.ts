@@ -5,6 +5,7 @@ import {
 import { Type } from 'class-transformer';
 
 export class CardItemDto {
+  @IsString() productId: string;
   @IsString() name: string;
   @IsString() flavor: string;
   @IsNumber() @Min(0.01) price: number;

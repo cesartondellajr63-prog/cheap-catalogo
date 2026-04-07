@@ -255,6 +255,7 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
     try {
       const result = await api.payments.createCard({
         items: localCart.map(i => ({
+          productId: i.productId,
           name:   i.productName,
           flavor: i.variantName,
           price:  i.price,
