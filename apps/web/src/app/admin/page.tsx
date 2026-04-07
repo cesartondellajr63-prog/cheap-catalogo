@@ -1107,6 +1107,41 @@ function OrderRow({ o, onRowClick, onStatusChange, onShippingChange, onMotoboyCh
           {FRETE_OPTIONS.map(opt => <option key={opt} value={opt} style={{ background: '#1a1a1a', color: '#f0f0f0' }}>{opt}</option>)}
         </select>
       </td>
+      <td style={td} onClick={e => e.stopPropagation()}>
+        {frete === '🟡 A Caminho' && phone && (() => {
+          const motoboyVal = ((o as any).motoboy as MotoboyOption | undefined) ?? '⏳ Pendente';
+          const address = [o.customer?.address, o.customer?.city].filter(Boolean).join(', ');
+          const trackingLink = (o as any).trackingLink ?? '';
+          let msg: string;
+          if (motoboyVal === '🏍️ Motoboy Próprio') {
+            msg = `Olá o seu pedido ${o.orderNumber ?? ''} acabou de sair para entrega para o endereço ${address}`;
+          } else if (motoboyVal === '🛵 Lala Move') {
+            msg = `Olá o seu pedido ${o.orderNumber ?? ''} acabou de sair para entrega para o endereço ${address} segue o link:\n\n${trackingLink}`;
+          } else {
+            return <span style={{ color:'#6a6a6a',fontSize:11 }}>—</span>;
+          }
+          const waUrl = `https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`;
+          return (
+            <a
+              href={waUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                padding: '5px 12px', borderRadius: 9,
+                background: 'rgba(37,211,102,0.12)', border: '1px solid rgba(37,211,102,0.3)',
+                color: '#25d366', fontFamily: 'Satoshi,sans-serif', fontSize: 11, fontWeight: 700,
+                textDecoration: 'none', whiteSpace: 'nowrap', transition: 'all 0.2s',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(37,211,102,0.22)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'rgba(37,211,102,0.12)')}
+            >
+              💬 Enviar
+            </a>
+          );
+        })()}
+        {!(frete === '🟡 A Caminho' && phone) && <span style={{ color:'#6a6a6a',fontSize:11 }}>—</span>}
+      </td>
     </tr>
   );
 }
@@ -1166,16 +1201,16 @@ function OrdersTable({ orders, loading, onRowClick, onStatusChange, onShippingCh
         <table style={{ width:'100%',borderCollapse:'collapse' }}>
           <thead>
             <tr>
-              {['Nº Pedido','Data/Hora','Cliente','WhatsApp','Endereço','Valor Frete','Produtos','Valor Produtos','Total','Pagamento','Motoboy','Frete'].map(h => (
+              {['Nº Pedido','Data/Hora','Cliente','WhatsApp','Endereço','Valor Frete','Produtos','Valor Produtos','Total','Pagamento','Motoboy','Frete','Notificar'].map(h => (
                 <th key={h} style={th}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {loading
-              ? <tr><td colSpan={12}><StateBox loading /></td></tr>
+              ? <tr><td colSpan={13}><StateBox loading /></td></tr>
               : orders.length === 0
-                ? <tr><td colSpan={12}><StateBox icon="🔍" text="Nenhum pedido encontrado." /></td></tr>
+                ? <tr><td colSpan={13}><StateBox icon="🔍" text="Nenhum pedido encontrado." /></td></tr>
                 : orders.map(o => <OrderRow key={o.id} o={o} onRowClick={onRowClick} onStatusChange={onStatusChange} onShippingChange={onShippingChange} onMotoboyChange={onMotoboyChange} />)
             }
           </tbody>
