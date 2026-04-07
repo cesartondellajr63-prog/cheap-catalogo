@@ -1114,7 +1114,7 @@ function OrderRow({ o, onRowClick, onStatusChange, onShippingChange, onMotoboyCh
           const trackingLink = (o as any).trackingLink ?? '';
           let msg: string;
           if (motoboyVal === '🏍️ Motoboy Próprio') {
-            msg = `Olá o seu pedido ${produtos} acabou de sair para entrega para o endereço ${address}`;
+            msg = `Olá o seu pedido ${produtos} acabou de sair para entrega para o endereço ${address}. A entrega será feita por um dos nossos próprios Motoboys então infelizmente não temos a possibilidade de te enviar um link de rastreio, mas relaxa que já já seu pedido estará em suas mãos !`;
           } else if (motoboyVal === '🛵 Lala Move') {
             msg = `Olá o seu pedido ${produtos} acabou de sair para entrega para o endereço ${address} segue o link:\n\n${trackingLink}`;
           } else {
