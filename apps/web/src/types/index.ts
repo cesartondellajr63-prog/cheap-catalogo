@@ -114,6 +114,10 @@ export const BRANDS_STATIC: Brand[] = [
   { id: 'lostmary',   name: 'Lost Mary',   slug: 'lostmary',    color: '#ff4e6a', active: true },
   { id: 'blacksheep', name: 'Black Sheep', slug: 'blacksheep',  color: '#888888', active: true },
   { id: 'oxbar',      name: 'Oxbar',       slug: 'oxbar',       color: '#a855f7', active: true },
+  { id: 'hqd',        name: 'HQD',         slug: 'hqd',         color: '#00c9a7', active: true },
+  { id: 'nikbar',     name: 'Nikbar',      slug: 'nikbar',      color: '#e040fb', active: true },
+  { id: 'dinnerlady', name: 'Dinner Lady', slug: 'dinnerlady',  color: '#f06292', active: true },
+  { id: 'rabbeats',   name: 'Rabbeats',    slug: 'rabbeats',    color: '#ffca28', active: true },
 ];
 
 export const BRAND_GRADIENTS: Record<string, string> = {

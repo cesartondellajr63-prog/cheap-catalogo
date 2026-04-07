@@ -17,6 +17,10 @@ export const BRANDS_DATA = [
   { id: 'lostmary',   label: 'Lost Mary',   color: '#ff4e6a' },
   { id: 'blacksheep', label: 'Black Sheep', color: '#888888' },
   { id: 'oxbar',      label: 'Oxbar',       color: '#a855f7' },
+  { id: 'hqd',        label: 'HQD',         color: '#00c9a7' },
+  { id: 'nikbar',     label: 'Nikbar',      color: '#e040fb' },
+  { id: 'dinnerlady', label: 'Dinner Lady', color: '#f06292' },
+  { id: 'rabbeats',   label: 'Rabbeats',    color: '#ffca28' },
 ];
 
 export const BRAND_GRADIENTS: Record<string, string> = {
@@ -25,10 +29,15 @@ export const BRAND_GRADIENTS: Record<string, string> = {
   blacksheep: 'linear-gradient(135deg,#111 0%,#2a2a2a 100%)',
   oxbar:      'linear-gradient(135deg,#120a1a 0%,#3a1a6e 100%)',
   ignite:     'linear-gradient(135deg,#1a0a00 0%,#5a2000 100%)',
+  hqd:        'linear-gradient(135deg,#001a16 0%,#003d30 100%)',
+  nikbar:     'linear-gradient(135deg,#1a0020 0%,#4a006e 100%)',
+  dinnerlady: 'linear-gradient(135deg,#1a0010 0%,#5a0030 100%)',
+  rabbeats:   'linear-gradient(135deg,#1a1400 0%,#4a3a00 100%)',
 };
 
 export const BRAND_ICONS: Record<string, string> = {
   elfbar: '⚡', lostmary: '💀', blacksheep: '🖤', oxbar: '🟣', ignite: '🔥',
+  hqd: '💎', nikbar: '🌀', dinnerlady: '🌸', rabbeats: '🎵',
 };
 
 export const CATALOG: StaticProduct[] = [
