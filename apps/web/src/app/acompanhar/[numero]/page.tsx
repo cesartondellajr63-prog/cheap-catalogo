@@ -3,6 +3,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 
+const API = process.env.NEXT_PUBLIC_API_URL ?? 'https://cheap-catalogo.onrender.com';
+
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
 type OrderStatus = 'PENDING' | 'PAID' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | 'REFUNDED';
@@ -30,13 +32,13 @@ interface TrackingOrder {
 
 // ─── Helpers de status ────────────────────────────────────────────────────────
 
-const STATUS_CONFIG: Record<OrderStatus, { label: string; color: string; bg: string; icon: string; description: string }> = {
-  PENDING:   { label: 'Aguardando Pagamento', color: 'text-yellow-700', bg: 'bg-yellow-50 border-yellow-300', icon: '⏳', description: 'Seu pagamento ainda está sendo processado.' },
-  PAID:      { label: 'Pagamento Confirmado',  color: 'text-blue-700',   bg: 'bg-blue-50 border-blue-300',   icon: '✅', description: 'Pagamento aprovado! Estamos preparando seu pedido.' },
-  SHIPPED:   { label: 'Em Entrega',            color: 'text-orange-700', bg: 'bg-orange-50 border-orange-300', icon: '🚚', description: 'Seu pedido está a caminho!' },
-  DELIVERED: { label: 'Entregue',              color: 'text-green-700',  bg: 'bg-green-50 border-green-300',  icon: '📦', description: 'Pedido entregue com sucesso. Aproveite!' },
-  CANCELLED: { label: 'Cancelado',             color: 'text-red-700',    bg: 'bg-red-50 border-red-300',     icon: '❌', description: 'Este pedido foi cancelado.' },
-  REFUNDED:  { label: 'Reembolsado',           color: 'text-gray-700',   bg: 'bg-gray-50 border-gray-300',   icon: '↩️', description: 'O valor foi estornado para você.' },
+const STATUS_CONFIG: Record<OrderStatus, { label: string; accent: string; bg: string; icon: string; description: string }> = {
+  PENDING:   { label: 'Aguardando Pagamento', accent: '#f59e0b', bg: 'rgba(245,158,11,0.1)',  icon: '⏳', description: 'Seu pagamento ainda está sendo processado.' },
+  PAID:      { label: 'Pagamento Confirmado',  accent: '#c8ff00', bg: 'rgba(200,255,0,0.08)', icon: '✅', description: 'Pagamento aprovado! Estamos preparando seu pedido.' },
+  SHIPPED:   { label: 'Em Entrega',            accent: '#7efff5', bg: 'rgba(126,255,245,0.08)', icon: '🚚', description: 'Seu pedido está a caminho!' },
+  DELIVERED: { label: 'Entregue',              accent: '#c8ff00', bg: 'rgba(200,255,0,0.08)', icon: '📦', description: 'Pedido entregue com sucesso. Aproveite!' },
+  CANCELLED: { label: 'Cancelado',             accent: '#ff5050', bg: 'rgba(255,80,80,0.08)', icon: '❌', description: 'Este pedido foi cancelado.' },
+  REFUNDED:  { label: 'Reembolsado',           accent: 'rgba(255,255,255,0.45)', bg: 'rgba(255,255,255,0.04)', icon: '↩️', description: 'O valor foi estornado para você.' },
 };
 
 function formatCurrency(value: number) {
@@ -62,10 +64,7 @@ export default function AcompanharPedidoPage() {
 
   const fetchOrder = useCallback(async () => {
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/orders/track/${numero}`,
-        { cache: 'no-store' },
-      );
+      const res = await fetch(`${API}/orders/track/${numero}`, { cache: 'no-store' });
       if (!res.ok) {
         setError('Pedido não encontrado. Verifique o número e tente novamente.');
         return;
@@ -80,9 +79,7 @@ export default function AcompanharPedidoPage() {
     }
   }, [numero]);
 
-  useEffect(() => {
-    fetchOrder();
-  }, [fetchOrder]);
+  useEffect(() => { fetchOrder(); }, [fetchOrder]);
 
   // Polling a cada 30s para atualizar status em tempo real
   useEffect(() => {
@@ -90,123 +87,127 @@ export default function AcompanharPedidoPage() {
     return () => clearInterval(interval);
   }, [fetchOrder]);
 
+  // ── Loading ──
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <p className="text-gray-500 animate-pulse">Buscando seu pedido...</p>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'center', minHeight:'100vh', position:'relative', zIndex:2 }}>
+        <p style={{ color:'rgba(255,255,255,0.45)', fontSize:14 }}>Buscando seu pedido...</p>
       </div>
     );
   }
 
+  // ── Erro ──
   if (error || !order) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-        <div className="text-center">
-          <p className="text-4xl mb-4">😕</p>
-          <p className="text-gray-700 font-medium">{error}</p>
-          <a href="/" className="mt-4 inline-block text-sm text-blue-600 underline">
-            Voltar ao catálogo
-          </a>
-        </div>
+      <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', minHeight:'100vh', gap:16, padding:'0 24px', position:'relative', zIndex:2, textAlign:'center' }}>
+        <p style={{ fontSize:40 }}>😕</p>
+        <p style={{ color:'#fff', fontWeight:600 }}>{error}</p>
+        <a href="/" style={{ color:'#c8ff00', fontSize:14, textDecoration:'underline' }}>Voltar ao catálogo</a>
       </div>
     );
   }
 
-  const statusCfg = STATUS_CONFIG[order.status] ?? STATUS_CONFIG.PENDING;
+  const sc = STATUS_CONFIG[order.status] ?? STATUS_CONFIG.PENDING;
+
+  const card: React.CSSProperties = {
+    background: 'var(--surface)',
+    border: '1px solid var(--border)',
+    borderRadius: 20,
+    padding: '20px 24px',
+  };
+
+  const label: React.CSSProperties = {
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.35)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.06em',
+    marginBottom: 8,
+  };
 
   return (
-    <main className="min-h-screen bg-gray-50 py-8 px-4">
-      <div className="max-w-lg mx-auto space-y-4">
+    <main style={{ minHeight:'100vh', padding:'clamp(24px,4vw,48px) var(--pad)', position:'relative', zIndex:2 }}>
+      <div style={{ maxWidth:520, margin:'0 auto', display:'flex', flexDirection:'column', gap:16 }}>
 
         {/* Cabeçalho */}
-        <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Cheap Pods</h1>
-          <p className="text-sm text-gray-500 mt-1">Acompanhamento de Pedido</p>
+        <div style={{ textAlign:'center', marginBottom:8 }}>
+          <h1 style={{ fontFamily:'var(--font-syne),Syne,sans-serif', fontSize:'clamp(20px,4vw,26px)', fontWeight:800, color:'#fff', letterSpacing:'-0.5px' }}>
+            Cheaps<span style={{ color:'var(--accent)' }}>.</span>Pods
+          </h1>
+          <p style={{ color:'rgba(255,255,255,0.45)', fontSize:13, marginTop:4 }}>Acompanhamento de Pedido</p>
         </div>
 
         {/* Identificação */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-          <p className="text-xs text-gray-400 uppercase tracking-wider">Número do pedido</p>
-          <p className="text-xl font-bold text-gray-900 mt-1">{order.orderNumber}</p>
-          <p className="text-sm text-gray-500 mt-1">Realizado em {formatDate(order.createdAt)}</p>
-          <p className="text-sm text-gray-700 mt-2">
-            Olá, <span className="font-medium">{order.customerName}</span>!
+        <div style={card}>
+          <p style={label}>Número do pedido</p>
+          <p style={{ fontFamily:'var(--font-syne),Syne,sans-serif', fontSize:22, fontWeight:800, color:'var(--accent)', letterSpacing:'-0.5px' }}>{order.orderNumber}</p>
+          <p style={{ color:'rgba(255,255,255,0.45)', fontSize:13, marginTop:4 }}>Realizado em {formatDate(order.createdAt)}</p>
+          <p style={{ color:'#fff', fontSize:14, marginTop:8 }}>
+            Olá, <span style={{ fontWeight:600 }}>{order.customerName}</span>!
           </p>
         </div>
 
         {/* Itens do pedido */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-          <p className="text-xs text-gray-400 uppercase tracking-wider mb-3">Itens do pedido</p>
-          <ul className="space-y-2">
+        <div style={card}>
+          <p style={label}>Itens do pedido</p>
+          <ul style={{ display:'flex', flexDirection:'column', gap:10 }}>
             {order.items.map((item, i) => (
-              <li key={i} className="flex justify-between text-sm">
-                <span className="text-gray-700">
+              <li key={i} style={{ display:'flex', justifyContent:'space-between', alignItems:'baseline', gap:12 }}>
+                <span style={{ color:'rgba(255,255,255,0.8)', fontSize:14 }}>
                   {item.quantity}x {item.productName}
-                  {item.variantName && (
-                    <span className="text-gray-400"> — {item.variantName}</span>
-                  )}
+                  {item.variantName && <span style={{ color:'rgba(255,255,255,0.4)' }}> — {item.variantName}</span>}
                 </span>
-                <span className="text-gray-900 font-medium">
+                <span style={{ color:'#fff', fontWeight:600, fontSize:14, flexShrink:0 }}>
                   {formatCurrency(item.unitPrice * item.quantity)}
                 </span>
               </li>
             ))}
           </ul>
-          <div className="border-t border-gray-100 mt-3 pt-3 space-y-1">
-            <div className="flex justify-between text-sm text-gray-500">
-              <span>Subtotal</span>
-              <span>{formatCurrency(order.subtotal)}</span>
+          <div style={{ borderTop:'1px solid var(--border)', marginTop:14, paddingTop:14, display:'flex', flexDirection:'column', gap:6 }}>
+            <div style={{ display:'flex', justifyContent:'space-between', fontSize:13, color:'rgba(255,255,255,0.45)' }}>
+              <span>Subtotal</span><span>{formatCurrency(order.subtotal)}</span>
             </div>
-            <div className="flex justify-between text-sm text-gray-500">
-              <span>Frete</span>
-              <span>{formatCurrency(order.shippingCost)}</span>
+            <div style={{ display:'flex', justifyContent:'space-between', fontSize:13, color:'rgba(255,255,255,0.45)' }}>
+              <span>Frete</span><span>{formatCurrency(order.shippingCost)}</span>
             </div>
-            <div className="flex justify-between text-base font-bold text-gray-900">
-              <span>Total</span>
-              <span>{formatCurrency(order.total)}</span>
+            <div style={{ display:'flex', justifyContent:'space-between', fontSize:16, fontWeight:700, color:'#fff' }}>
+              <span>Total</span><span>{formatCurrency(order.total)}</span>
             </div>
           </div>
         </div>
 
         {/* Endereço */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-          <p className="text-xs text-gray-400 uppercase tracking-wider mb-2">Endereço de entrega</p>
-          <p className="text-sm text-gray-800">{order.address}</p>
-          <p className="text-sm text-gray-500">{order.city}</p>
+        <div style={card}>
+          <p style={label}>Endereço de entrega</p>
+          <p style={{ color:'#fff', fontSize:14 }}>{order.address}</p>
+          <p style={{ color:'rgba(255,255,255,0.45)', fontSize:13, marginTop:2 }}>{order.city}</p>
         </div>
 
         {/* Status — destaque */}
-        <div className={`rounded-2xl border-2 p-5 ${statusCfg.bg}`}>
-          <div className="flex items-center gap-3">
-            <span className="text-3xl">{statusCfg.icon}</span>
+        <div style={{ ...card, background: sc.bg, border: `1px solid ${sc.accent}33` }}>
+          <div style={{ display:'flex', alignItems:'center', gap:14 }}>
+            <span style={{ fontSize:36, lineHeight:1 }}>{sc.icon}</span>
             <div>
-              <p className={`text-xs uppercase tracking-wider font-semibold ${statusCfg.color}`}>
-                Status do pedido
-              </p>
-              <p className={`text-lg font-bold ${statusCfg.color}`}>{statusCfg.label}</p>
+              <p style={{ fontSize:11, textTransform:'uppercase', letterSpacing:'0.06em', color: sc.accent, fontWeight:600 }}>Status do pedido</p>
+              <p style={{ fontSize:20, fontWeight:800, color: sc.accent, fontFamily:'var(--font-syne),Syne,sans-serif', letterSpacing:'-0.3px', marginTop:2 }}>{sc.label}</p>
             </div>
           </div>
-          <p className={`text-sm mt-3 ${statusCfg.color} opacity-80`}>{statusCfg.description}</p>
+          <p style={{ fontSize:13, color:`${sc.accent}cc`, marginTop:12 }}>{sc.description}</p>
 
           {(order.motoboy || order.shippingStatus || order.trackingLink) && (
-            <div className="mt-4 pt-4 border-t border-current border-opacity-20 space-y-2">
+            <div style={{ borderTop:`1px solid ${sc.accent}22`, marginTop:14, paddingTop:14, display:'flex', flexDirection:'column', gap:8 }}>
               {order.shippingStatus && (
-                <p className={`text-sm ${statusCfg.color}`}>
-                  <span className="font-medium">Entrega:</span> {order.shippingStatus}
+                <p style={{ fontSize:13, color: sc.accent }}>
+                  <span style={{ fontWeight:600 }}>Entrega:</span> {order.shippingStatus}
                 </p>
               )}
               {order.motoboy && (
-                <p className={`text-sm ${statusCfg.color}`}>
-                  <span className="font-medium">Entregador:</span> {order.motoboy}
+                <p style={{ fontSize:13, color: sc.accent }}>
+                  <span style={{ fontWeight:600 }}>Entregador:</span> {order.motoboy}
                 </p>
               )}
               {order.trackingLink && (
-                <a
-                  href={order.trackingLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`inline-flex items-center gap-2 text-sm font-semibold underline ${statusCfg.color}`}
-                >
+                <a href={order.trackingLink} target="_blank" rel="noopener noreferrer"
+                  style={{ display:'inline-flex', alignItems:'center', gap:6, fontSize:13, fontWeight:700, color: sc.accent, textDecoration:'underline' }}>
                   🔗 Rastrear entrega em tempo real
                 </a>
               )}
@@ -214,11 +215,11 @@ export default function AcompanharPedidoPage() {
           )}
         </div>
 
-        <p className="text-center text-xs text-gray-400">
+        <p style={{ textAlign:'center', fontSize:12, color:'rgba(255,255,255,0.25)' }}>
           Esta página atualiza automaticamente a cada 30 segundos.
         </p>
 
-        <a href="/" className="block text-center text-sm text-blue-600 underline pb-8">
+        <a href="/" style={{ display:'block', textAlign:'center', fontSize:13, color:'var(--accent)', textDecoration:'underline', paddingBottom:32 }}>
           Voltar ao catálogo
         </a>
 
