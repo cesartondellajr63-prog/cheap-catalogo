@@ -2,6 +2,10 @@ import { IsString, IsNumber, IsArray, IsEmail, Min, ValidateNested, IsOptional }
 import { Type } from 'class-transformer';
 
 export class PaymentItemDto {
+  @IsOptional()
+  @IsString()
+  productId?: string;
+
   @IsString()
   model: string;
 

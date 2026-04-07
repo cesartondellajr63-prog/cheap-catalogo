@@ -8,6 +8,17 @@ import { CreateOrderDto } from './dto/create-order.dto';
 
 const VALID_STATUSES = ['PENDING', 'PAID', 'SHIPPED', 'DELIVERED', 'CANCELLED', 'REFUNDED'];
 
+// Authoritative price map mirroring the static frontend catalog.
+// Used as fallback when a product is not yet registered in Firestore.
+// Keep in sync with apps/web/src/lib/catalog-data.ts.
+const STATIC_CATALOG_PRICES: Record<string, number> = {
+  'eb-king': 99.99, 'eb-trio': 99.99, 'eb-te': 89.99, 'eb-gh': 84.99,
+  'eb-bc': 64.99, 'lm-dura': 89.99, 'bs-30k': 99.99, 'ox-30k': 84.99,
+  'ox-9k': 64.99, 'ig-v400m': 99.99, 'ig-v400': 104.99, 'ig-v400s': 99.99,
+  'ig-v250': 89.99, 'ig-v155': 84.99, 'ig-v150': 79.99, 'ig-v80': 74.99,
+  'ig-v55': 69.99, 'ig-nano': 29.99,
+};
+
 @Injectable()
 export class OrdersService {
   private readonly logger = new Logger(OrdersService.name);
@@ -35,41 +46,58 @@ export class OrdersService {
     subtotal: number;
     total: number;
   }> {
-    // 1. Validate each item against Firestore and override unitPrice
+    // 1. Validate each item and resolve authoritative unitPrice.
+    //    Priority: Firestore product (by slug) → static catalog price map.
+    //    Client-supplied unitPrice is never trusted.
     const items = await Promise.all(
       dto.items.map(async (item) => {
-        const product = await this.productsService.findById(item.productId);
+        let unitPrice: number | undefined;
+        let resolvedProductName = item.productName;
+        let resolvedVariantName = item.variantName;
 
-        if (!product.active) {
-          throw new BadRequestException(
-            `Produto "${product.name}" não está disponível.`,
+        try {
+          const product = await this.productsService.findBySlug(item.productId);
+
+          if (!product.active) {
+            throw new BadRequestException(
+              `Produto "${product.name}" não está disponível.`,
+            );
+          }
+
+          // Variant lookup by name (static catalog uses flavor names, not UUIDs)
+          const variant = (product.variants as any[])?.find(
+            (v: any) => v.name === item.variantName || v.id === item.variantId,
           );
-        }
 
-        const variant = (product.variants as any[])?.find(
-          (v: any) => v.id === item.variantId,
-        );
+          if (variant?.active === false) {
+            throw new BadRequestException(
+              `Variante "${item.variantName}" do produto "${product.name}" não está disponível.`,
+            );
+          }
 
-        if (!variant) {
-          throw new BadRequestException(
-            `Variante "${item.variantId}" não encontrada no produto "${product.name}".`,
+          unitPrice = variant?.priceOverride ?? product.basePrice;
+          resolvedProductName = product.name;
+          resolvedVariantName = variant?.name ?? item.variantName;
+        } catch (e) {
+          if (e instanceof BadRequestException) throw e;
+          // Product not in Firestore — fall back to static catalog price map
+          const staticPrice = STATIC_CATALOG_PRICES[item.productId];
+          if (staticPrice === undefined) {
+            throw new BadRequestException(
+              `Produto "${item.productId}" não encontrado.`,
+            );
+          }
+          this.logger.warn(
+            `[ORDERS] Product "${item.productId}" not in Firestore, using static price R$${staticPrice}`,
           );
+          unitPrice = staticPrice;
         }
-
-        if (variant.active === false) {
-          throw new BadRequestException(
-            `Variante "${variant.name}" do produto "${product.name}" não está disponível.`,
-          );
-        }
-
-        // Authoritative price: priceOverride takes precedence over basePrice
-        const unitPrice: number = variant.priceOverride ?? product.basePrice;
 
         return {
           productId: item.productId,
-          productName: product.name,
+          productName: resolvedProductName,
           variantId: item.variantId,
-          variantName: variant.name,
+          variantName: resolvedVariantName,
           quantity: item.quantity,
           unitPrice,
         };

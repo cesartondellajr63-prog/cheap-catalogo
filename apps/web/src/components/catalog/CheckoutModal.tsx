@@ -217,6 +217,7 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
       const result = await api.payments.createPix({
         orderId,
         items: localCart.map(i => ({
+          productId: i.productId,
           model: i.productName,
           flavor: i.variantName,
           price: i.price,
@@ -254,10 +255,11 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
     try {
       const result = await api.payments.createCard({
         items: localCart.map(i => ({
-          name:   i.productName,
-          flavor: i.variantName,
-          price:  i.price,
-          qty:    i.qty,
+          productId: i.productId,
+          name:      i.productName,
+          flavor:    i.variantName,
+          price:     i.price,
+          qty:       i.qty,
         })),
         shippingPrice: freteValue,
         customerName:  nome,

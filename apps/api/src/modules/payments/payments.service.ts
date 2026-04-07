@@ -121,9 +121,9 @@ export class PaymentsService {
         city: dto.city,
         shippingCost: dto.shippingPrice,
         items: dto.items.map(i => ({
-          productId: i.model,
+          productId: i.productId ?? i.model,
           productName: i.model,
-          variantId: i.flavor,
+          variantId: i.productId ?? i.model,
           variantName: i.flavor,
           quantity: i.qty,
           unitPrice: i.price,
@@ -171,9 +171,9 @@ export class PaymentsService {
       city: dto.cidade,
       shippingCost: dto.shippingPrice,
       items: dto.items.map(i => ({
-        productId:   i.name,
+        productId:   i.productId ?? i.name,
         productName: i.name,
-        variantId:   i.flavor,
+        variantId:   i.productId ?? i.name,
         variantName: i.flavor,
         quantity:    i.qty,
         unitPrice:   i.price,

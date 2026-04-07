@@ -42,7 +42,7 @@ const mockSheets = { appendOrderRow: jest.fn().mockResolvedValue(undefined) } as
 
 // Mock ProductsService — returns an authoritative product with basePrice 89.9
 const mockProducts = {
-  findById: jest.fn().mockResolvedValue({
+  findBySlug: jest.fn().mockResolvedValue({
     id: 'p1',
     name: 'Elfbar',
     active: true,
@@ -118,7 +118,7 @@ describe('OrdersService', () => {
 
     it('deve usar priceOverride da variante quando disponível', async () => {
       const productsWithOverride = {
-        findById: jest.fn().mockResolvedValue({
+        findBySlug: jest.fn().mockResolvedValue({
           id: 'p1',
           name: 'Elfbar',
           active: true,
@@ -137,7 +137,7 @@ describe('OrdersService', () => {
 
     it('deve lançar BadRequestException para produto inativo', async () => {
       const inactiveProducts = {
-        findById: jest.fn().mockResolvedValue({
+        findBySlug: jest.fn().mockResolvedValue({
           id: 'p1', name: 'Elfbar', active: false, basePrice: 89.9, variants: [],
         }),
       } as any;
@@ -148,11 +148,11 @@ describe('OrdersService', () => {
       await expect(service.createWithId('uuid-123', baseDto)).rejects.toThrow(BadRequestException);
     });
 
-    it('deve lançar BadRequestException para variante não encontrada', async () => {
+    it('deve lançar BadRequestException para variante inativa', async () => {
       const wrongVariant = {
-        findById: jest.fn().mockResolvedValue({
+        findBySlug: jest.fn().mockResolvedValue({
           id: 'p1', name: 'Elfbar', active: true, basePrice: 89.9,
-          variants: [{ id: 'outro-id', name: 'Outro', active: true }],
+          variants: [{ id: 'v1', name: 'Mango Ice', active: false }],
         }),
       } as any;
 
