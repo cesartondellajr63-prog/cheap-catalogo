@@ -26,20 +26,46 @@ interface TrackingOrder {
   status: OrderStatus;
   shippingStatus: string | null;
   trackingLink: string | null;
-  motoboy: string | null;
   createdAt: number;
 }
 
-// ─── Helpers de status ────────────────────────────────────────────────────────
+// ─── Pagamento: box de confirmação ───────────────────────────────────────────
 
-const STATUS_CONFIG: Record<OrderStatus, { label: string; accent: string; bg: string; icon: string; description: string }> = {
-  PENDING:   { label: 'Aguardando Pagamento', accent: '#f59e0b', bg: 'rgba(245,158,11,0.1)',  icon: '⏳', description: 'Seu pagamento ainda está sendo processado.' },
-  PAID:      { label: 'Pagamento Confirmado',  accent: '#c8ff00', bg: 'rgba(200,255,0,0.08)', icon: '✅', description: 'Pagamento aprovado! Estamos preparando seu pedido.' },
-  SHIPPED:   { label: 'Em Entrega',            accent: '#7efff5', bg: 'rgba(126,255,245,0.08)', icon: '🚚', description: 'Seu pedido está a caminho!' },
-  DELIVERED: { label: 'Entregue',              accent: '#c8ff00', bg: 'rgba(200,255,0,0.08)', icon: '📦', description: 'Pedido entregue com sucesso. Aproveite!' },
-  CANCELLED: { label: 'Cancelado',             accent: '#ff5050', bg: 'rgba(255,80,80,0.08)', icon: '❌', description: 'Este pedido foi cancelado.' },
-  REFUNDED:  { label: 'Reembolsado',           accent: 'rgba(255,255,255,0.45)', bg: 'rgba(255,255,255,0.04)', icon: '↩️', description: 'O valor foi estornado para você.' },
+const PAYMENT_CONFIG: Record<OrderStatus, { label: string; icon: string; accent: string; bg: string } | null> = {
+  PENDING:   null, // sem box de pagamento enquanto não confirmado
+  PAID:      { label: 'Pagamento Confirmado', icon: '✅', accent: '#c8ff00', bg: 'rgba(200,255,0,0.08)' },
+  SHIPPED:   { label: 'Pagamento Confirmado', icon: '✅', accent: '#c8ff00', bg: 'rgba(200,255,0,0.08)' },
+  DELIVERED: { label: 'Pagamento Confirmado', icon: '✅', accent: '#c8ff00', bg: 'rgba(200,255,0,0.08)' },
+  CANCELLED: { label: 'Pedido Cancelado',     icon: '❌', accent: '#ff5050', bg: 'rgba(255,80,80,0.08)' },
+  REFUNDED:  { label: 'Reembolsado',          icon: '↩️', accent: 'rgba(255,255,255,0.5)', bg: 'rgba(255,255,255,0.04)' },
 };
+
+// ─── Entrega: mapeamento shippingStatus → texto para o cliente ───────────────
+// Admin vê:          Cliente vê:
+// 🔴 Pendente     →  Em separação
+// 🟠 Solicitado   →  Buscando motorista
+// 🟡 A Caminho    →  A caminho
+// 🟢 Entregue     →  Entregue
+// ⛔ Cancelado    →  Cancelado
+
+function getDeliveryStatus(shippingStatus: string | null): { label: string; icon: string; accent: string; bg: string } {
+  if (shippingStatus === '🟠 Solicitado') {
+    return { label: 'Buscando motorista', icon: '🔍', accent: '#ff9500', bg: 'rgba(255,149,0,0.1)' };
+  }
+  if (shippingStatus === '🟡 A Caminho') {
+    return { label: 'A caminho', icon: '🚚', accent: '#7efff5', bg: 'rgba(126,255,245,0.08)' };
+  }
+  if (shippingStatus === '🟢 Entregue') {
+    return { label: 'Entregue', icon: '📦', accent: '#c8ff00', bg: 'rgba(200,255,0,0.08)' };
+  }
+  if (shippingStatus === '⛔ Cancelado') {
+    return { label: 'Cancelado', icon: '❌', accent: '#ff5050', bg: 'rgba(255,80,80,0.08)' };
+  }
+  // 🔴 Pendente ou null → Em separação
+  return { label: 'Em separação', icon: '📋', accent: '#f59e0b', bg: 'rgba(245,158,11,0.1)' };
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function formatCurrency(value: number) {
   return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -81,13 +107,11 @@ export default function AcompanharPedidoPage() {
 
   useEffect(() => { fetchOrder(); }, [fetchOrder]);
 
-  // Polling a cada 30s para atualizar status em tempo real
   useEffect(() => {
     const interval = setInterval(fetchOrder, 30_000);
     return () => clearInterval(interval);
   }, [fetchOrder]);
 
-  // ── Loading ──
   if (loading) {
     return (
       <div style={{ display:'flex', alignItems:'center', justifyContent:'center', minHeight:'100vh', position:'relative', zIndex:2 }}>
@@ -96,7 +120,6 @@ export default function AcompanharPedidoPage() {
     );
   }
 
-  // ── Erro ──
   if (error || !order) {
     return (
       <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', minHeight:'100vh', gap:16, padding:'0 24px', position:'relative', zIndex:2, textAlign:'center' }}>
@@ -107,7 +130,8 @@ export default function AcompanharPedidoPage() {
     );
   }
 
-  const sc = STATUS_CONFIG[order.status] ?? STATUS_CONFIG.PENDING;
+  const paymentCfg = PAYMENT_CONFIG[order.status];
+  const deliveryCfg = getDeliveryStatus(order.shippingStatus);
 
   const card: React.CSSProperties = {
     background: 'var(--surface)',
@@ -116,7 +140,7 @@ export default function AcompanharPedidoPage() {
     padding: '20px 24px',
   };
 
-  const label: React.CSSProperties = {
+  const sectionLabel: React.CSSProperties = {
     fontSize: 11,
     color: 'rgba(255,255,255,0.35)',
     textTransform: 'uppercase',
@@ -138,7 +162,7 @@ export default function AcompanharPedidoPage() {
 
         {/* Identificação */}
         <div style={card}>
-          <p style={label}>Número do pedido</p>
+          <p style={sectionLabel}>Número do pedido</p>
           <p style={{ fontFamily:'var(--font-syne),Syne,sans-serif', fontSize:22, fontWeight:800, color:'var(--accent)', letterSpacing:'-0.5px' }}>{order.orderNumber}</p>
           <p style={{ color:'rgba(255,255,255,0.45)', fontSize:13, marginTop:4 }}>Realizado em {formatDate(order.createdAt)}</p>
           <p style={{ color:'#fff', fontSize:14, marginTop:8 }}>
@@ -148,7 +172,7 @@ export default function AcompanharPedidoPage() {
 
         {/* Itens do pedido */}
         <div style={card}>
-          <p style={label}>Itens do pedido</p>
+          <p style={sectionLabel}>Itens do pedido</p>
           <ul style={{ display:'flex', flexDirection:'column', gap:10 }}>
             {order.items.map((item, i) => (
               <li key={i} style={{ display:'flex', justifyContent:'space-between', alignItems:'baseline', gap:12 }}>
@@ -177,43 +201,45 @@ export default function AcompanharPedidoPage() {
 
         {/* Endereço */}
         <div style={card}>
-          <p style={label}>Endereço de entrega</p>
+          <p style={sectionLabel}>Endereço de entrega</p>
           <p style={{ color:'#fff', fontSize:14 }}>{order.address}</p>
           <p style={{ color:'rgba(255,255,255,0.45)', fontSize:13, marginTop:2 }}>{order.city}</p>
         </div>
 
-        {/* Status — destaque */}
-        <div style={{ ...card, background: sc.bg, border: `1px solid ${sc.accent}33` }}>
-          <div style={{ display:'flex', alignItems:'center', gap:14 }}>
-            <span style={{ fontSize:36, lineHeight:1 }}>{sc.icon}</span>
-            <div>
-              <p style={{ fontSize:11, textTransform:'uppercase', letterSpacing:'0.06em', color: sc.accent, fontWeight:600 }}>Status do pedido</p>
-              <p style={{ fontSize:20, fontWeight:800, color: sc.accent, fontFamily:'var(--font-syne),Syne,sans-serif', letterSpacing:'-0.3px', marginTop:2 }}>{sc.label}</p>
-            </div>
+        {/* Box: Pagamento */}
+        {paymentCfg && (
+          <div style={{ ...card, background: paymentCfg.bg, border: `1px solid ${paymentCfg.accent}33`, display:'flex', alignItems:'center', gap:14 }}>
+            <span style={{ fontSize:32, lineHeight:1 }}>{paymentCfg.icon}</span>
+            <p style={{ fontFamily:'var(--font-syne),Syne,sans-serif', fontSize:18, fontWeight:800, color: paymentCfg.accent }}>
+              {paymentCfg.label}
+            </p>
           </div>
-          <p style={{ fontSize:13, color:`${sc.accent}cc`, marginTop:12 }}>{sc.description}</p>
+        )}
 
-          {(order.motoboy || order.shippingStatus || order.trackingLink) && (
-            <div style={{ borderTop:`1px solid ${sc.accent}22`, marginTop:14, paddingTop:14, display:'flex', flexDirection:'column', gap:8 }}>
-              {order.shippingStatus && (
-                <p style={{ fontSize:13, color: sc.accent }}>
-                  <span style={{ fontWeight:600 }}>Entrega:</span> {order.shippingStatus}
-                </p>
-              )}
-              {order.motoboy && (
-                <p style={{ fontSize:13, color: sc.accent }}>
-                  <span style={{ fontWeight:600 }}>Entregador:</span> {order.motoboy}
-                </p>
-              )}
-              {order.trackingLink && (
+        {/* Box: Status da entrega */}
+        {order.status !== 'PENDING' && order.status !== 'CANCELLED' && order.status !== 'REFUNDED' && (
+          <div style={{ ...card, background: deliveryCfg.bg, border: `1px solid ${deliveryCfg.accent}33` }}>
+            <p style={{ fontSize:11, textTransform:'uppercase', letterSpacing:'0.06em', color: deliveryCfg.accent, fontWeight:600, marginBottom:12 }}>
+              Status da entrega
+            </p>
+            <div style={{ display:'flex', alignItems:'center', gap:14 }}>
+              <span style={{ fontSize:36, lineHeight:1 }}>{deliveryCfg.icon}</span>
+              <p style={{ fontFamily:'var(--font-syne),Syne,sans-serif', fontSize:22, fontWeight:800, color: deliveryCfg.accent, letterSpacing:'-0.3px' }}>
+                {deliveryCfg.label}
+              </p>
+            </div>
+
+            {/* Link de rastreio (apenas quando A Caminho) */}
+            {order.trackingLink && (
+              <div style={{ marginTop:14, paddingTop:14, borderTop:`1px solid ${deliveryCfg.accent}22` }}>
                 <a href={order.trackingLink} target="_blank" rel="noopener noreferrer"
-                  style={{ display:'inline-flex', alignItems:'center', gap:6, fontSize:13, fontWeight:700, color: sc.accent, textDecoration:'underline' }}>
+                  style={{ display:'inline-flex', alignItems:'center', gap:6, fontSize:13, fontWeight:700, color: deliveryCfg.accent, textDecoration:'underline' }}>
                   🔗 Rastrear entrega em tempo real
                 </a>
-              )}
-            </div>
-          )}
-        </div>
+              </div>
+            )}
+          </div>
+        )}
 
         <p style={{ textAlign:'center', fontSize:12, color:'rgba(255,255,255,0.25)' }}>
           Esta página atualiza automaticamente a cada 30 segundos.
