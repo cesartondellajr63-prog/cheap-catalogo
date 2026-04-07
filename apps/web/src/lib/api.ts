@@ -55,7 +55,7 @@ export const api = {
   payments: {
     createPix: (body: {
       orderId: string;
-      items: { productId: string; model: string; flavor: string; price: number; qty: number }[];
+      items: { productId: string; model: string; flavor: string; qty: number }[];
       shippingPrice: number;
       shippingToken: string;
       customerEmail: string;
@@ -76,7 +76,7 @@ export const api = {
     getCardStatus: (orderId: string): Promise<{ status: string; orderNumber: string }> =>
       request(`/payments/card-status/${orderId}`),
     createCard: (body: {
-      items: { productId: string; name: string; flavor: string; price: number; qty: number }[];
+      items: { productId: string; name: string; flavor: string; qty: number }[];
       shippingPrice: number;
       shippingToken: string;
       customerName: string;
