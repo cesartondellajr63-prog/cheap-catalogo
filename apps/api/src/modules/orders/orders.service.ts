@@ -161,7 +161,9 @@ export class OrdersService {
     const previousStatus = (docSnap.data() as any).status;
     const now = Date.now();
 
-    await docRef.update({ status, updatedAt: now });
+    const existingPaidAt = (docSnap.data() as any).paidAt ?? null;
+    const paidAt = status === 'PAID' && !existingPaidAt ? now : existingPaidAt;
+    await docRef.update({ status, updatedAt: now, ...(status === 'PAID' && !existingPaidAt ? { paidAt: now } : {}) });
 
     await this.firebaseService.db.collection('audit_logs').add({
       entityType: 'order',
@@ -223,10 +225,13 @@ export class OrdersService {
     const docRef = this.firebaseService.db.collection('orders').doc(id);
     const docSnap = await docRef.get();
     if (!docSnap.exists) throw new NotFoundException(`Order with id "${id}" not found.`);
+    const existingData = docSnap.data() as any;
+    const now = Date.now();
     await docRef.update({
       status: 'PAID',
       mpPaymentId: method === 'mp' ? 'manual' : null,
-      updatedAt: Date.now(),
+      updatedAt: now,
+      ...(!existingData.paidAt ? { paidAt: now } : {}),
     });
     const updated = await docRef.get();
     return { id, ...updated.data() };

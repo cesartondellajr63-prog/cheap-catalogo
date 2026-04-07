@@ -45,6 +45,7 @@ export class OrdersController {
       trackingLink: order.trackingLink ?? null,
       motoboy: order.motoboy ?? null,
       createdAt: order.createdAt,
+      paidAt: (order as any).paidAt ?? null,
     };
   }
 

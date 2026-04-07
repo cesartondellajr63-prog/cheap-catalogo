@@ -28,6 +28,7 @@ interface TrackingOrder {
   trackingLink: string | null;
   motoboy: string | null;
   createdAt: number;
+  paidAt: number | null;
 }
 
 // ─── Pagamento: box de confirmação ───────────────────────────────────────────
@@ -77,6 +78,36 @@ function formatDate(ts: number) {
     day: '2-digit', month: '2-digit', year: 'numeric',
     hour: '2-digit', minute: '2-digit',
   });
+}
+
+// ─── Cronômetro 150 min a partir do pagamento ─────────────────────────────────
+
+const TOTAL_MS = 150 * 60 * 1000;
+
+function useCountdown(startTs: number | null) {
+  const [remaining, setRemaining] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!startTs) return;
+    const tick = () => {
+      const elapsed = Date.now() - startTs;
+      setRemaining(Math.max(0, TOTAL_MS - elapsed));
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [startTs]);
+
+  return remaining;
+}
+
+function formatCountdown(ms: number): string {
+  const totalSec = Math.floor(ms / 1000);
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  if (h > 0) return `${h}h ${String(m).padStart(2,'0')}min ${String(s).padStart(2,'0')}s`;
+  return `${String(m).padStart(2,'0')}min ${String(s).padStart(2,'0')}s`;
 }
 
 // ─── Componente principal ─────────────────────────────────────────────────────
@@ -130,6 +161,10 @@ export default function AcompanharPedidoPage() {
       </div>
     );
   }
+
+  const remaining = useCountdown(order.paidAt ?? order.createdAt);
+  const pct = remaining !== null ? Math.round(((TOTAL_MS - remaining) / TOTAL_MS) * 100) : 0;
+  const timerDone = remaining === 0;
 
   const showTracking =
     order.shippingStatus === '🟡 A Caminho' &&
@@ -233,6 +268,34 @@ export default function AcompanharPedidoPage() {
                 {deliveryCfg.label}
               </p>
             </div>
+
+            {/* Cronômetro 150 min — só exibe enquanto pedido ativo */}
+            {!timerDone && remaining !== null && order.status !== 'DELIVERED' && order.status !== 'CANCELLED' && (
+              <div style={{ marginTop:16 }}>
+                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'baseline', marginBottom:6 }}>
+                  <span style={{ fontSize:11, color:`${deliveryCfg.accent}99`, textTransform:'uppercase', letterSpacing:'0.05em' }}>
+                    Tempo estimado de entrega
+                  </span>
+                  <span style={{ fontFamily:'var(--font-syne),Syne,sans-serif', fontSize:15, fontWeight:700, color: deliveryCfg.accent }}>
+                    {formatCountdown(remaining)}
+                  </span>
+                </div>
+                <div style={{ height:6, borderRadius:99, background:`${deliveryCfg.accent}18`, overflow:'hidden' }}>
+                  <div style={{
+                    height:'100%', borderRadius:99,
+                    width:`${pct}%`,
+                    background: deliveryCfg.accent,
+                    transition:'width 1s linear',
+                    boxShadow:`0 0 8px ${deliveryCfg.accent}66`,
+                  }} />
+                </div>
+              </div>
+            )}
+            {timerDone && order.status !== 'DELIVERED' && (
+              <p style={{ fontSize:12, color:`${deliveryCfg.accent}99`, marginTop:12 }}>
+                Seu pedido está a caminho — em breve chegará!
+              </p>
+            )}
 
           </div>
         )}
