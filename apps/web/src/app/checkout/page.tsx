@@ -176,6 +176,7 @@ export default function CheckoutPage() {
       const result = await api.payments.createPix({
         orderId,
         items: cart.map(i => ({
+          productId: i.productId,
           model: i.productName,
           flavor: i.variantName,
           price: i.price,
