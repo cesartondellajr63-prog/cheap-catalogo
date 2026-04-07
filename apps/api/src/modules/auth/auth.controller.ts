@@ -25,8 +25,8 @@ export class AuthController {
   @UseGuards(ThrottleGuard)
   @Throttle({ limit: 5, windowSeconds: 900, lockoutSeconds: 900 })
   @ThrottleKey('auth_login')
-  login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
-    const { token, usuario } = this.authService.login(dto);
+  async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
+    const { token, usuario } = await this.authService.login(dto);
     res.cookie('admin-token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',

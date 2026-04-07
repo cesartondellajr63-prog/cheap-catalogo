@@ -40,6 +40,17 @@ function makeFirebase(docData: any = {}, docExists = true) {
 const mockCustomers = { upsertFromOrder: jest.fn().mockResolvedValue(undefined) } as any;
 const mockSheets = { appendOrderRow: jest.fn().mockResolvedValue(undefined) } as any;
 
+// Mock ProductsService — returns an authoritative product with basePrice 89.9
+const mockProducts = {
+  findById: jest.fn().mockResolvedValue({
+    id: 'p1',
+    name: 'Elfbar',
+    active: true,
+    basePrice: 89.9,
+    variants: [{ id: 'v1', name: 'Mango Ice', active: true }],
+  }),
+} as any;
+
 const baseDto = {
   customerName: 'João Silva',
   customerPhone: '11999999999',
@@ -54,7 +65,7 @@ const baseDto = {
       variantId: 'v1',
       variantName: 'Mango Ice',
       quantity: 2,
-      unitPrice: 89.9,
+      unitPrice: 1, // intentionally wrong — server must override with DB price
     },
   ],
 };
@@ -65,7 +76,7 @@ describe('OrdersService', () => {
   describe('createWithId', () => {
     it('deve criar pedido com orderNumber no formato CP-XXXXXXXX', async () => {
       const firebase = makeFirebase();
-      const service = new OrdersService(firebase, mockCustomers, mockSheets);
+      const service = new OrdersService(firebase, mockCustomers, mockSheets, mockProducts);
 
       const result = await service.createWithId('uuid-123', baseDto);
 
@@ -73,35 +84,82 @@ describe('OrdersService', () => {
       expect(result.id).toBe('uuid-123');
     });
 
-    it('deve calcular total corretamente (subtotal + frete)', async () => {
+    it('deve calcular total usando preço do banco, ignorando unitPrice do cliente', async () => {
       const firebase = makeFirebase();
-      const service = new OrdersService(firebase, mockCustomers, mockSheets);
+      const service = new OrdersService(firebase, mockCustomers, mockSheets, mockProducts);
 
       const result = await service.createWithId('uuid-123', baseDto);
 
+      // unitPrice deve ser 89.9 (do banco), não 1 (enviado pelo cliente)
+      expect(result.items[0].unitPrice).toBeCloseTo(89.9);
       const expectedSubtotal = 89.9 * 2;
       expect(result.subtotal).toBeCloseTo(expectedSubtotal);
       expect(result.total).toBeCloseTo(expectedSubtotal + 5.0);
     });
 
-    it('deve salvar snapshot dos produtos com nome e preço no momento do pedido', async () => {
+    it('deve usar nome autoritativo do produto e variante vindos do banco', async () => {
       const firebase = makeFirebase();
-      const service = new OrdersService(firebase, mockCustomers, mockSheets);
+      const service = new OrdersService(firebase, mockCustomers, mockSheets, mockProducts);
 
       const result = await service.createWithId('uuid-123', baseDto);
 
       expect(result.items[0].productName).toBe('Elfbar');
-      expect(result.items[0].unitPrice).toBe(89.9);
       expect(result.items[0].variantName).toBe('Mango Ice');
     });
 
     it('deve salvar o pedido com status PENDING', async () => {
       const firebase = makeFirebase();
-      const service = new OrdersService(firebase, mockCustomers, mockSheets);
+      const service = new OrdersService(firebase, mockCustomers, mockSheets, mockProducts);
 
       const result = await service.createWithId('uuid-123', baseDto);
 
       expect(result.status).toBe('PENDING');
+    });
+
+    it('deve usar priceOverride da variante quando disponível', async () => {
+      const productsWithOverride = {
+        findById: jest.fn().mockResolvedValue({
+          id: 'p1',
+          name: 'Elfbar',
+          active: true,
+          basePrice: 89.9,
+          variants: [{ id: 'v1', name: 'Mango Ice', active: true, priceOverride: 79.9 }],
+        }),
+      } as any;
+
+      const firebase = makeFirebase();
+      const service = new OrdersService(firebase, mockCustomers, mockSheets, productsWithOverride);
+
+      const result = await service.createWithId('uuid-123', baseDto);
+
+      expect(result.items[0].unitPrice).toBeCloseTo(79.9);
+    });
+
+    it('deve lançar BadRequestException para produto inativo', async () => {
+      const inactiveProducts = {
+        findById: jest.fn().mockResolvedValue({
+          id: 'p1', name: 'Elfbar', active: false, basePrice: 89.9, variants: [],
+        }),
+      } as any;
+
+      const firebase = makeFirebase();
+      const service = new OrdersService(firebase, mockCustomers, mockSheets, inactiveProducts);
+
+      await expect(service.createWithId('uuid-123', baseDto)).rejects.toThrow(BadRequestException);
+    });
+
+    it('deve lançar BadRequestException para variante não encontrada', async () => {
+      const wrongVariant = {
+        findById: jest.fn().mockResolvedValue({
+          id: 'p1', name: 'Elfbar', active: true, basePrice: 89.9,
+          variants: [{ id: 'outro-id', name: 'Outro', active: true }],
+        }),
+      } as any;
+
+      const firebase = makeFirebase();
+      const service = new OrdersService(firebase, mockCustomers, mockSheets, wrongVariant);
+
+      await expect(service.createWithId('uuid-123', baseDto)).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -110,21 +168,21 @@ describe('OrdersService', () => {
   describe('updateStatus', () => {
     it('deve lançar BadRequestException para status inválido', async () => {
       const firebase = makeFirebase();
-      const service = new OrdersService(firebase, mockCustomers, mockSheets);
+      const service = new OrdersService(firebase, mockCustomers, mockSheets, mockProducts);
 
       await expect(service.updateStatus('order-id', 'INVALIDO')).rejects.toThrow(BadRequestException);
     });
 
     it('deve lançar NotFoundException para pedido inexistente', async () => {
       const firebase = makeFirebase({}, false);
-      const service = new OrdersService(firebase, mockCustomers, mockSheets);
+      const service = new OrdersService(firebase, mockCustomers, mockSheets, mockProducts);
 
       await expect(service.updateStatus('nao-existe', 'PAID')).rejects.toThrow(NotFoundException);
     });
 
     it('deve registrar audit_log em cada mudança de status', async () => {
       const firebase = makeFirebase({ id: 'order-id', status: 'PENDING' });
-      const service = new OrdersService(firebase, mockCustomers, mockSheets);
+      const service = new OrdersService(firebase, mockCustomers, mockSheets, mockProducts);
 
       await service.updateStatus('order-id', 'PAID', 'admin');
 
@@ -143,7 +201,7 @@ describe('OrdersService', () => {
 
       for (const status of validStatuses) {
         const firebase = makeFirebase({ id: 'order-id', status: 'PENDING' });
-        const service = new OrdersService(firebase, mockCustomers, mockSheets);
+        const service = new OrdersService(firebase, mockCustomers, mockSheets, mockProducts);
         await expect(service.updateStatus('order-id', status)).resolves.not.toThrow();
       }
     });
@@ -154,14 +212,14 @@ describe('OrdersService', () => {
   describe('findById', () => {
     it('deve lançar NotFoundException para id inexistente', async () => {
       const firebase = makeFirebase({}, false);
-      const service = new OrdersService(firebase, mockCustomers, mockSheets);
+      const service = new OrdersService(firebase, mockCustomers, mockSheets, mockProducts);
 
       await expect(service.findById('nao-existe')).rejects.toThrow(NotFoundException);
     });
 
     it('deve retornar o pedido quando encontrado', async () => {
       const firebase = makeFirebase({ id: 'order-id', status: 'PENDING' });
-      const service = new OrdersService(firebase, mockCustomers, mockSheets);
+      const service = new OrdersService(firebase, mockCustomers, mockSheets, mockProducts);
 
       const result = await service.findById('order-id');
 

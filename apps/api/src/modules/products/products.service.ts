@@ -18,6 +18,15 @@ export class ProductsService {
     return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
   }
 
+  async findById(id: string): Promise<any> {
+    const docRef = this.firebaseService.db.collection('products').doc(id);
+    const docSnap = await docRef.get();
+    if (!docSnap.exists) {
+      throw new NotFoundException(`Product with id "${id}" not found.`);
+    }
+    return { id: docSnap.id, ...docSnap.data() };
+  }
+
   async findBySlug(slug: string): Promise<any> {
     const snapshot = await this.firebaseService.db
       .collection('products')

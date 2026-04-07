@@ -1,27 +1,30 @@
 import { UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 
+// bcrypt hash of 'senha123' with cost 10 — pre-computed to keep tests fast
+const HASH_SENHA123 = '$2b$10$cpaw3j6bIGo1bcsCsBBNWOCgNOQOs7StV5xvVgJ590CGJyKV7WNHW';
+
 describe('AuthService', () => {
   let service: AuthService;
 
   beforeEach(() => {
     service = new AuthService();
     process.env.DASHBOARD_USER = 'admin';
-    process.env.DASHBOARD_PASS = 'senha123';
+    process.env.DASHBOARD_PASS_HASH = HASH_SENHA123;
     process.env.JWT_SECRET = 'segredo-de-teste-32-chars-minimo!!';
   });
 
   afterEach(() => {
     delete process.env.DASHBOARD_USER;
-    delete process.env.DASHBOARD_PASS;
+    delete process.env.DASHBOARD_PASS_HASH;
     delete process.env.JWT_SECRET;
   });
 
   // ── login ──────────────────────────────────────────────────────────────────
 
   describe('login', () => {
-    it('deve retornar token JWT ao receber credenciais corretas', () => {
-      const result = service.login({ usuario: 'admin', senha: 'senha123' });
+    it('deve retornar token JWT ao receber credenciais corretas', async () => {
+      const result = await service.login({ usuario: 'admin', senha: 'senha123' });
 
       expect(result).toHaveProperty('token');
       expect(result).toHaveProperty('usuario', 'admin');
@@ -29,31 +32,31 @@ describe('AuthService', () => {
       expect(result.token.split('.').length).toBe(2);
     });
 
-    it('deve lançar UnauthorizedException para senha incorreta', () => {
-      expect(() =>
+    it('deve lançar UnauthorizedException para senha incorreta', async () => {
+      await expect(
         service.login({ usuario: 'admin', senha: 'errada' }),
-      ).toThrow(UnauthorizedException);
+      ).rejects.toThrow(UnauthorizedException);
     });
 
-    it('deve lançar UnauthorizedException para usuário incorreto', () => {
-      expect(() =>
+    it('deve lançar UnauthorizedException para usuário incorreto', async () => {
+      await expect(
         service.login({ usuario: 'desconhecido', senha: 'senha123' }),
-      ).toThrow(UnauthorizedException);
+      ).rejects.toThrow(UnauthorizedException);
     });
 
-    it('deve lançar UnauthorizedException quando DASHBOARD_USER não está configurado', () => {
+    it('deve lançar UnauthorizedException quando DASHBOARD_USER não está configurado', async () => {
       delete process.env.DASHBOARD_USER;
-      expect(() =>
+      await expect(
         service.login({ usuario: 'admin', senha: 'senha123' }),
-      ).toThrow(UnauthorizedException);
+      ).rejects.toThrow(UnauthorizedException);
     });
   });
 
   // ── validateToken ──────────────────────────────────────────────────────────
 
   describe('validateToken', () => {
-    it('deve retornar payload para token válido', () => {
-      const { token } = service.login({ usuario: 'admin', senha: 'senha123' });
+    it('deve retornar payload para token válido', async () => {
+      const { token } = await service.login({ usuario: 'admin', senha: 'senha123' });
       const payload = service.validateToken(token);
 
       expect(payload).not.toBeNull();
@@ -61,15 +64,15 @@ describe('AuthService', () => {
       expect(payload?.role).toBe('admin');
     });
 
-    it('deve retornar null para token com assinatura inválida', () => {
-      const { token } = service.login({ usuario: 'admin', senha: 'senha123' });
+    it('deve retornar null para token com assinatura inválida', async () => {
+      const { token } = await service.login({ usuario: 'admin', senha: 'senha123' });
       const tampered = token.slice(0, -4) + 'xxxx';
 
       expect(service.validateToken(tampered)).toBeNull();
     });
 
-    it('deve retornar null para token expirado', () => {
-      const { token } = service.login({ usuario: 'admin', senha: 'senha123' });
+    it('deve retornar null para token expirado', async () => {
+      const { token } = await service.login({ usuario: 'admin', senha: 'senha123' });
 
       // Decodifica, força expiração e re-assina
       const [base] = token.split('.');

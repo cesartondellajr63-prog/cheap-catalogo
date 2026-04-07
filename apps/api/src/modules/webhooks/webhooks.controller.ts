@@ -8,6 +8,7 @@ import {
   HttpCode,
   HttpStatus,
   Logger,
+  BadRequestException,
   InternalServerErrorException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -125,6 +126,21 @@ export class WebhooksController {
       return { received: true };
     }
 
+    // Cross-check the transferred amount against the order total stored in the
+    // database. This prevents the "R$0.01 Pix" attack where an attacker sends
+    // an approved payment with an arbitrary external_reference but for a
+    // fraction of the actual order value.
+    const order = await this.ordersService.findById(orderId);
+    const valorRecebido = Number(payment.transaction_amount);
+    const valorEsperado = Number(order.total);
+
+    if (valorRecebido < valorEsperado) {
+      this.logger.error(
+        `[FRAUD] Order ${orderId}: R$${valorRecebido} recebido, R$${valorEsperado} esperado — pedido NÃO liberado.`,
+      );
+      throw new BadRequestException('Valor recebido insuficiente para cobrir o pedido.');
+    }
+
     await this.ordersService.updatePaymentInfo(orderId, String(payment.id), payment.preference_id || '');
     await this.ordersService.updateStatus(orderId, 'PAID', 'webhook_mercadopago');
 
@@ -208,15 +224,67 @@ export class WebhooksController {
       return { received: true };
     }
 
+    // Cielo's webhook notification only tells us "something changed" — it does
+    // not carry a signature we can verify. The only safe approach is to fetch
+    // the payment directly from Cielo's API using the PaymentId they provide,
+    // and trust only that authoritative response (same pattern as MercadoPago).
+    const cieloPaymentId: string = body?.PaymentId || body?.payment_id || '';
+
+    if (!cieloPaymentId) {
+      this.logger.warn(`Cielo webhook missing PaymentId for order ${merchantOrderNumber}`);
+      throw new BadRequestException('PaymentId ausente no webhook da Cielo.');
+    }
+
+    const merchantId = process.env.CIELO_MERCHANT_ID;
+    const merchantKey = process.env.CIELO_MERCHANT_KEY;
+
+    const cieloResponse = await fetch(
+      `https://apiquery.cieloecommerce.cielo.com.br/1/sales/${cieloPaymentId}`,
+      {
+        headers: {
+          MerchantId: merchantId as string,
+          MerchantKey: merchantKey as string,
+        },
+      },
+    );
+
+    if (!cieloResponse.ok) {
+      this.logger.error(`Failed to verify Cielo payment ${cieloPaymentId} from Cielo API`);
+      throw new InternalServerErrorException('Falha ao verificar pagamento na Cielo.');
+    }
+
+    const cieloPayment = (await cieloResponse.json()) as any;
+    // Cielo status: 1 = Authorized, 2 = PaymentConfirmed
+    const cieloStatus: number = cieloPayment?.Payment?.Status;
+    const cieloAmount: number = cieloPayment?.Payment?.Amount; // centavos
+
+    if (cieloStatus !== 1 && cieloStatus !== 2) {
+      this.logger.log(`Cielo payment ${cieloPaymentId} status: ${cieloStatus}, no action.`);
+      return { received: true };
+    }
+
     try {
       const order = await this.ordersService.findByOrderNumber(merchantOrderNumber);
       if (order.status === 'PAID') {
         this.logger.log(`Order ${order.id} already PAID, skipping.`);
         return { received: true };
       }
+
+      // Fail-secure amount validation: NaN, missing, or partial amounts are all
+      // rejected. isNaN catches "hack", undefined, and other non-numeric values.
+      const valorEsperadoEmCentavos = Math.round(order.total * 100);
+      if (!cieloAmount || isNaN(cieloAmount) || cieloAmount < valorEsperadoEmCentavos) {
+        this.logger.error(
+          `[FRAUD] Cielo order ${merchantOrderNumber}: ${cieloAmount} centavos recebidos, ${valorEsperadoEmCentavos} esperados — pedido NÃO liberado.`,
+        );
+        throw new BadRequestException('Bypass detectado ou valor insuficiente.');
+      }
+
       await this.ordersService.updateStatus(order.id, 'PAID', 'webhook_cielo');
-      this.logger.log(`Order ${order.id} marked as PAID via Cielo webhook.`);
+      this.logger.log(`Order ${order.id} marked as PAID via Cielo payment ${cieloPaymentId}.`);
     } catch (e) {
+      // Re-throw intentional rejections (fraud detection, not-found, etc.)
+      if (e instanceof BadRequestException) throw e;
       this.logger.error(`Cielo webhook error: ${(e as Error).message}`);
     }
 

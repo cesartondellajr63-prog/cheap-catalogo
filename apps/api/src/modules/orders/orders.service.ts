@@ -3,7 +3,8 @@ import * as crypto from 'crypto';
 import { FirebaseService } from '../../shared/firebase/firebase.service';
 import { CustomersService } from '../customers/customers.service';
 import { GoogleSheetsService } from '../../shared/google-sheets/google-sheets.service';
-import { CreateOrderDto, OrderItemDto } from './dto/create-order.dto';
+import { ProductsService } from '../products/products.service';
+import { CreateOrderDto } from './dto/create-order.dto';
 
 const VALID_STATUSES = ['PENDING', 'PAID', 'SHIPPED', 'DELIVERED', 'CANCELLED', 'REFUNDED'];
 
@@ -15,21 +16,97 @@ export class OrdersService {
     private readonly firebaseService: FirebaseService,
     private readonly customersService: CustomersService,
     private readonly googleSheetsService: GoogleSheetsService,
+    private readonly productsService: ProductsService,
   ) {}
-
-  private calculateSubtotal(items: OrderItemDto[]): number {
-    return items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
-  }
 
   private generateOrderNumber(): string {
     const digits = crypto.randomInt(10000000, 100000000);
     return `CP-${digits}`;
   }
 
+  /**
+   * Resolves authoritative item prices from Firestore and the authoritative
+   * shipping cost from the cached Lalamove quote. Client-supplied prices are
+   * intentionally discarded — this prevents price manipulation attacks.
+   */
+  private async resolveOrderPricing(dto: CreateOrderDto): Promise<{
+    items: any[];
+    shippingCost: number;
+    subtotal: number;
+    total: number;
+  }> {
+    // 1. Validate each item against Firestore and override unitPrice
+    const items = await Promise.all(
+      dto.items.map(async (item) => {
+        const product = await this.productsService.findById(item.productId);
+
+        if (!product.active) {
+          throw new BadRequestException(
+            `Produto "${product.name}" não está disponível.`,
+          );
+        }
+
+        const variant = (product.variants as any[])?.find(
+          (v: any) => v.id === item.variantId,
+        );
+
+        if (!variant) {
+          throw new BadRequestException(
+            `Variante "${item.variantId}" não encontrada no produto "${product.name}".`,
+          );
+        }
+
+        if (variant.active === false) {
+          throw new BadRequestException(
+            `Variante "${variant.name}" do produto "${product.name}" não está disponível.`,
+          );
+        }
+
+        // Authoritative price: priceOverride takes precedence over basePrice
+        const unitPrice: number = variant.priceOverride ?? product.basePrice;
+
+        return {
+          productId: item.productId,
+          productName: product.name,
+          variantId: item.variantId,
+          variantName: variant.name,
+          quantity: item.quantity,
+          unitPrice,
+        };
+      }),
+    );
+
+    // 2. Resolve authoritative shipping cost from cached Lalamove quote
+    let shippingCost = dto.shippingCost;
+    if (dto.zipCode) {
+      const raw = dto.zipCode.replace(/\D/g, '');
+      const cacheSnap = await this.firebaseService.db
+        .collection('shipping_quotes')
+        .doc(raw)
+        .get();
+
+      if (cacheSnap.exists) {
+        const cached = cacheSnap.data() as { price: number; expiresAt: number };
+        if (cached.expiresAt > Date.now()) {
+          shippingCost = cached.price;
+          this.logger.log(`[ORDERS] Shipping overridden from cache: R$${shippingCost} (zip ${raw})`);
+        } else {
+          this.logger.warn(`[ORDERS] Shipping cache expired for zip ${raw}, using client value R$${shippingCost}`);
+        }
+      } else {
+        this.logger.warn(`[ORDERS] No shipping cache for zip ${raw}, using client value R$${shippingCost}`);
+      }
+    }
+
+    const subtotal = items.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0);
+    const total = subtotal + shippingCost;
+
+    return { items, shippingCost, subtotal, total };
+  }
+
   async createWithId(id: string, dto: CreateOrderDto): Promise<any> {
     const orderNumber = this.generateOrderNumber();
-    const subtotal = this.calculateSubtotal(dto.items);
-    const total = subtotal + dto.shippingCost;
+    const { items, shippingCost, subtotal, total } = await this.resolveOrderPricing(dto);
     const now = Date.now();
 
     const order = {
@@ -40,8 +117,8 @@ export class OrdersService {
       customerEmail: dto.customerEmail || null,
       address: dto.address,
       city: dto.city,
-      shippingCost: dto.shippingCost,
-      items: dto.items,
+      shippingCost,
+      items,
       subtotal,
       total,
       status: 'PENDING',
@@ -70,8 +147,7 @@ export class OrdersService {
   async create(dto: CreateOrderDto): Promise<any> {
     const id = crypto.randomUUID();
     const orderNumber = this.generateOrderNumber();
-    const subtotal = this.calculateSubtotal(dto.items);
-    const total = subtotal + dto.shippingCost;
+    const { items, shippingCost, subtotal, total } = await this.resolveOrderPricing(dto);
     const now = Date.now();
 
     const order = {
@@ -82,8 +158,8 @@ export class OrdersService {
       customerEmail: dto.customerEmail || null,
       address: dto.address,
       city: dto.city,
-      shippingCost: dto.shippingCost,
-      items: dto.items,
+      shippingCost,
+      items,
       subtotal,
       total,
       status: 'PENDING',

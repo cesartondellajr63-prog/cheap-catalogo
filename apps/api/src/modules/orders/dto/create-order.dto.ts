@@ -5,6 +5,8 @@ export class OrderItemDto {
   @IsString()
   productId: string;
 
+  // productName and variantName are accepted for display, but the server
+  // overwrites them with authoritative values from the database.
   @IsString()
   productName: string;
 
@@ -18,9 +20,11 @@ export class OrderItemDto {
   @Min(1)
   quantity: number;
 
+  // unitPrice sent by the client is intentionally ignored.
+  // The server always resolves the authoritative price from Firestore.
+  @IsOptional()
   @IsNumber()
-  @Min(1)
-  unitPrice: number;
+  unitPrice?: number;
 }
 
 export class CreateOrderDto {
@@ -39,6 +43,13 @@ export class CreateOrderDto {
 
   @IsString()
   city: string;
+
+  // zipCode is used server-side to validate shippingCost against the cached
+  // Lalamove quote. The client-supplied shippingCost is always overridden by
+  // the cached value when a valid quote exists.
+  @IsOptional()
+  @IsString()
+  zipCode?: string;
 
   @IsNumber()
   @Min(0)

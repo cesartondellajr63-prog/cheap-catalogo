@@ -1,4 +1,5 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { LoginDto } from './dto/login.dto';
 
@@ -11,11 +12,22 @@ export interface TokenPayload {
 
 @Injectable()
 export class AuthService {
-  login(dto: LoginDto): { token: string; usuario: string } {
-    const dashboardUser = process.env.DASHBOARD_USER;
-    const dashboardPass = process.env.DASHBOARD_PASS;
+  async login(dto: LoginDto): Promise<{ token: string; usuario: string }> {
+    const expectedUser = process.env.DASHBOARD_USER ?? '';
+    const passHash = process.env.DASHBOARD_PASS_HASH ?? '';
 
-    if (dto.usuario !== dashboardUser || dto.senha !== dashboardPass) {
+    // Timing-safe username comparison
+    const userMatch =
+      expectedUser.length === dto.usuario.length &&
+      crypto.timingSafeEqual(
+        Buffer.from(dto.usuario),
+        Buffer.from(expectedUser),
+      );
+
+    // bcrypt.compare is inherently timing-safe
+    const passMatch = await bcrypt.compare(dto.senha, passHash);
+
+    if (!userMatch || !passMatch) {
       throw new UnauthorizedException('Invalid credentials.');
     }
 
@@ -47,7 +59,7 @@ export class AuthService {
       const secret = process.env.JWT_SECRET as string;
       const expectedSig = crypto.createHmac('sha256', secret).update(base).digest('hex');
 
-      if (sig !== expectedSig) return null;
+      if (!crypto.timingSafeEqual(Buffer.from(sig, 'hex'), Buffer.from(expectedSig, 'hex'))) return null;
 
       const payload: TokenPayload = JSON.parse(Buffer.from(base, 'base64url').toString('utf8'));
 
