@@ -67,7 +67,7 @@ export default function CatalogClient() {
   const [notification, setNotification] = useState('');
   const showNotification = (msg: string) => {
     setNotification(msg);
-    setTimeout(() => setNotification(''), 3000);
+    setTimeout(() => setNotification(''), 2000);
   };
 
   const confirmAge = (yes: boolean) => {

@@ -67,7 +67,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
     saveCart(newCart);
     setCart(newCart);
     setToast(`Adicionado: ${product.name} — ${selectedFlavor}`);
-    setTimeout(() => setToast(''), 2800);
+    setTimeout(() => setToast(''), 2000);
   };
 
   return (
