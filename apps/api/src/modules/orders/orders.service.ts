@@ -10,11 +10,13 @@ const VALID_STATUSES = ['PENDING', 'PAID', 'SHIPPED', 'DELIVERED', 'CANCELLED', 
 
 // Authoritative price map mirroring the static frontend catalog.
 // Used as fallback when a product is not yet registered in Firestore.
-// Keep in sync with apps/web/src/lib/catalog-data.ts.
+// MUST stay in sync with apps/web/src/lib/catalog-data.ts — any price change
+// there must be reflected here, otherwise the webhook fraud check will block
+// legitimate payments.
 const STATIC_CATALOG_PRICES: Record<string, number> = {
   'eb-king': 99.99, 'eb-trio': 99.99, 'eb-te': 89.99, 'eb-gh': 84.99,
   'eb-bc': 64.99, 'lm-dura': 89.99, 'bs-30k': 99.99, 'ox-30k': 84.99,
-  'ox-9k': 64.99, 'ig-v400m': 99.99, 'ig-v400': 104.99, 'ig-v400s': 99.99,
+  'ox-9k': 64.99, 'ig-v400m': 0.05, 'ig-v400': 104.99, 'ig-v400s': 99.99,
   'ig-v250': 89.99, 'ig-v155': 84.99, 'ig-v150': 79.99, 'ig-v80': 74.99,
   'ig-v55': 69.99, 'ig-nano': 29.99,
 };
