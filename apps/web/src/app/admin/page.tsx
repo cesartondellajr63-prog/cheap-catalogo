@@ -1164,6 +1164,11 @@ function OrderRow({ o, onRowClick, onStatusChange, onShippingChange, onMotoboyCh
             return <span style={{ color:'#6a6a6a',fontSize:11 }}>—</span>;
           }
           const waUrl = `https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`;
+          const hasLink = motoboyVal === '🛵 Lala Move' ? !!trackingLink : true;
+          const btnBg = hasLink ? 'rgba(37,211,102,0.12)' : 'rgba(255,77,77,0.12)';
+          const btnBgHover = hasLink ? 'rgba(37,211,102,0.22)' : 'rgba(255,77,77,0.22)';
+          const btnBorder = hasLink ? '1px solid rgba(37,211,102,0.3)' : '1px solid rgba(255,77,77,0.3)';
+          const btnColor = hasLink ? '#25d366' : '#ff4d4d';
           return (
             <a
               href={waUrl}
@@ -1172,12 +1177,12 @@ function OrderRow({ o, onRowClick, onStatusChange, onShippingChange, onMotoboyCh
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 6,
                 padding: '5px 12px', borderRadius: 9,
-                background: 'rgba(37,211,102,0.12)', border: '1px solid rgba(37,211,102,0.3)',
-                color: '#25d366', fontFamily: 'Satoshi,sans-serif', fontSize: 11, fontWeight: 700,
+                background: btnBg, border: btnBorder,
+                color: btnColor, fontFamily: 'Satoshi,sans-serif', fontSize: 11, fontWeight: 700,
                 textDecoration: 'none', whiteSpace: 'nowrap', transition: 'all 0.2s',
               }}
-              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(37,211,102,0.22)')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'rgba(37,211,102,0.12)')}
+              onMouseEnter={e => (e.currentTarget.style.background = btnBgHover)}
+              onMouseLeave={e => (e.currentTarget.style.background = btnBg)}
             >
               💬 Enviar
             </a>
