@@ -1,6 +1,7 @@
 import {
   Injectable,
   ForbiddenException,
+  BadRequestException,
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
@@ -19,6 +20,28 @@ export class PaymentsService {
     private readonly ordersService: OrdersService,
   ) {}
 
+  /**
+   * Valida o token de cotação de frete e retorna o preço autoritativo do servidor.
+   * O shippingPrice enviado pelo frontend é IGNORADO — apenas o valor armazenado
+   * no Firestore no momento da cotação é utilizado.
+   */
+  private async validateShippingToken(token: string): Promise<number> {
+    const ref = this.firebaseService.db.collection('shipping_tokens').doc(token);
+    const snap = await ref.get();
+    if (!snap.exists) {
+      throw new BadRequestException(
+        'Cotação de frete inválida. Recalcule o frete e tente novamente.',
+      );
+    }
+    const data = snap.data() as { price: number; expiresAt: number };
+    if (data.expiresAt < Date.now()) {
+      throw new BadRequestException(
+        'Cotação de frete expirada. Recalcule o frete e tente novamente.',
+      );
+    }
+    return data.price;
+  }
+
   async createPixPayment(dto: CreatePaymentDto): Promise<any> {
     const accessToken = process.env.MERCADOPAGO_ACCESS_TOKEN;
     if (!accessToken) {
@@ -28,25 +51,56 @@ export class PaymentsService {
     const frontendUrl = process.env.FRONTEND_URL!;
     const backendUrl = process.env.BACKEND_URL!;
 
+    // 1. Valida o frete server-side — ignora dto.shippingPrice
+    const shippingPrice = await this.validateShippingToken(dto.shippingToken);
+
+    // 2. Cria o pedido primeiro para obter os preços resolvidos do Firebase
+    const orderRef = this.firebaseService.db.collection('orders').doc(dto.orderId);
+    const existingSnap = await orderRef.get();
+    let order: any;
+    if (!existingSnap.exists) {
+      order = await this.ordersService.createWithId(dto.orderId, {
+        customerName: dto.customerName,
+        customerPhone: dto.customerPhone.replace(/\D/g, ''),
+        customerEmail: dto.customerEmail,
+        address: dto.address,
+        city: dto.city,
+        shippingCost: shippingPrice,
+        items: dto.items.map(i => ({
+          productId: i.productId,
+          productName: i.model,
+          variantId: i.flavor,
+          variantName: i.flavor,
+          quantity: i.qty,
+          unitPrice: i.price,
+        })),
+      });
+    } else {
+      order = { id: existingSnap.id, ...existingSnap.data() };
+    }
+
+    // 3. Monta a preferência do MP usando os preços resolvidos do Firebase (não do frontend)
     const phone = dto.customerPhone.replace(/\D/g, '');
     const areaCode = phone.substring(0, 2);
     const phoneNumber = phone.substring(2);
 
-    const valorProdutos = dto.items.reduce((sum, item) => sum + item.price * item.qty, 0);
-    const valorTotal = valorProdutos + dto.shippingPrice;
-
     const preference = {
-      items: dto.items.map((item) => ({
-        title: `${item.model} - ${item.flavor}`,
-        description: `Quantidade: ${item.qty}`,
-        unit_price: item.price,
-        quantity: item.qty,
-        currency_id: 'BRL',
-      })),
-      shipments: {
-        cost: dto.shippingPrice,
-        mode: 'not_specified',
-      },
+      items: [
+        ...order.items.map((item: any) => ({
+          title: `${item.productName} - ${item.variantName}`,
+          description: `Quantidade: ${item.quantity}`,
+          unit_price: item.unitPrice,
+          quantity: item.quantity,
+          currency_id: 'BRL',
+        })),
+        {
+          title: 'Frete',
+          description: 'Taxa de entrega',
+          unit_price: shippingPrice,
+          quantity: 1,
+          currency_id: 'BRL',
+        },
+      ],
       payer: {
         name: dto.customerName,
         email: dto.customerEmail,
@@ -77,12 +131,11 @@ export class PaymentsService {
         customer_name: dto.customerName,
         customer_phone: dto.customerPhone,
         customer_address: dto.address,
-        valor_produtos: valorProdutos,
-        valor_frete: dto.shippingPrice,
-        valor_total: valorTotal,
+        valor_total: order.total,
       },
     };
 
+    // 4. Envia preferência ao MercadoPago
     const mpResponse = await fetch('https://api.mercadopago.com/checkout/preferences', {
       method: 'POST',
       headers: {
@@ -100,36 +153,9 @@ export class PaymentsService {
 
     const data = (await mpResponse.json()) as any;
 
+    // 5. Cria token de sessão para polling de status
     const sessionAccessToken = crypto.randomBytes(32).toString('hex');
     const tokenHash = crypto.createHash('sha256').update(sessionAccessToken).digest('hex');
-
-    // Cria o pedido atomicamente para evitar race condition com requests duplicados
-    const orderRef = this.firebaseService.db.collection('orders').doc(dto.orderId);
-    let orderCreated = false;
-    await this.firebaseService.db.runTransaction(async (tx) => {
-      const snap = await tx.get(orderRef);
-      if (!snap.exists) {
-        orderCreated = true;
-      }
-    });
-    if (orderCreated) {
-      await this.ordersService.createWithId(dto.orderId, {
-        customerName: dto.customerName,
-        customerPhone: dto.customerPhone.replace(/\D/g, ''),
-        customerEmail: dto.customerEmail,
-        address: dto.address,
-        city: dto.city,
-        shippingCost: dto.shippingPrice,
-        items: dto.items.map(i => ({
-          productId: i.productId,
-          productName: i.model,
-          variantId: i.flavor,
-          variantName: i.flavor,
-          quantity: i.qty,
-          unitPrice: i.price,
-        })),
-      });
-    }
 
     await this.firebaseService.db.collection('sessions').doc(dto.orderId).set({
       tokenHash,
@@ -139,8 +165,7 @@ export class PaymentsService {
 
     await this.ordersService.updatePaymentInfo(dto.orderId, null as any, data.id);
 
-    const orderDoc = await this.firebaseService.db.collection('orders').doc(dto.orderId).get();
-    const orderNumber = (orderDoc.data() as any)?.orderNumber ?? dto.orderId;
+    const orderNumber = order.orderNumber ?? dto.orderId;
 
     return {
       success: true,
@@ -162,14 +187,17 @@ export class PaymentsService {
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     const backendUrl  = process.env.BACKEND_URL  || 'http://localhost:3001';
 
-    // 1. Cria o pedido no Firestore
+    // 0. Valida o frete server-side — ignora dto.shippingPrice
+    const shippingPrice = await this.validateShippingToken(dto.shippingToken);
+
+    // 1. Cria o pedido com frete validado e preços resolvidos do Firebase
     const order = await this.ordersService.create({
       customerName:  dto.customerName,
       customerPhone: dto.customerPhone.replace(/\D/g, ''),
       customerEmail: dto.customerEmail,
       address: `${dto.rua}, ${dto.numero}${dto.complemento ? ', ' + dto.complemento : ''}, ${dto.bairro}`,
       city: dto.cidade,
-      shippingCost: dto.shippingPrice,
+      shippingCost: shippingPrice,
       items: dto.items.map(i => ({
         productId:   i.productId,
         productName: i.name,
@@ -180,8 +208,7 @@ export class PaymentsService {
       })),
     });
 
-    // 2. Monta o body para o Checkout Cielo
-    // Cielo trabalha com centavos (inteiros)
+    // 2. Monta o body para o Checkout Cielo usando preços resolvidos do Firebase
     const CARD_FEE = 1.07;
     const toCents = (v: number) => Math.round(v * 100);
     const withFee = (v: number) => Math.round(v * CARD_FEE * 100) / 100;
@@ -190,17 +217,17 @@ export class PaymentsService {
       OrderNumber:    order.orderNumber,
       SoftDescriptor: 'CheapPods',
       Cart: {
-        Items: dto.items.map(i => ({
-          Name:      `${i.name} - ${i.flavor}`,
-          UnitPrice: toCents(withFee(i.price)),
-          Quantity:  i.qty,
+        Items: order.items.map((i: any) => ({
+          Name:      `${i.productName} - ${i.variantName}`,
+          UnitPrice: toCents(withFee(i.unitPrice)),
+          Quantity:  i.quantity,
           Type:      'Asset',
         })),
       },
       Shipping: {
         Type:          'FixedAmount',
         TargetZipCode: dto.cep.replace(/\D/g, ''),
-        Services: [{ Name: 'Entrega Motoboy', Price: toCents(withFee(dto.shippingPrice)) }],
+        Services: [{ Name: 'Entrega Motoboy', Price: toCents(withFee(shippingPrice)) }],
         Address: {
           Street:     dto.rua,
           Number:     dto.numero,

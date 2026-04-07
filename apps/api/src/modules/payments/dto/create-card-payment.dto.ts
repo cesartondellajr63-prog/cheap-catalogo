@@ -19,6 +19,7 @@ export class CreateCardPaymentDto {
   items: CardItemDto[];
 
   @IsNumber() @Min(0) shippingPrice: number;
+  @IsString() shippingToken: string;
 
   @IsString() customerName: string;
   @IsEmail()  customerEmail: string;

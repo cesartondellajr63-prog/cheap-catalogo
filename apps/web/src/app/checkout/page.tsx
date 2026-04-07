@@ -183,6 +183,7 @@ export default function CheckoutPage() {
           qty: i.qty,
         })),
         shippingPrice: freteValue,
+        shippingToken: freteResult!.shippingToken,
         customerEmail: email,
         customerName: nome,
         customerPhone: tel.replace(/\D/g, ''),

@@ -57,6 +57,7 @@ export const api = {
       orderId: string;
       items: { productId: string; model: string; flavor: string; price: number; qty: number }[];
       shippingPrice: number;
+      shippingToken: string;
       customerEmail: string;
       customerName: string;
       customerPhone: string;
@@ -77,6 +78,7 @@ export const api = {
     createCard: (body: {
       items: { productId: string; name: string; flavor: string; price: number; qty: number }[];
       shippingPrice: number;
+      shippingToken: string;
       customerName: string;
       customerEmail: string;
       customerPhone: string;

@@ -27,13 +27,24 @@ export class ShippingService {
     );
   }
 
+  private async storeAndReturnQuote(price: number, expiresAt: number): Promise<any> {
+    const shippingToken = crypto.randomUUID();
+    await this.firebaseService.db.collection('shipping_tokens').doc(shippingToken).set({
+      price,
+      expiresAt,
+      createdAt: Date.now(),
+    });
+    return {
+      price,
+      priceFormatted: 'R$ ' + price.toFixed(2).replace('.', ','),
+      expiresAt,
+      shippingToken,
+    };
+  }
+
   async getQuote(_dto: QuoteShippingDto): Promise<any> {
     // TESTE — frete fixo em R$ 0,02. Remover para voltar ao cálculo real.
-    return {
-      price: 0.02,
-      priceFormatted: 'R$ 0,02',
-      expiresAt: Date.now() + 5 * 60 * 1000,
-    };
+    return this.storeAndReturnQuote(0.02, Date.now() + 5 * 60 * 1000);
 
     const dto = _dto;
     const raw = dto.zipCode?.replace(/\D/g, '') ?? null;
@@ -193,10 +204,6 @@ export class ShippingService {
       });
     }
 
-    return {
-      price: finalPrice,
-      priceFormatted: 'R$ ' + finalPrice.toFixed(2).replace('.', ','),
-      expiresAt,
-    };
+    return this.storeAndReturnQuote(finalPrice, expiresAt);
   }
 }

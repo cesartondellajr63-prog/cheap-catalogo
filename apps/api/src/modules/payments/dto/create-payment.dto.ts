@@ -33,6 +33,9 @@ export class CreatePaymentDto {
   @Min(0)
   shippingPrice: number;
 
+  @IsString()
+  shippingToken: string;
+
   @IsEmail()
   customerEmail: string;
 

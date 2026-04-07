@@ -84,6 +84,7 @@ export interface ShippingQuoteResult {
   price: number;
   priceFormatted: string;
   expiresAt: number;
+  shippingToken: string;
 }
 
 export interface PaymentResult {
