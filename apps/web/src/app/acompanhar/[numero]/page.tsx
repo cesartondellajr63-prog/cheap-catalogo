@@ -26,6 +26,7 @@ interface TrackingOrder {
   status: OrderStatus;
   shippingStatus: string | null;
   trackingLink: string | null;
+  motoboy: string | null;
   createdAt: number;
 }
 
@@ -229,8 +230,8 @@ export default function AcompanharPedidoPage() {
               </p>
             </div>
 
-            {/* Link de rastreio (apenas quando A Caminho) */}
-            {order.trackingLink && (
+            {/* Link de rastreio — oculto para Motoboy Próprio */}
+            {order.trackingLink && order.motoboy !== '🏍️ Motoboy Próprio' && (
               <div style={{ marginTop:14, paddingTop:14, borderTop:`1px solid ${deliveryCfg.accent}22` }}>
                 <a href={order.trackingLink} target="_blank" rel="noopener noreferrer"
                   style={{ display:'inline-flex', alignItems:'center', gap:6, fontSize:13, fontWeight:700, color: deliveryCfg.accent, textDecoration:'underline' }}>
