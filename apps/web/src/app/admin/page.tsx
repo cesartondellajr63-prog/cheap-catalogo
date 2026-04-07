@@ -361,6 +361,26 @@ export default function AdminDashboard() {
     }
   }, [orders, modalOrder]);
 
+  const updatePaymentMethod = useCallback(async (id: string, method: 'mp' | 'cielo') => {
+    const token = getToken();
+    const prev = orders.find(o => o.id === id);
+    setOrders(list => list.map(o => o.id === id ? { ...o, status: 'PAID' as OrderStatus, mpPaymentId: method === 'mp' ? 'manual' : null } as any : o));
+    if (modalOrder?.id === id) setModalOrder(m => m ? { ...m, status: 'PAID' as OrderStatus, mpPaymentId: method === 'mp' ? 'manual' : null } as any : m);
+    try {
+      await apiFetch<any>(`/orders/${id}/payment-method`, token, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ method }),
+      });
+    } catch (e) {
+      if (prev) {
+        setOrders(list => list.map(o => o.id === id ? prev : o));
+        if (modalOrder?.id === id) setModalOrder(prev);
+      }
+      alert('Erro ao atualizar pagamento: ' + (e instanceof Error ? e.message : 'desconhecido'));
+    }
+  }, [orders, modalOrder]);
+
   const archiveOrder = useCallback(async (id: string, archived: boolean) => {
     const token = getToken();
     setOrders(list => list.map(o => o.id === id ? { ...o, archived } as any : o));
@@ -605,6 +625,7 @@ export default function AdminDashboard() {
                 onStatusChange={updateOrderStatus}
                 onShippingChange={updateShippingStatus}
                 onMotoboyChange={updateMotoboy}
+                onPaymentMethodChange={updatePaymentMethod}
               />
             </div>
           </>
@@ -661,6 +682,7 @@ export default function AdminDashboard() {
                 onStatusChange={updateOrderStatus}
                 onShippingChange={updateShippingStatus}
                 onMotoboyChange={updateMotoboy}
+                onPaymentMethodChange={updatePaymentMethod}
               />
             </div>
           </>
@@ -1003,12 +1025,13 @@ function StatCard({ label, value, sub, color, icon, featured, onClick, active }:
 }
 
 // ── OrderRow ──
-function OrderRow({ o, onRowClick, onStatusChange, onShippingChange, onMotoboyChange }: {
+function OrderRow({ o, onRowClick, onStatusChange, onShippingChange, onMotoboyChange, onPaymentMethodChange }: {
   o: Order;
   onRowClick: (o: Order) => void;
   onStatusChange: (id: string, status: OrderStatus) => void;
   onShippingChange: (id: string, shippingStatus: string) => void;
   onMotoboyChange: (id: string, motoboy: string) => void;
+  onPaymentMethodChange: (id: string, method: 'mp' | 'cielo') => void;
 }) {
   const produtos = (o.items ?? []).map(i => `${i.productName ?? ''} — ${i.variantName ?? ''} ×${i.quantity ?? 0}`).join(' | ');
   const phone = o.customer?.phone?.replace(/\D/g, '');
@@ -1049,7 +1072,7 @@ function OrderRow({ o, onRowClick, onStatusChange, onShippingChange, onMotoboyCh
       </td>
       <td style={{ ...tdMono, fontWeight: 600, color: '#ffb545' }}>{fmtR(o.subtotal ?? 0)}</td>
       <td style={{ ...tdMono, fontWeight: 700, color: '#fff' }}>{fmtR(o.total ?? 0)}</td>
-      <td style={td}>
+      <td style={td} onClick={e => e.stopPropagation()}>
         {isPaid(o.status)
           ? (() => {
               const isMp = !!o.mpPaymentId;
@@ -1062,7 +1085,27 @@ function OrderRow({ o, onRowClick, onStatusChange, onShippingChange, onMotoboyCh
             })()
           : o.status === 'CANCELLED'
             ? <span style={{ display:'inline-flex',gap:5,padding:'5px 12px',borderRadius:8,fontSize:11,fontWeight:700,background:'rgba(255,77,77,0.1)',color:'#ff4d4d',border:'1px solid rgba(255,77,77,0.2)' }}>❌ Cancelado</span>
-            : <span style={{ display:'inline-flex',gap:5,padding:'5px 12px',borderRadius:8,fontSize:11,fontWeight:700,background:'rgba(255,181,69,0.1)',color:'#ffb545',border:'1px solid rgba(255,181,69,0.2)' }}>⏳ Pendente</span>
+            : (
+              <div style={{ display:'flex',flexDirection:'column',gap:5 }}>
+                <span style={{ fontSize:10,fontWeight:600,color:'#ffb545',marginBottom:2 }}>⏳ Pendente</span>
+                <div style={{ display:'flex',gap:5 }}>
+                  <button
+                    onClick={() => onPaymentMethodChange(o.id, 'mp')}
+                    style={{ padding:'4px 9px',borderRadius:7,background:'rgba(255,193,7,0.1)',border:'1px solid rgba(255,193,7,0.3)',color:'#ffc107',fontFamily:'Satoshi,sans-serif',fontSize:10,fontWeight:700,cursor:'pointer',whiteSpace:'nowrap',transition:'all 0.2s' }}
+                    onMouseEnter={e=>(e.currentTarget.style.background='rgba(255,193,7,0.22)')}
+                    onMouseLeave={e=>(e.currentTarget.style.background='rgba(255,193,7,0.1)')}>
+                    🟡 Mercado Pago
+                  </button>
+                  <button
+                    onClick={() => onPaymentMethodChange(o.id, 'cielo')}
+                    style={{ padding:'4px 9px',borderRadius:7,background:'rgba(30,136,229,0.1)',border:'1px solid rgba(30,136,229,0.3)',color:'#42a5f5',fontFamily:'Satoshi,sans-serif',fontSize:10,fontWeight:700,cursor:'pointer',whiteSpace:'nowrap',transition:'all 0.2s' }}
+                    onMouseEnter={e=>(e.currentTarget.style.background='rgba(30,136,229,0.22)')}
+                    onMouseLeave={e=>(e.currentTarget.style.background='rgba(30,136,229,0.1)')}>
+                    🔵 Cielo
+                  </button>
+                </div>
+              </div>
+            )
         }
       </td>
       <td style={td} onClick={e => e.stopPropagation()}>
@@ -1181,13 +1224,14 @@ function exportCSV(orders: Order[]) {
 }
 
 // ── OrdersTable ──
-function OrdersTable({ orders, loading, onRowClick, onStatusChange, onShippingChange, onMotoboyChange }: {
+function OrdersTable({ orders, loading, onRowClick, onStatusChange, onShippingChange, onMotoboyChange, onPaymentMethodChange }: {
   orders: Order[];
   loading: boolean;
   onRowClick: (o: Order) => void;
   onStatusChange: (id: string, status: OrderStatus) => void;
   onShippingChange: (id: string, shippingStatus: string) => void;
   onMotoboyChange: (id: string, motoboy: string) => void;
+  onPaymentMethodChange: (id: string, method: 'mp' | 'cielo') => void;
 }) {
   return (
     <div style={tableCard}>
@@ -1211,7 +1255,7 @@ function OrdersTable({ orders, loading, onRowClick, onStatusChange, onShippingCh
               ? <tr><td colSpan={13}><StateBox loading /></td></tr>
               : orders.length === 0
                 ? <tr><td colSpan={13}><StateBox icon="🔍" text="Nenhum pedido encontrado." /></td></tr>
-                : orders.map(o => <OrderRow key={o.id} o={o} onRowClick={onRowClick} onStatusChange={onStatusChange} onShippingChange={onShippingChange} onMotoboyChange={onMotoboyChange} />)
+                : orders.map(o => <OrderRow key={o.id} o={o} onRowClick={onRowClick} onStatusChange={onStatusChange} onShippingChange={onShippingChange} onMotoboyChange={onMotoboyChange} onPaymentMethodChange={onPaymentMethodChange} />)
             }
           </tbody>
         </table>

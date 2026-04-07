@@ -72,6 +72,15 @@ export class OrdersController {
     return this.ordersService.updateMotoboy(id, motoboy);
   }
 
+  @Patch(':id/payment-method')
+  @UseGuards(JwtAuthGuard)
+  setPaymentMethod(
+    @Param('id') id: string,
+    @Body('method') method: 'mp' | 'cielo',
+  ) {
+    return this.ordersService.setPaymentMethod(id, method);
+  }
+
   @Patch(':id/archive')
   @UseGuards(JwtAuthGuard)
   archive(@Param('id') id: string) {

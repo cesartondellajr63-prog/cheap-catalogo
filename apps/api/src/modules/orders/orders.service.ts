@@ -219,6 +219,19 @@ export class OrdersService {
     return { success: true };
   }
 
+  async setPaymentMethod(id: string, method: 'mp' | 'cielo'): Promise<any> {
+    const docRef = this.firebaseService.db.collection('orders').doc(id);
+    const docSnap = await docRef.get();
+    if (!docSnap.exists) throw new NotFoundException(`Order with id "${id}" not found.`);
+    await docRef.update({
+      status: 'PAID',
+      mpPaymentId: method === 'mp' ? 'manual' : null,
+      updatedAt: Date.now(),
+    });
+    const updated = await docRef.get();
+    return { id, ...updated.data() };
+  }
+
   async updatePaymentInfo(
     id: string,
     mpPaymentId: string | null,
