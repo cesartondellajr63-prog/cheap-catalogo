@@ -234,26 +234,30 @@ export default function AcompanharPedidoPage() {
           </div>
         )}
 
-        {/* iframe de rastreio inline — Lala Move apenas */}
-        {showTracking && (
-          <div style={{ borderRadius:20, overflow:'hidden', border:'1px solid rgba(126,255,245,0.2)', background:'#111' }}>
-            <div style={{ padding:'12px 16px', borderBottom:'1px solid rgba(255,255,255,0.06)', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-              <p style={{ fontFamily:'var(--font-syne),Syne,sans-serif', fontWeight:700, fontSize:13, color:'#7efff5' }}>
-                🚚 Rastreio da entrega
-              </p>
-              <a href={order.trackingLink!} target="_blank" rel="noopener noreferrer"
-                style={{ fontSize:11, color:'rgba(255,255,255,0.3)', textDecoration:'underline' }}>
-                Abrir em nova aba
-              </a>
-            </div>
-            <iframe
-              src={order.trackingLink!}
-              style={{ width:'100%', height:420, border:'none', display:'block' }}
-              title="Rastreio de entrega"
-              allow="geolocation"
-            />
+      </div>
+
+      {/* iframe de rastreio inline — largura total, fora do container estreito */}
+      {showTracking && (
+        <div style={{ maxWidth:760, margin:'0 auto', marginTop:0, borderRadius:20, overflow:'hidden', border:'1px solid rgba(126,255,245,0.2)', background:'#111' }}>
+          <div style={{ padding:'12px 20px', borderBottom:'1px solid rgba(255,255,255,0.06)', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+            <p style={{ fontFamily:'var(--font-syne),Syne,sans-serif', fontWeight:700, fontSize:13, color:'#7efff5' }}>
+              🚚 Rastreio da entrega
+            </p>
+            <a href={order.trackingLink!} target="_blank" rel="noopener noreferrer"
+              style={{ fontSize:11, color:'rgba(255,255,255,0.3)', textDecoration:'underline' }}>
+              Abrir em nova aba
+            </a>
           </div>
-        )}
+          <iframe
+            src={order.trackingLink!}
+            style={{ width:'100%', height:'min(70vh, 620px)', border:'none', display:'block' }}
+            title="Rastreio de entrega"
+            allow="geolocation"
+          />
+        </div>
+      )}
+
+      <div style={{ maxWidth:520, margin:'0 auto' }}>
 
         <p style={{ textAlign:'center', fontSize:12, color:'rgba(255,255,255,0.25)' }}>
           Esta página atualiza automaticamente a cada 30 segundos.
