@@ -2,16 +2,17 @@
 
 import { useState, useEffect, use, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { CATALOG, BRANDS_DATA, BRAND_GRADIENTS, BRAND_ICONS } from '@/lib/catalog-data';
+import { BRANDS_DATA, BRAND_GRADIENTS, BRAND_ICONS } from '@/lib/catalog-data';
 import { loadCart, saveCart, getCartCount } from '@/lib/cart';
-import { fmtBRLFromDecimal } from '@/lib/api';
-import type { CartItem } from '@/types';
+import { fmtBRLFromDecimal, api } from '@/lib/api';
+import type { CartItem, Product } from '@/types';
 import CheckoutModal from '@/components/catalog/CheckoutModal';
 
 export default function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
   const router = useRouter();
-  const product = CATALOG.find(p => p.id === slug);
+  const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const [selectedFlavor, setSelectedFlavor] = useState<string | null>(null);
   const [qty, setQty] = useState(1);
@@ -25,37 +26,47 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
   }, []);
 
   useEffect(() => {
-    if (!product) { router.replace('/'); return; }
     setCart(loadCart());
-    if (product.flavors.length === 1) setSelectedFlavor(product.flavors[0]);
-  }, [product, router]);
+    api.products.getBySlug(slug)
+      .then(p => {
+        setProduct(p);
+        const active = (p.variants ?? []).filter(v => v.active !== false);
+        if (active.length === 1) setSelectedFlavor(active[0].name);
+      })
+      .catch(() => router.replace('/'))
+      .finally(() => setLoading(false));
+  }, [slug, router]);
 
+  if (loading) return null;
   if (!product) return null;
 
-  const brand = BRANDS_DATA.find(b => b.id === product.brand)!;
+  const brand = BRANDS_DATA.find(b => b.id === product.brandId) ?? BRANDS_DATA[0];
+  const activeFlavors = (product.variants ?? []).filter(v => v.active !== false);
   const count = getCartCount(cart);
 
   const addToCart = () => {
     if (!selectedFlavor) return;
-    const variantId = `${product.id}__${selectedFlavor}`;
+    const variant = activeFlavors.find(v => v.name === selectedFlavor);
+    const variantId = variant?.id ?? `${product.slug}__${selectedFlavor}`;
+    const price = variant?.priceOverride ?? product.basePrice;
     const newCart = [...cart];
-    const existing = newCart.find(i => i.productId === product.id && i.variantId === variantId);
+    const existing = newCart.find(i => i.productId === product.slug && i.variantId === variantId);
     if (existing) {
       existing.qty += qty;
     } else {
       newCart.push({
-        productId: product.id,
-        productName: product.model,
-        brandId: product.brand,
+        productId: product.slug,
+        productName: product.name,
+        brandId: product.brandId,
         variantId,
         variantName: selectedFlavor,
-        price: product.price,
+        price,
         qty,
       });
     }
     saveCart(newCart);
     setCart(newCart);
-    setToast(`Adicionado: ${product.model} — ${selectedFlavor}`);
+    setToast(`Adicionado: ${product.name} — ${selectedFlavor}`);
     setTimeout(() => setToast(''), 2800);
   };
 
@@ -79,9 +90,9 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
 
       <div className="product-page">
         <div className="product-left">
-          <div className="product-img" style={{ background: BRAND_GRADIENTS[product.brand] }}>
+          <div className="product-img" style={{ background: BRAND_GRADIENTS[product.brandId] }}>
             <div className="product-img-placeholder">
-              <div className="placeholder-big-icon">{BRAND_ICONS[product.brand]}</div>
+              <div className="placeholder-big-icon">{BRAND_ICONS[product.brandId]}</div>
             </div>
             <div className="product-img-overlay"></div>
             <div className="product-tags">
@@ -96,13 +107,13 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
 
         <div className="product-right">
           <div className="product-info">
-            <h1 className="product-name">{product.model}</h1>
+            <h1 className="product-name">{product.name}</h1>
             <div className="product-meta">
               <span className="product-brand-label">Marca: <b>{brand.label}</b></span>
               <span className="meta-sep">•</span>
-              <span className="product-brand-label">{product.flavors.length} sabor{product.flavors.length > 1 ? 'es' : ''}</span>
+              <span className="product-brand-label">{activeFlavors.length} sabor{activeFlavors.length > 1 ? 'es' : ''}</span>
             </div>
-            <div className="product-price">{fmtBRLFromDecimal(product.price)}</div>
+            <div className="product-price">{fmtBRLFromDecimal(product.basePrice)}</div>
             <div className="product-price-note">por unidade · frete calculado no checkout</div>
           </div>
 
@@ -110,16 +121,16 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
             <div className="flavor-title">Escolha o sabor</div>
             <div className="flavor-subtitle">Selecione uma opção abaixo</div>
             <div className="flavor-grid">
-              {product.flavors.map(f => (
+              {activeFlavors.map(v => (
                 <div
-                  key={f}
-                  className={`flavor-item${selectedFlavor === f ? ' selected' : ''}`}
-                  onClick={() => setSelectedFlavor(f)}
+                  key={v.name}
+                  className={`flavor-item${selectedFlavor === v.name ? ' selected' : ''}`}
+                  onClick={() => setSelectedFlavor(v.name)}
                 >
                   <div className="flavor-radio">
                     <div className="flavor-radio-dot"></div>
                   </div>
-                  <span className="flavor-name">{f}</span>
+                  <span className="flavor-name">{v.name}</span>
                 </div>
               ))}
             </div>
@@ -155,7 +166,6 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
         <span>{toast}</span>
       </div>
 
-      {/* Cart FAB */}
       {count > 0 && (
         <button className="cart-fab visible" onClick={() => setCheckoutOpen(true)}>
           🛒

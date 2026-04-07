@@ -3,6 +3,7 @@ import * as crypto from 'crypto';
 import { FirebaseService } from '../../shared/firebase/firebase.service';
 import { CustomersService } from '../customers/customers.service';
 import { GoogleSheetsService } from '../../shared/google-sheets/google-sheets.service';
+import { ProductsService } from '../products/products.service';
 import { CreateOrderDto, OrderItemDto } from './dto/create-order.dto';
 
 const VALID_STATUSES = ['PENDING', 'PAID', 'SHIPPED', 'DELIVERED', 'CANCELLED', 'REFUNDED'];
@@ -15,7 +16,42 @@ export class OrdersService {
     private readonly firebaseService: FirebaseService,
     private readonly customersService: CustomersService,
     private readonly googleSheetsService: GoogleSheetsService,
+    private readonly productsService: ProductsService,
   ) {}
+
+  /**
+   * Resolve o preço autoritativo de cada item consultando o Firebase.
+   * O unitPrice enviado pelo frontend é IGNORADO — apenas os valores do
+   * banco de dados são usados, prevenindo manipulação de preços.
+   */
+  private async resolveItems(items: OrderItemDto[]): Promise<OrderItemDto[]> {
+    return Promise.all(
+      items.map(async (item) => {
+        try {
+          const product = await this.productsService.findBySlug(item.productId);
+
+          if (!product.active) {
+            throw new BadRequestException(`Produto "${product.name}" não está disponível.`);
+          }
+
+          const variant = (product.variants as any[])?.find(
+            (v: any) => v.name === item.variantName || v.id === item.variantId,
+          );
+
+          if (variant?.active === false) {
+            throw new BadRequestException(`Variante "${item.variantName}" não está disponível.`);
+          }
+
+          const unitPrice: number = variant?.priceOverride ?? product.basePrice;
+
+          return { ...item, unitPrice, productName: product.name, variantName: variant?.name ?? item.variantName };
+        } catch (e) {
+          if (e instanceof BadRequestException) throw e;
+          throw new BadRequestException(`Produto "${item.productId}" não encontrado no catálogo.`);
+        }
+      }),
+    );
+  }
 
   private calculateSubtotal(items: OrderItemDto[]): number {
     return items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
@@ -27,8 +63,9 @@ export class OrdersService {
   }
 
   async createWithId(id: string, dto: CreateOrderDto): Promise<any> {
+    const resolvedItems = await this.resolveItems(dto.items);
     const orderNumber = this.generateOrderNumber();
-    const subtotal = this.calculateSubtotal(dto.items);
+    const subtotal = this.calculateSubtotal(resolvedItems);
     const total = subtotal + dto.shippingCost;
     const now = Date.now();
 
@@ -41,7 +78,7 @@ export class OrdersService {
       address: dto.address,
       city: dto.city,
       shippingCost: dto.shippingCost,
-      items: dto.items,
+      items: resolvedItems,
       subtotal,
       total,
       status: 'PENDING',
@@ -68,9 +105,10 @@ export class OrdersService {
   }
 
   async create(dto: CreateOrderDto): Promise<any> {
+    const resolvedItems = await this.resolveItems(dto.items);
     const id = crypto.randomUUID();
     const orderNumber = this.generateOrderNumber();
-    const subtotal = this.calculateSubtotal(dto.items);
+    const subtotal = this.calculateSubtotal(resolvedItems);
     const total = subtotal + dto.shippingCost;
     const now = Date.now();
 
@@ -83,7 +121,7 @@ export class OrdersService {
       address: dto.address,
       city: dto.city,
       shippingCost: dto.shippingCost,
-      items: dto.items,
+      items: resolvedItems,
       subtotal,
       total,
       status: 'PENDING',
