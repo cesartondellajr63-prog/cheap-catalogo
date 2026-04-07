@@ -2,14 +2,27 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import type { CartItem } from '@/types';
+import type { CartItem, Product } from '@/types';
 import { loadCart, saveCart, getCartCount } from '@/lib/cart';
-import { fmtBRLFromDecimal } from '@/lib/api';
-import { CATALOG, BRANDS_DATA, BRAND_GRADIENTS, BRAND_ICONS } from '@/lib/catalog-data';
+import { fmtBRLFromDecimal, api } from '@/lib/api';
+import { BRANDS_DATA, BRAND_GRADIENTS, BRAND_ICONS } from '@/lib/catalog-data';
 import CheckoutModal from './CheckoutModal';
+
+function toDisplay(p: Product) {
+  return {
+    id: p.slug,
+    brand: p.brandId,
+    model: p.name,
+    puffs: p.puffs ?? '',
+    price: p.basePrice,
+    flavors: (p.variants ?? []).filter(v => v.active !== false).map(v => v.name),
+  };
+}
+type DisplayProduct = ReturnType<typeof toDisplay>;
 
 export default function CatalogClient() {
   const router = useRouter();
+  const [products, setProducts] = useState<DisplayProduct[]>([]);
   const [activeBrand, setActiveBrand] = useState('all');
   const [search, setSearch] = useState('');
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -22,6 +35,10 @@ export default function CatalogClient() {
     if (confirmed === 'true') setAgeConfirmed(true);
     else if (confirmed === 'false') setAgeConfirmed(false);
     else setAgeConfirmed(null);
+  }, []);
+
+  useEffect(() => {
+    api.products.list().then(data => setProducts(data.map(toDisplay))).catch(() => {});
   }, []);
 
   const updateCart = useCallback((newCart: CartItem[]) => {
@@ -58,7 +75,7 @@ export default function CatalogClient() {
     setAgeConfirmed(yes);
   };
 
-  const filtered = CATALOG.filter(p => {
+  const filtered = products.filter(p => {
     if (activeBrand !== 'all' && p.brand !== activeBrand) return false;
     if (search) {
       const q = search.toLowerCase();
