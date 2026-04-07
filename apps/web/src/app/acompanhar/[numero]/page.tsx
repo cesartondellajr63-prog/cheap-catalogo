@@ -275,7 +275,7 @@ export default function AcompanharPedidoPage() {
               <div style={{ marginTop:16 }}>
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'baseline', marginBottom:6 }}>
                   <span style={{ fontSize:11, color:`${deliveryCfg.accent}99`, textTransform:'uppercase', letterSpacing:'0.05em' }}>
-                    Tempo estimado de entrega
+                    Tempo máximo para entrega
                   </span>
                   <span style={{ fontFamily:'var(--font-syne),Syne,sans-serif', fontSize:15, fontWeight:700, color: deliveryCfg.accent }}>
                     {formatCountdown(remaining)}
