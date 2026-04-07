@@ -262,12 +262,12 @@ export default function AcompanharPedidoPage() {
 
       <div style={{ maxWidth:520, margin:'0 auto' }}>
 
-        <p style={{ textAlign:'center', fontSize:12, color:'rgba(255,255,255,0.25)' }}>
+        <p style={{ textAlign:'center', fontSize:12, color:'rgba(255,255,255,0.25)', marginTop:32, marginBottom:16 }}>
           Esta página atualiza automaticamente a cada 30 segundos.
         </p>
 
-        <a href="/" style={{ display:'block', textAlign:'center', fontSize:13, color:'var(--accent)', textDecoration:'underline', paddingBottom:32 }}>
-          Voltar ao catálogo
+        <a href="/" style={{ display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, fontWeight:600, color:'var(--accent)', textDecoration:'none', background:'rgba(200,255,0,0.07)', border:'1px solid rgba(200,255,0,0.2)', borderRadius:14, padding:'14px 24px', marginBottom:48 }}>
+          ← Voltar ao catálogo
         </a>
 
       </div>
