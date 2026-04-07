@@ -179,7 +179,6 @@ export default function CheckoutPage() {
           productId: i.productId,
           model: i.productName,
           flavor: i.variantName,
-          price: i.price,
           qty: i.qty,
         })),
         shippingPrice: freteValue,
