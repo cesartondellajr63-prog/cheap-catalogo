@@ -9,6 +9,7 @@ import {
   HttpStatus,
   Logger,
   InternalServerErrorException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { FirebaseService } from '../../shared/firebase/firebase.service';
 import { OrdersService } from '../orders/orders.service';
@@ -53,30 +54,35 @@ export class WebhooksController {
     const signatureHeader = req.headers['x-signature'] as string;
     const requestId = req.headers['x-request-id'] as string;
 
-    if (signatureHeader) {
-      const parts = signatureHeader.split(',');
-      let ts = '';
-      let hash = '';
-
-      for (const part of parts) {
-        const [key, value] = part.trim().split('=');
-        if (key === 'ts') ts = value;
-        if (key === 'v1') hash = value;
-      }
-
-      if (ts && hash) {
-        const manifest = `id:${paymentId};request-id:${requestId || ''};ts:${ts};`;
-        const expectedHmac = crypto
-          .createHmac('sha256', this.webhookSecret)
-          .update(manifest)
-          .digest('hex');
-
-        if (expectedHmac !== hash) {
-          this.logger.warn('Webhook signature mismatch — processando mesmo assim');
-        }
-      }
-    } else {
+    if (!signatureHeader) {
       this.logger.warn(`Webhook sem x-signature recebido para paymentId ${paymentId}`);
+      throw new UnauthorizedException('Missing webhook signature.');
+    }
+
+    const parts = signatureHeader.split(',');
+    let ts = '';
+    let hash = '';
+
+    for (const part of parts) {
+      const [key, value] = part.trim().split('=');
+      if (key === 'ts') ts = value;
+      if (key === 'v1') hash = value;
+    }
+
+    if (!ts || !hash) {
+      this.logger.warn(`Webhook com x-signature malformado para paymentId ${paymentId}`);
+      throw new UnauthorizedException('Malformed webhook signature.');
+    }
+
+    const manifest = `id:${paymentId};request-id:${requestId || ''};ts:${ts};`;
+    const expectedHmac = crypto
+      .createHmac('sha256', this.webhookSecret)
+      .update(manifest)
+      .digest('hex');
+
+    if (!crypto.timingSafeEqual(Buffer.from(expectedHmac, 'hex'), Buffer.from(hash, 'hex'))) {
+      this.logger.warn(`Webhook signature inválida para paymentId ${paymentId}`);
+      throw new UnauthorizedException('Invalid webhook signature.');
     }
 
     const mpToken = process.env.MERCADOPAGO_ACCESS_TOKEN;
