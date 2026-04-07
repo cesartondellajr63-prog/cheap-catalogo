@@ -279,16 +279,22 @@ export class OrdersService {
     id: string,
     mpPaymentId: string | null,
     mpPreferenceId: string,
+    paidAmount?: number,
   ): Promise<void> {
     const docRef = this.firebaseService.db.collection('orders').doc(id);
-    // Use set with merge so it creates the doc if it doesn't exist yet
     await docRef.set(
       {
         mpPaymentId,
         mpPreferenceId,
         updatedAt: Date.now(),
+        ...(paidAmount !== undefined ? { paidAmount } : {}),
       },
       { merge: true },
     );
+  }
+
+  async updatePaidAmount(id: string, paidAmount: number): Promise<void> {
+    const docRef = this.firebaseService.db.collection('orders').doc(id);
+    await docRef.update({ paidAmount, updatedAt: Date.now() });
   }
 }

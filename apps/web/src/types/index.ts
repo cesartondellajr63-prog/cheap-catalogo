@@ -75,6 +75,7 @@ export interface Order {
   total: number;
   mpPreferenceId?: string;
   mpPaymentId?: string;
+  paidAmount?: number;
   paymentMethod: 'PIX' | 'CARD' | 'BOLETO';
   createdAt: string;
   updatedAt: string;

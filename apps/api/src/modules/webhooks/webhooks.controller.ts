@@ -158,7 +158,7 @@ export class WebhooksController {
       return { received: true };
     }
 
-    await this.ordersService.updatePaymentInfo(orderId, String(payment.id), payment.preference_id || '');
+    await this.ordersService.updatePaymentInfo(orderId, String(payment.id), payment.preference_id || '', payment.transaction_amount);
     await this.ordersService.updateStatus(orderId, 'PAID', 'webhook_mercadopago');
 
     const metadata = payment.metadata || {};
@@ -248,6 +248,10 @@ export class WebhooksController {
         return { received: true };
       }
       await this.ordersService.updateStatus(order.id, 'PAID', 'webhook_cielo');
+      const amountCents = Number(body?.amount ?? body?.Amount ?? 0);
+      if (amountCents > 0) {
+        await this.ordersService.updatePaidAmount(order.id, amountCents / 100);
+      }
       this.logger.log(`Order ${order.id} marked as PAID via Cielo webhook.`);
     } catch (e) {
       this.logger.error(`Cielo webhook error: ${(e as Error).message}`);

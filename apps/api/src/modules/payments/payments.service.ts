@@ -385,7 +385,7 @@ export class PaymentsService {
             return { status: 'pending', paymentId: payment.id, amount: payment.transaction_amount, metadata: null };
           }
 
-          await this.ordersService.updatePaymentInfo(orderId, String(payment.id), payment.preference_id || '');
+          await this.ordersService.updatePaymentInfo(orderId, String(payment.id), payment.preference_id || '', payment.transaction_amount);
           await this.ordersService.updateStatus(orderId, 'PAID', 'polling_mercadopago');
         }
       } catch {}

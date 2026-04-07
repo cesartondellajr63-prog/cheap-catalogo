@@ -1072,6 +1072,9 @@ function OrderRow({ o, onRowClick, onStatusChange, onShippingChange, onMotoboyCh
       </td>
       <td style={{ ...tdMono, fontWeight: 600, color: '#ffb545' }}>{fmtR(o.subtotal ?? 0)}</td>
       <td style={{ ...tdMono, fontWeight: 700, color: '#fff' }}>{fmtR(o.total ?? 0)}</td>
+      <td style={{ ...tdMono, fontWeight: 700, color: o.paidAmount != null ? '#4cff72' : '#4a4a4a' }}>
+        {o.paidAmount != null ? fmtR(o.paidAmount) : '—'}
+      </td>
       <td style={td} onClick={e => e.stopPropagation()}>
         {isPaid(o.status)
           ? (() => {
@@ -1250,16 +1253,16 @@ function OrdersTable({ orders, loading, onRowClick, onStatusChange, onShippingCh
         <table style={{ width:'100%',borderCollapse:'collapse' }}>
           <thead>
             <tr>
-              {['Nº Pedido','Data/Hora','Cliente','WhatsApp','Endereço','Valor Frete','Produtos','Valor Produtos','Total','Pagamento','Motoboy','Frete','Notificar'].map(h => (
+              {['Nº Pedido','Data/Hora','Cliente','WhatsApp','Endereço','Valor Frete','Produtos','Valor Produtos','Total','Valor Pago','Pagamento','Motoboy','Frete','Notificar'].map(h => (
                 <th key={h} style={th}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {loading
-              ? <tr><td colSpan={13}><StateBox loading /></td></tr>
+              ? <tr><td colSpan={14}><StateBox loading /></td></tr>
               : orders.length === 0
-                ? <tr><td colSpan={13}><StateBox icon="🔍" text="Nenhum pedido encontrado." /></td></tr>
+                ? <tr><td colSpan={14}><StateBox icon="🔍" text="Nenhum pedido encontrado." /></td></tr>
                 : orders.map(o => <OrderRow key={o.id} o={o} onRowClick={onRowClick} onStatusChange={onStatusChange} onShippingChange={onShippingChange} onMotoboyChange={onMotoboyChange} onPaymentMethodChange={onPaymentMethodChange} />)
             }
           </tbody>
