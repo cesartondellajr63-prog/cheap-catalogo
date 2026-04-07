@@ -252,10 +252,16 @@ function PedidoContent({ orderId: orderIdProp }: { orderId: string }) {
 
           {/* Actions */}
           <div style={{ display:'flex', flexDirection:'column', gap:12, marginTop:8, alignItems:'center' }}>
+            {status === 'approved' && orderNumber && (
+              <a href={`/acompanhar/${orderNumber}`}
+                style={{ background:'var(--accent)', color:'#000', padding:'14px 32px', borderRadius:12, fontSize:14, fontWeight:700, display:'inline-flex', alignItems:'center', justifyContent:'center', gap:8, minHeight:48, textDecoration:'none', transition:'all 0.2s', width:'min(80%, 320px)' }}>
+                📦 Acompanhar meu pedido
+              </a>
+            )}
             {(status === 'approved' || status === 'timeout') && (
               <a href={waLink} target="_blank" rel="noopener noreferrer"
-                style={{ background:'var(--accent)', color:'#000', padding:'14px 32px', borderRadius:12, fontSize:14, fontWeight:700, display:'inline-flex', alignItems:'center', justifyContent:'center', gap:8, minHeight:48, textDecoration:'none', transition:'all 0.2s', width:'min(80%, 320px)' }}>
-                💬 {status === 'approved' ? 'Acompanhar entrega' : 'Confirmar pedido no WhatsApp'}
+                style={{ background: status === 'approved' ? 'rgba(255,255,255,0.07)' : 'var(--accent)', color: status === 'approved' ? 'var(--muted)' : '#000', border: status === 'approved' ? '1px solid var(--border)' : 'none', padding:'14px 32px', borderRadius:12, fontSize:14, fontWeight:700, display:'inline-flex', alignItems:'center', justifyContent:'center', gap:8, minHeight:48, textDecoration:'none', transition:'all 0.2s', width:'min(80%, 320px)' }}>
+                💬 {status === 'approved' ? 'Falar no WhatsApp' : 'Confirmar pedido no WhatsApp'}
               </a>
             )}
             {status === 'rejected' && (

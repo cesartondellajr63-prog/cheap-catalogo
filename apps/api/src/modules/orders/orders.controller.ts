@@ -28,6 +28,26 @@ export class OrdersController {
     return this.ordersService.findAll(status ? { status } : undefined);
   }
 
+  @Get('track/:orderNumber')
+  async trackOrder(@Param('orderNumber') orderNumber: string) {
+    const order = await this.ordersService.findByOrderNumber(orderNumber);
+    return {
+      orderNumber: order.orderNumber,
+      customerName: order.customerName,
+      address: order.address,
+      city: order.city,
+      items: order.items,
+      subtotal: order.subtotal,
+      shippingCost: order.shippingCost,
+      total: order.total,
+      status: order.status,
+      shippingStatus: order.shippingStatus ?? null,
+      trackingLink: order.trackingLink ?? null,
+      motoboy: order.motoboy ?? null,
+      createdAt: order.createdAt,
+    };
+  }
+
   @Get(':id')
   @UseGuards(JwtAuthGuard)
   findById(@Param('id') id: string) {
