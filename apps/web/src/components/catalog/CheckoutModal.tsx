@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import type { CartItem } from '@/types';
+import type { CartItem, ShippingQuoteResult } from '@/types';
 import { saveCart, getCartSubtotal } from '@/lib/cart';
 import { api, fmtBRLFromDecimal } from '@/lib/api';
 
@@ -48,7 +48,7 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
   const [estado, setEstado] = useState<string>(savedForm.estado ?? '');
   const [complemento, setComplemento] = useState<string>(savedForm.complemento ?? '');
   const [freteLoading, setFreteLoading] = useState(false);
-  const [freteResult, setFreteResult] = useState<{ price: number; priceFormatted: string; expiresAt?: number } | null>(null);
+  const [freteResult, setFreteResult] = useState<ShippingQuoteResult | null>(null);
   const [freteError, setFreteError] = useState('');
   const [freteTimer, setFreteTimer] = useState<string>('');
   const [freteExpired, setFreteExpired] = useState(false);

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import type { CartItem } from '@/types';
+import type { CartItem, ShippingQuoteResult } from '@/types';
 import { loadCart, saveCart, getCartSubtotal, getCartCount } from '@/lib/cart';
 import { api, fmtBRLFromDecimal } from '@/lib/api';
 
@@ -41,7 +41,7 @@ export default function CheckoutPage() {
   const [estado, setEstado] = useState('');
   const [complemento, setComplemento] = useState('');
   const [freteLoading, setFreteLoading] = useState(false);
-  const [freteResult, setFreteResult] = useState<{ price: number; priceFormatted: string; expiresAt?: number } | null>(null);
+  const [freteResult, setFreteResult] = useState<ShippingQuoteResult | null>(null);
   const [freteError, setFreteError] = useState('');
   const [freteConfirmed, setFreteConfirmed] = useState(false);
   const [freteTimer, setFreteTimer] = useState<string>('');
