@@ -1116,7 +1116,7 @@ function OrderRow({ o, onRowClick, onStatusChange, onShippingChange, onMotoboyCh
           if (motoboyVal === '🏍️ Motoboy Próprio') {
             msg = `Olá o seu pedido ${o.orderNumber ?? ''} acabou de sair para entrega para o endereço ${address}`;
           } else if (motoboyVal === '🛵 Lala Move') {
-            msg = `Olá o seu pedido ${o.orderNumber ?? ''} acabou de sair para entrega para o endereço ${address} segue o link:\n\n${trackingLink}`;
+            msg = `Olá o seu pedido ${produtos} acabou de sair para entrega para o endereço ${address} segue o link:\n\n${trackingLink}`;
           } else {
             return <span style={{ color:'#6a6a6a',fontSize:11 }}>—</span>;
           }
