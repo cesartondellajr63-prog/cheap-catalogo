@@ -271,7 +271,7 @@ export default function AcompanharPedidoPage() {
             </div>
 
             {/* Cronômetro 150 min — só exibe enquanto pedido ativo */}
-            {!timerDone && remaining !== null && order.status !== 'DELIVERED' && (
+            {!timerDone && remaining !== null && order.status !== 'DELIVERED' && order.shippingStatus !== '🟢 Entregue' && (
               <div style={{ marginTop:16 }}>
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'baseline', marginBottom:6 }}>
                   <span style={{ fontSize:11, color:`${deliveryCfg.accent}99`, textTransform:'uppercase', letterSpacing:'0.05em' }}>
@@ -292,7 +292,7 @@ export default function AcompanharPedidoPage() {
                 </div>
               </div>
             )}
-            {timerDone && order.status !== 'DELIVERED' && (
+            {timerDone && order.status !== 'DELIVERED' && order.shippingStatus !== '🟢 Entregue' && (
               <p style={{ fontSize:12, color:`${deliveryCfg.accent}99`, marginTop:12 }}>
                 Seu pedido está a caminho — em breve chegará!
               </p>
