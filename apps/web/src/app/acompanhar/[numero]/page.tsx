@@ -227,13 +227,7 @@ export default function AcompanharPedidoPage() {
               </li>
             ))}
           </ul>
-          <div style={{ borderTop:'1px solid var(--border)', marginTop:14, paddingTop:14, display:'flex', flexDirection:'column', gap:6 }}>
-            <div style={{ display:'flex', justifyContent:'space-between', fontSize:13, color:'rgba(255,255,255,0.45)' }}>
-              <span>Subtotal</span><span>{formatCurrency(order.subtotal)}</span>
-            </div>
-            <div style={{ display:'flex', justifyContent:'space-between', fontSize:13, color:'rgba(255,255,255,0.45)' }}>
-              <span>Frete</span><span>{formatCurrency(order.shippingCost)}</span>
-            </div>
+          <div style={{ borderTop:'1px solid var(--border)', marginTop:14, paddingTop:14 }}>
             <div style={{ display:'flex', justifyContent:'space-between', fontSize:16, fontWeight:700, color:'#fff' }}>
               <span>Total</span><span>{formatCurrency(order.total)}</span>
             </div>
