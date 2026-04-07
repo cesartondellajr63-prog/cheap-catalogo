@@ -338,6 +338,21 @@ export class PaymentsService {
       try {
         const order = await this.ordersService.findById(orderId);
         if (order.status !== 'PAID') {
+          // Same amount validation as the webhook — prevents marking an order as
+          // PAID via polling if the customer paid less than the order total.
+          const valorRecebido = Number(payment.transaction_amount);
+          const valorEsperado = Number(order.total);
+          if (valorRecebido < valorEsperado) {
+            this.logger.error(
+              `[FRAUD] Polling: order ${orderId} R$${valorRecebido} recebido, R$${valorEsperado} esperado — não marcado como PAID.`,
+            );
+            return {
+              status: 'pending',
+              paymentId: payment.id,
+              amount: payment.transaction_amount,
+              metadata: payment.metadata,
+            };
+          }
           await this.ordersService.updatePaymentInfo(orderId, String(payment.id), payment.preference_id || '');
           await this.ordersService.updateStatus(orderId, 'PAID', 'polling_mercadopago');
         }
