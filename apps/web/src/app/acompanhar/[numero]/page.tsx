@@ -131,7 +131,10 @@ export default function AcompanharPedidoPage() {
     );
   }
 
-  const showTracking = !!order.trackingLink && order.motoboy !== '🏍️ Motoboy Próprio';
+  const showTracking =
+    order.shippingStatus === '🟡 A Caminho' &&
+    !!order.trackingLink &&
+    order.motoboy !== '🏍️ Motoboy Próprio';
   const paymentCfg = PAYMENT_CONFIG[order.status];
   const deliveryCfg = getDeliveryStatus(order.shippingStatus);
 
@@ -236,9 +239,9 @@ export default function AcompanharPedidoPage() {
 
       </div>
 
-      {/* iframe de rastreio inline — largura total, fora do container estreito */}
+      {/* iframe de rastreio inline — só quando A Caminho + link preenchido */}
       {showTracking && (
-        <div style={{ maxWidth:760, margin:'0 auto', marginTop:0, borderRadius:20, overflow:'hidden', border:'1px solid rgba(126,255,245,0.2)', background:'#111' }}>
+        <div style={{ maxWidth:760, margin:'32px auto 0', borderRadius:20, overflow:'hidden', border:'1px solid rgba(126,255,245,0.2)', background:'#111' }}>
           <div style={{ padding:'12px 20px', borderBottom:'1px solid rgba(255,255,255,0.06)', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
             <p style={{ fontFamily:'var(--font-syne),Syne,sans-serif', fontWeight:700, fontSize:13, color:'#7efff5' }}>
               🚚 Rastreio da entrega
