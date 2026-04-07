@@ -53,7 +53,7 @@ export default function AdminLoginPage() {
 
             <div style={{ width:64,height:64,background:'linear-gradient(135deg,rgba(200,255,0,0.12),rgba(126,255,245,0.08))',border:'1px solid rgba(200,255,0,0.2)',borderRadius:20,display:'flex',alignItems:'center',justifyContent:'center',fontSize:26,margin:'0 auto 24px' }}>⚡</div>
 
-            <div style={{ fontFamily:'JetBrains Mono,monospace',fontSize:10,fontWeight:700,letterSpacing:4,textTransform:'uppercase',color:'#c8ff00',marginBottom:8,opacity:0.8 }}>Cheaps Pods</div>
+            <div style={{ fontFamily:'JetBrains Mono,monospace',fontSize:10,fontWeight:700,letterSpacing:4,textTransform:'uppercase',color:'#c8ff00',marginBottom:8,opacity:0.8 }}>Cheap Pods</div>
             <div style={{ fontSize:24,fontWeight:800,color:'#fff',letterSpacing:-0.5,marginBottom:36 }}>Painel Administrativo</div>
 
             <form onSubmit={handleLogin}>

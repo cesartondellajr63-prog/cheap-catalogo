@@ -188,7 +188,7 @@ export class PaymentsService {
 
     const body = {
       OrderNumber:    order.orderNumber,
-      SoftDescriptor: 'CheapsPods',
+      SoftDescriptor: 'CheapPods',
       Cart: {
         Items: dto.items.map(i => ({
           Name:      `${i.name} - ${i.flavor}`,

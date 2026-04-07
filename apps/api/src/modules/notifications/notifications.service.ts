@@ -66,7 +66,7 @@ export class NotificationsService {
           ${content}
           <div style="text-align: center; padding: 20px; margin-top: 20px; border-top: 1px solid #1a1a1a;">
             <p style="color: #666; font-size: 12px; margin: 0;">
-              CheapsPods &mdash; O melhor custo-benefício em pods descartáveis
+              CheapPods &mdash; O melhor custo-benefício em pods descartáveis
             </p>
             <p style="color: #666; font-size: 12px; margin: 5px 0 0 0;">
               Este é um e-mail automático, por favor não responda.
@@ -152,9 +152,9 @@ export class NotificationsService {
       const resend = new Resend(resendApiKey);
 
       await resend.emails.send({
-        from: 'CheapsPods <noreply@cheapspods.com.br>',
+        from: 'CheapPods <noreply@cheapspods.com.br>',
         to: [order.customerEmail],
-        subject: `Pedido ${order.orderNumber} confirmado - CheapsPods`,
+        subject: `Pedido ${order.orderNumber} confirmado - CheapPods`,
         html: this.buildBaseEmailHtml(`Pedido ${order.orderNumber} confirmado`, content),
       });
 
@@ -242,9 +242,9 @@ export class NotificationsService {
       const resend = new Resend(resendApiKey);
 
       await resend.emails.send({
-        from: 'CheapsPods <noreply@cheapspods.com.br>',
+        from: 'CheapPods <noreply@cheapspods.com.br>',
         to: [order.customerEmail],
-        subject: `Pagamento aprovado - Pedido ${order.orderNumber} - CheapsPods`,
+        subject: `Pagamento aprovado - Pedido ${order.orderNumber} - CheapPods`,
         html: this.buildBaseEmailHtml(`Pagamento Aprovado - ${order.orderNumber}`, content),
       });
 

@@ -108,7 +108,7 @@ export default function CatalogClient() {
       <header>
         <div className="header-inner">
           <div className="header-top">
-            <div className="logo">Cheaps<span>.</span>Pods</div>
+            <div className="logo">Cheap<span>.</span>Pods</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <div className="header-badge"><span className="badge-dot"></span> Online agora</div>
               {count > 0 && (

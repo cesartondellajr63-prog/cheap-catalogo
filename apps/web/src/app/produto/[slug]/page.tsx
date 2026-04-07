@@ -70,7 +70,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
             </svg>
             Voltar
           </a>
-          <div className="topbar-logo">Cheaps<span>.</span>Pods</div>
+          <div className="topbar-logo">Cheap<span>.</span>Pods</div>
           <div className="cart-pill" onClick={() => count > 0 && setCheckoutOpen(true)}>
             🛒 <span className="cart-pill-count">{count}</span>
           </div>

@@ -224,7 +224,7 @@ export default function CheckoutPage() {
             </svg>
             Catálogo
           </a>
-          <div className="topbar-logo">Cheaps<span style={{ color: 'var(--accent)' }}>.</span>Pods</div>
+          <div className="topbar-logo">Cheap<span style={{ color: 'var(--accent)' }}>.</span>Pods</div>
           <div style={{ fontSize: 13, color: 'var(--muted)' }}>{count} {count === 1 ? 'item' : 'itens'}</div>
         </div>
       </div>

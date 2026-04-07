@@ -15,7 +15,7 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: 'Cheaps Pods — Catálogo',
+  title: 'Cheap Pods — Catálogo',
   description: 'Os melhores pods com os melhores preços. Ignite, Elf Bar, Lost Mary, Oxbar e Black Sheep.',
   icons: {
     apple: '/apple-touch-icon.png',
