@@ -120,6 +120,11 @@ export default function AcompanharPedidoPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Hooks chamados antes de qualquer early return (Rules of Hooks)
+  const remaining = useCountdown(order ? (order.paidAt ?? order.createdAt) : null);
+  const pct = remaining !== null ? Math.round(((TOTAL_MS - remaining) / TOTAL_MS) * 100) : 0;
+  const timerDone = remaining === 0;
+
   const fetchOrder = useCallback(async () => {
     try {
       const res = await fetch(`${API}/orders/track/${numero}`, { cache: 'no-store' });
@@ -161,10 +166,6 @@ export default function AcompanharPedidoPage() {
       </div>
     );
   }
-
-  const remaining = useCountdown(order.paidAt ?? order.createdAt);
-  const pct = remaining !== null ? Math.round(((TOTAL_MS - remaining) / TOTAL_MS) * 100) : 0;
-  const timerDone = remaining === 0;
 
   const showTracking =
     order.shippingStatus === '🟡 A Caminho' &&
