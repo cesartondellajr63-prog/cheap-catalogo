@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { AppleSelect } from '@/components/AppleSelect';
 import { useRouter } from 'next/navigation';
 import type { Order, OrderStatus, Product } from '@/types';
 import { BRANDS_STATIC } from '@/types';
@@ -1116,42 +1117,22 @@ function OrderRow({ o, onRowClick, onStatusChange, onShippingChange, onMotoboyCh
           const motoboyVal = ((o as any).motoboy as MotoboyOption | undefined) ?? '⏳ Pendente';
           const motoboyColor = MOTOBOY_COLOR[motoboyVal] ?? '#ff4d4d';
           return (
-            <select
+            <AppleSelect
               value={motoboyVal}
-              onChange={e => onMotoboyChange(o.id, e.target.value)}
-              style={{
-                background: 'linear-gradient(135deg,rgba(255,255,255,0.09),rgba(255,255,255,0.03))',
-                border: `1px solid ${motoboyColor}55`,
-                borderRadius: 9, padding: '5px 24px 5px 10px',
-                fontFamily: 'Satoshi,sans-serif', fontSize: 11, fontWeight: 600,
-                color: motoboyColor, outline: 'none', cursor: 'pointer',
-                appearance: 'none', WebkitAppearance: 'none',
-                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238a8a8a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E")`,
-                backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center',
-              }}
-            >
-              {MOTOBOY_OPTIONS.map(opt => <option key={opt} value={opt} style={{ background: '#1a1a1a', color: '#f0f0f0' }}>{opt}</option>)}
-            </select>
+              onChange={v => onMotoboyChange(o.id, v)}
+              options={MOTOBOY_OPTIONS}
+              color={motoboyColor}
+            />
           );
         })()}
       </td>
       <td style={td} onClick={e => e.stopPropagation()}>
-        <select
+        <AppleSelect
           value={frete}
-          onChange={e => onShippingChange(o.id, e.target.value)}
-          style={{
-            background: 'linear-gradient(135deg,rgba(255,255,255,0.09),rgba(255,255,255,0.03))',
-            border: `1px solid ${freteColor}55`,
-            borderRadius: 9, padding: '5px 24px 5px 10px',
-            fontFamily: 'Satoshi,sans-serif', fontSize: 11, fontWeight: 600,
-            color: freteColor, outline: 'none', cursor: 'pointer',
-            appearance: 'none', WebkitAppearance: 'none',
-            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238a8a8a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E")`,
-            backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center',
-          }}
-        >
-          {FRETE_OPTIONS.map(opt => <option key={opt} value={opt} style={{ background: '#1a1a1a', color: '#f0f0f0' }}>{opt}</option>)}
-        </select>
+          onChange={v => onShippingChange(o.id, v)}
+          options={FRETE_OPTIONS}
+          color={freteColor}
+        />
       </td>
       <td style={td} onClick={e => e.stopPropagation()}>
         {frete === '🟡 A Caminho' && phone && (() => {
@@ -1400,35 +1381,23 @@ function OrderModal({ order: o, onClose, onStatusChange, onShippingChange, onMot
                   const motoboyVal = ((o as any).motoboy as MotoboyOption | undefined) ?? '⏳ Pendente';
                   const motoboyColor = MOTOBOY_COLOR[motoboyVal] ?? '#ff4d4d';
                   return (
-                    <select
+                    <AppleSelect
                       value={motoboyVal}
-                      onChange={e => onMotoboyChange(o.id, e.target.value)}
-                      style={{
-                        background:'rgba(255,255,255,0.04)',border:`1px solid ${motoboyColor}55`,borderRadius:9,
-                        padding:'5px 24px 5px 10px',fontFamily:'Satoshi,sans-serif',fontSize:11,fontWeight:600,
-                        color:motoboyColor,outline:'none',cursor:'pointer',appearance:'none',WebkitAppearance:'none',
-                        backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238a8a8a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E")`,
-                        backgroundRepeat:'no-repeat',backgroundPosition:'right 8px center',
-                      }}>
-                      {MOTOBOY_OPTIONS.map(opt => <option key={opt} value={opt} style={{ background:'#1a1a1a',color:'#f0f0f0' }}>{opt}</option>)}
-                    </select>
+                      onChange={v => onMotoboyChange(o.id, v)}
+                      options={MOTOBOY_OPTIONS}
+                      color={motoboyColor}
+                    />
                   );
                 })()}
               </div>
               <div style={{ background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.07)',borderRadius:12,padding:'12px 14px' }}>
                 <div style={{ fontSize:10,fontWeight:700,letterSpacing:1,textTransform:'uppercase',color:'#8a8a8a',marginBottom:8 }}>Entrega</div>
-                <select
+                <AppleSelect
                   value={frete}
-                  onChange={e => onShippingChange(o.id, e.target.value)}
-                  style={{
-                    background:'rgba(255,255,255,0.04)',border:`1px solid ${freteColor}55`,borderRadius:9,
-                    padding:'5px 24px 5px 10px',fontFamily:'Satoshi,sans-serif',fontSize:11,fontWeight:600,
-                    color:freteColor,outline:'none',cursor:'pointer',appearance:'none',WebkitAppearance:'none',
-                    backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238a8a8a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E")`,
-                    backgroundRepeat:'no-repeat',backgroundPosition:'right 8px center',
-                  }}>
-                  {FRETE_OPTIONS.map(opt => <option key={opt} value={opt} style={{ background:'#1a1a1a',color:'#f0f0f0' }}>{opt}</option>)}
-                </select>
+                  onChange={v => onShippingChange(o.id, v)}
+                  options={FRETE_OPTIONS}
+                  color={freteColor}
+                />
               </div>
             </div>
           </div>
@@ -1625,14 +1594,18 @@ function ProductModal({ mode, product, onSaved, onClose }: {
           <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:12,alignItems:'end' }}>
             <div>
               <label style={{ fontSize:10,fontWeight:700,letterSpacing:1,textTransform:'uppercase',color:'#8a8a8a',display:'block',marginBottom:6 }}>Marca *</label>
-              <select style={{ ...inp,cursor:'pointer' }} value={form.brandId}
-                onChange={e => {
-                  if (e.target.value === '__nova__') { setNewBrand({ name:'', color:'#ffffff' }); }
-                  else { setForm(f => ({ ...f, brandId: e.target.value })); setNewBrand(null); }
-                }}>
-                {brands.map(b => <option key={b.id} value={b.id} style={{ background:'#1a1a1a' }}>{b.name}</option>)}
-                <option value="__nova__" style={{ background:'#1a1a1a', color:'#c8ff00' }}>➕ Nova marca...</option>
-              </select>
+              <AppleSelect
+                value={form.brandId}
+                onChange={v => {
+                  if (v === '__nova__') { setNewBrand({ name:'', color:'#ffffff' }); }
+                  else { setForm(f => ({ ...f, brandId: v })); setNewBrand(null); }
+                }}
+                options={[
+                  ...brands.map(b => ({ value: b.id, label: b.name })),
+                  { value: '__nova__', label: '➕ Nova marca...' },
+                ]}
+                triggerStyle={{ ...inp, cursor:'pointer', width:'100%' }}
+              />
               {newBrand !== null && (
                 <div style={{ marginTop:8,padding:'10px 12px',background:'rgba(200,255,0,0.05)',border:'1px solid rgba(200,255,0,0.2)',borderRadius:10,display:'flex',flexDirection:'column',gap:8 }}>
                   <div style={{ fontSize:10,fontWeight:700,color:'#c8ff00',letterSpacing:1,textTransform:'uppercase' }}>Nova Marca</div>

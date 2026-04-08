@@ -4,6 +4,7 @@ import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, fmtBRL } from '@/lib/api';
 import type { Order, OrderStatus } from '@/types';
+import { AppleSelect } from '@/components/AppleSelect';
 
 function getToken(): string {
   if (typeof window === 'undefined') return '';
@@ -124,15 +125,12 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
               <div className="address-form">
                 <div className="form-group">
                   <label>Atualizar status</label>
-                  <select
+                  <AppleSelect
                     value={newStatus}
-                    onChange={e => setNewStatus(e.target.value as OrderStatus)}
-                    style={{ background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 12, padding: '12px 14px', color: '#fff', fontSize: 14, outline: 'none', fontFamily: 'var(--font-inter),Inter,sans-serif', width: '100%', minHeight: 44, cursor: 'pointer' }}
-                  >
-                    {STATUS_OPTIONS.map(s => (
-                      <option key={s.value} value={s.value}>{s.label}</option>
-                    ))}
-                  </select>
+                    onChange={v => setNewStatus(v as OrderStatus)}
+                    options={STATUS_OPTIONS}
+                    triggerStyle={{ background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 12, padding: '12px 28px 12px 14px', color: '#fff', fontSize: 14, fontFamily: 'var(--font-inter),Inter,sans-serif', width: '100%', minHeight: 44, cursor: 'pointer' }}
+                  />
                 </div>
               </div>
               <button
