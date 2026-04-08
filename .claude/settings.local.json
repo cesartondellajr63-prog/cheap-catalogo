@@ -18,7 +18,8 @@
       "Bash(grep -r ShippingQuoteResult '/c/Users/CesarJunior/Desktop/Cheap Pods/catalago-cheaps/apps' --include=*.ts --include=*.tsx)",
       "Bash(grep -r \"calculateFrete\\\\|calcularFrete\\\\|fetchCEP\" '/c/Users/CesarJunior/Desktop/Cheap Pods/catalago-cheaps/apps/web' --include=*.tsx --include=*.ts)",
       "Bash(find '/c/Users/CesarJunior/Desktop/Cheap Pods/catalago-cheaps' -type f \\\\\\(-name *.md -o -name README* \\\\\\))",
-      "WebSearch"
+      "WebSearch",
+      "Bash(xargs grep:*)"
     ]
   }
 }
