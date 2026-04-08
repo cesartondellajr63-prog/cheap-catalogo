@@ -10,7 +10,7 @@ export interface SelectOption {
 interface AppleSelectProps {
   value: string;
   onChange: (value: string) => void;
-  options: Array<string | SelectOption>;
+  options: ReadonlyArray<string | SelectOption>;
   color?: string;
   triggerStyle?: React.CSSProperties;
 }
