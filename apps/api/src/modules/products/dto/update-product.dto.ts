@@ -33,6 +33,10 @@ export class UpdateProductDto {
   active?: boolean;
 
   @IsOptional()
+  @IsString()
+  puffs?: string;
+
+  @IsOptional()
   @IsArray()
   variants?: any[];
 }

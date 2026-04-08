@@ -26,6 +26,10 @@ export class CreateProductDto {
   active: boolean;
 
   @IsOptional()
+  @IsString()
+  puffs?: string;
+
+  @IsOptional()
   @IsArray()
   variants?: any[];
 }

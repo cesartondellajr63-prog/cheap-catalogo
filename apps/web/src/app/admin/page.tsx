@@ -1517,7 +1517,7 @@ function ProductModal({ mode, product, onSaved, onClose }: {
   onSaved: (p: Product) => void;
   onClose: () => void;
 }) {
-  const emptyForm = { name:'', slug:'', brandId:'ignite', description:'', basePrice:'', images:'', active:true, variants:[] as ProdVariantForm[] };
+  const emptyForm = { name:'', slug:'', brandId:'ignite', description:'', basePrice:'', puffs:'', images:'', active:true, variants:[] as ProdVariantForm[] };
   const [form, setForm] = React.useState(() => product ? {
     name: product.name,
     slug: product.slug,
@@ -1525,6 +1525,7 @@ function ProductModal({ mode, product, onSaved, onClose }: {
     description: product.description,
     basePrice: String(product.basePrice),
     images: (product.images ?? []).join('\n'),
+    puffs: product.puffs ?? '',
     active: product.active,
     variants: (product.variants ?? []).map(v => ({ _key: v.id || String(Math.random()), name: v.name, stock: String(v.stock), priceOverride: v.priceOverride != null ? String(v.priceOverride) : '', active: v.active, image: v.image ?? '' })),
   } : emptyForm);
@@ -1586,7 +1587,7 @@ function ProductModal({ mode, product, onSaved, onClose }: {
     try {
       const images = form.images.split(/[\n,]/).map(s => s.trim()).filter(Boolean);
       const variants = form.variants.map(v => ({ id: v._key, name: v.name, stock: parseInt(v.stock) || 0, priceOverride: v.priceOverride ? parseFloat(v.priceOverride) : undefined, active: v.active, image: v.image || undefined }));
-      const body = { name: form.name, slug: form.slug, brandId: form.brandId, description: form.description, basePrice: parseFloat(form.basePrice) || 0, images, active: form.active, variants };
+      const body = { name: form.name, slug: form.slug, brandId: form.brandId, description: form.description, basePrice: parseFloat(form.basePrice) || 0, puffs: form.puffs || undefined, images, active: form.active, variants };
       const result = mode === 'create'
         ? await apiFetch<Product>('/products', token, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) })
         : await apiFetch<Product>(`/products/${product!.id}`, token, { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
@@ -1665,6 +1666,12 @@ function ProductModal({ mode, product, onSaved, onClose }: {
           <div>
             <label style={{ fontSize:10,fontWeight:700,letterSpacing:1,textTransform:'uppercase',color:'#8a8a8a',display:'block',marginBottom:6 }}>Descrição</label>
             <textarea style={{ ...inp,minHeight:72,resize:'vertical' }} value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Descrição do produto..." />
+          </div>
+
+          {/* Puffs */}
+          <div>
+            <label style={{ fontSize:10,fontWeight:700,letterSpacing:1,textTransform:'uppercase',color:'#8a8a8a',display:'block',marginBottom:6 }}>Puffs <span style={{ color:'#6a6a6a',fontWeight:400,textTransform:'none',letterSpacing:0 }}>(ex: 20K, 30.000 puffs)</span></label>
+            <input style={inp} value={form.puffs} onChange={e => setForm(f => ({ ...f, puffs: e.target.value }))} placeholder="ex: 20K" />
           </div>
 
           {/* Images */}
