@@ -18,6 +18,7 @@ interface AppleSelectProps {
 export function AppleSelect({ value, onChange, options, color, triggerStyle }: AppleSelectProps) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState({ top: 0, left: 0 });
+  const [isMobile, setIsMobile] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   const normalizedOptions: SelectOption[] = options.map(o =>
@@ -26,6 +27,14 @@ export function AppleSelect({ value, onChange, options, color, triggerStyle }: A
 
   const currentLabel = normalizedOptions.find(o => o.value === value)?.label ?? value;
   const isFullWidth = triggerStyle?.width === '100%';
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)');
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
 
   const openDropdown = useCallback(() => {
     if (triggerRef.current) {
@@ -42,6 +51,45 @@ export function AppleSelect({ value, onChange, options, color, triggerStyle }: A
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
 
+  // Mobile: native select
+  if (isMobile) {
+    const nativeStyle: React.CSSProperties = {
+      background: 'linear-gradient(135deg,rgba(255,255,255,0.09),rgba(255,255,255,0.03))',
+      border: `1px solid ${color ? color + '55' : 'rgba(255,255,255,0.15)'}`,
+      borderRadius: 9,
+      padding: '5px 24px 5px 10px',
+      fontFamily: 'Satoshi,sans-serif',
+      fontSize: 11,
+      fontWeight: 600,
+      color: color ?? '#e0e0e0',
+      outline: 'none',
+      cursor: 'pointer',
+      appearance: 'none',
+      WebkitAppearance: 'none',
+      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238a8a8a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E")`,
+      backgroundRepeat: 'no-repeat',
+      backgroundPosition: 'right 8px center',
+      width: isFullWidth ? '100%' : undefined,
+      boxSizing: 'border-box',
+      ...triggerStyle,
+    };
+
+    return (
+      <select
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        style={nativeStyle}
+      >
+        {normalizedOptions.map(opt => (
+          <option key={opt.value} value={opt.value} style={{ background: '#1a1a1a', color: '#f0f0f0' }}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
+    );
+  }
+
+  // Desktop: Apple-style custom dropdown
   const dropdown = open && typeof document !== 'undefined'
     ? createPortal(
         <div
