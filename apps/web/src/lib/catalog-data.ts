@@ -15,7 +15,6 @@ export const BRANDS_DATA = [
   { id: 'ignite',     label: 'Ignite',      color: '#ff6a00' },
   { id: 'elfbar',     label: 'Elf Bar',     color: '#3b9eff' },
   { id: 'lostmary',   label: 'Lost Mary',   color: '#ff4e6a' },
-  { id: 'blacksheep', label: 'Black Sheep', color: '#888888' },
   { id: 'oxbar',      label: 'Oxbar',       color: '#a855f7' },
   { id: 'hqd',        label: 'HQD',         color: '#00c9a7' },
   { id: 'nikbar',     label: 'Nikbar',      color: '#e040fb' },
