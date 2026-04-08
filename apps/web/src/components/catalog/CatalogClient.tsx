@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import type { CartItem, Product } from '@/types';
 import { loadCart, saveCart, getCartCount } from '@/lib/cart';
@@ -28,6 +28,28 @@ export default function CatalogClient() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [ageConfirmed, setAgeConfirmed] = useState<boolean | null>(null);
+
+  const brandFilterRef = useRef<HTMLDivElement>(null);
+  const dragState = useRef({ dragging: false, startX: 0, scrollLeft: 0 });
+
+  const onFilterMouseDown = useCallback((e: React.MouseEvent) => {
+    const el = brandFilterRef.current;
+    if (!el) return;
+    dragState.current = { dragging: true, startX: e.pageX - el.offsetLeft, scrollLeft: el.scrollLeft };
+    el.style.cursor = 'grabbing';
+  }, []);
+
+  const onFilterMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!dragState.current.dragging || !brandFilterRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - brandFilterRef.current.offsetLeft;
+    brandFilterRef.current.scrollLeft = dragState.current.scrollLeft - (x - dragState.current.startX);
+  }, []);
+
+  const onFilterMouseUp = useCallback(() => {
+    dragState.current.dragging = false;
+    if (brandFilterRef.current) brandFilterRef.current.style.cursor = 'grab';
+  }, []);
 
   useEffect(() => {
     setCart(loadCart());
@@ -177,7 +199,15 @@ export default function CatalogClient() {
               onChange={e => setSearch(e.target.value)}
             />
           </div>
-          <div className="brand-filter">
+          <div
+            className="brand-filter"
+            ref={brandFilterRef}
+            style={{ cursor: 'grab' }}
+            onMouseDown={onFilterMouseDown}
+            onMouseMove={onFilterMouseMove}
+            onMouseUp={onFilterMouseUp}
+            onMouseLeave={onFilterMouseUp}
+          >
             <button
               className={`brand-btn${activeBrand === 'all' ? ' active' : ''}`}
               onClick={() => setActiveBrand('all')}
