@@ -57,7 +57,7 @@ export function AppleSelect({ value, onChange, options, color, triggerStyle }: A
             borderRadius: 14,
             boxShadow: '0 8px 40px rgba(0,0,0,0.7), 0 0 0 0.5px rgba(255,255,255,0.1)',
             overflow: 'hidden',
-            minWidth: 200,
+            minWidth: 150,
           }}
         >
           {normalizedOptions.map((opt, i) => (
@@ -68,20 +68,20 @@ export function AppleSelect({ value, onChange, options, color, triggerStyle }: A
                 display: 'flex',
                 alignItems: 'center',
                 width: '100%',
-                padding: '13px 18px',
+                padding: '9px 14px',
                 background: 'none',
                 border: 'none',
                 borderTop: i > 0 ? '0.5px solid rgba(255,255,255,0.08)' : 'none',
                 cursor: 'pointer',
                 fontFamily: 'Satoshi,sans-serif',
-                fontSize: 15,
+                fontSize: 12,
                 fontWeight: 400,
                 color: '#fff',
                 textAlign: 'left',
                 gap: 12,
               }}
             >
-              <span style={{ width: 20, fontSize: 14, color: '#0a84ff', flexShrink: 0, fontWeight: 600 }}>
+              <span style={{ width: 14, fontSize: 11, color: '#0a84ff', flexShrink: 0, fontWeight: 600 }}>
                 {opt.value === value ? '✓' : ''}
               </span>
               {opt.label}
