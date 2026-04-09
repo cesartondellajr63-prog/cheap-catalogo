@@ -8,6 +8,7 @@ import {
 import * as crypto from 'crypto';
 import { FirebaseService } from '../../shared/firebase/firebase.service';
 import { OrdersService } from '../orders/orders.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { CreateCardPaymentDto } from './dto/create-card-payment.dto';
 
@@ -18,6 +19,7 @@ export class PaymentsService {
   constructor(
     private readonly firebaseService: FirebaseService,
     private readonly ordersService: OrdersService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   /**
@@ -387,6 +389,10 @@ export class PaymentsService {
 
           await this.ordersService.updatePaymentInfo(orderId, String(payment.id), payment.preference_id || '', payment.transaction_amount);
           await this.ordersService.updateStatus(orderId, 'PAID', 'polling_mercadopago');
+
+          if (order.customerPhone && order.orderNumber) {
+            void this.notificationsService.sendOrderPaidWhatsApp(order.customerPhone, order.orderNumber);
+          }
         }
       } catch {}
     } else if (status === 'rejected') {
