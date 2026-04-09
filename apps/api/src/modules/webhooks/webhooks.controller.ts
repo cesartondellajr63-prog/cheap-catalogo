@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common';
 import { FirebaseService } from '../../shared/firebase/firebase.service';
 import { OrdersService } from '../orders/orders.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Controller('webhooks')
 export class WebhooksController {
@@ -22,6 +23,7 @@ export class WebhooksController {
   constructor(
     private readonly firebaseService: FirebaseService,
     private readonly ordersService: OrdersService,
+    private readonly notificationsService: NotificationsService,
   ) {
     const secret = process.env.WEBHOOK_SECRET;
     if (!secret) {
@@ -161,6 +163,10 @@ export class WebhooksController {
     await this.ordersService.updatePaymentInfo(orderId, String(payment.id), payment.preference_id || '', payment.transaction_amount);
     await this.ordersService.updateStatus(orderId, 'PAID', 'webhook_mercadopago');
 
+    if (customerPhone && order.orderNumber) {
+      void this.notificationsService.sendOrderPaidWhatsApp(customerPhone, order.orderNumber);
+    }
+
     const metadata = payment.metadata || {};
     const customerPhone = metadata.customer_phone || payment.payer?.phone?.number || '';
     const customerName =
@@ -253,6 +259,11 @@ export class WebhooksController {
         await this.ordersService.updatePaidAmount(order.id, amountCents / 100);
       }
       this.logger.log(`Order ${order.id} marked as PAID via Cielo webhook.`);
+
+      const phone = order.customerPhone || order.customer?.phone || '';
+      if (phone && order.orderNumber) {
+        void this.notificationsService.sendOrderPaidWhatsApp(phone, order.orderNumber);
+      }
     } catch (e) {
       this.logger.error(`Cielo webhook error: ${(e as Error).message}`);
     }

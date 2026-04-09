@@ -164,6 +164,48 @@ export class NotificationsService {
     }
   }
 
+  async sendOrderPaidWhatsApp(phone: string, orderNumber: string): Promise<void> {
+    const instanceId = process.env.ZAPI_INSTANCE_ID;
+    const token = process.env.ZAPI_TOKEN;
+    const clientToken = process.env.ZAPI_CLIENT_TOKEN;
+
+    if (!instanceId || !token || !clientToken) {
+      this.logger.log(`[Z-API] Variáveis não configuradas, pulando WhatsApp para ${orderNumber}.`);
+      return;
+    }
+
+    const digits = phone.replace(/\D/g, '');
+    const to = digits.startsWith('55') ? digits : `55${digits}`;
+
+    const message =
+      `Que bom que concluiu seu pedido conosco!\n\n` +
+      `Segue o link para acompanhamento:\n\n` +
+      `https://cheap-catalogo.vercel.app/acompanhar/${orderNumber}`;
+
+    try {
+      const res = await fetch(
+        `https://api.z-api.io/instances/${instanceId}/token/${token}/send-text`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Client-Token': clientToken,
+          },
+          body: JSON.stringify({ phone: to, message }),
+        },
+      );
+
+      if (!res.ok) {
+        const err = await res.text();
+        this.logger.error(`[Z-API] Falha ao enviar WhatsApp para ${orderNumber}: ${err}`);
+      } else {
+        this.logger.log(`[Z-API] WhatsApp enviado para ${to} — pedido ${orderNumber}.`);
+      }
+    } catch (error) {
+      this.logger.error(`[Z-API] Erro ao chamar Z-API: ${(error as Error).message}`);
+    }
+  }
+
   async sendPaymentApproved(order: Order): Promise<void> {
     if (!order.customerEmail) {
       this.logger.log(`Order ${order.orderNumber}: no email provided, skipping payment approved.`);
