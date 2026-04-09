@@ -1153,7 +1153,8 @@ function OrderRow({ o, onRowClick, onStatusChange, onShippingChange, onMotoboyCh
       </td>
       <td style={td} onClick={e => e.stopPropagation()}>
         {isPaid(o.status) && phone ? (() => {
-          const msg = `Que bom que concluiu seu pedido conosco \uD83C\uDF89\n\nSegue o link para acompanhamento:\n\nhttps://cheap-catalogo.vercel.app/acompanhar/${o.orderNumber}`;
+          const confetti = String.fromCodePoint(0x1F389);
+          const msg = `Que bom que concluiu seu pedido conosco ${confetti}\n\nSegue o link para acompanhamento:\n\nhttps://cheap-catalogo.vercel.app/acompanhar/${o.orderNumber}`;
           const waUrl = `https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`;
           return (
             <a
