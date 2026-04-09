@@ -19,8 +19,9 @@ export default function AdminLoginPage() {
     try {
       await api.admin.login({ usuario, senha });
       router.push('/admin');
-    } catch {
-      setError('Usuário ou senha incorretos.');
+    } catch (err: any) {
+      const msg = err?.message || '';
+      setError(msg.toLowerCase().includes('muitas') ? msg : 'Usuário ou senha incorretos.');
       setShake(true);
       setTimeout(() => setShake(false), 400);
     } finally {

@@ -27,10 +27,11 @@ export class AuthController {
   @ThrottleKey('auth_login')
   login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
     const { token, usuario } = this.authService.login(dto);
+    const isProd = process.env.NODE_ENV === 'production';
     res.cookie('admin-token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      secure: isProd,
+      sameSite: isProd ? 'none' : 'strict',
       maxAge: 24 * 60 * 60 * 1000,
       path: '/',
     });
