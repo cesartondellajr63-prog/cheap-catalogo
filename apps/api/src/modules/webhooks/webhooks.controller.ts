@@ -76,10 +76,12 @@ export class WebhooksController {
       throw new UnauthorizedException('Malformed webhook signature.');
     }
 
-    // Validação de timestamp para prevenir Replay Attacks (tolerância de 5 minutos = 300000ms)
-    const TIMESTAMP_TOLERANCE = 5 * 60 * 1000;
+    // Validação de timestamp para prevenir Replay Attacks (tolerância de 5 minutos)
+    // O MercadoPago envia ts em SEGUNDOS — converter para ms antes de comparar
+    const TIMESTAMP_TOLERANCE_MS = 5 * 60 * 1000;
     const now = Date.now();
-    if (now - Number(ts) > TIMESTAMP_TOLERANCE) {
+    const tsMs = Number(ts) * 1000;
+    if (now - tsMs > TIMESTAMP_TOLERANCE_MS) {
       this.logger.warn(`Webhook expirado para paymentId ${paymentId}. TS: ${ts}, Now: ${now}`);
       throw new UnauthorizedException('Webhook timestamp expired (Replay Attack protection).');
     }
