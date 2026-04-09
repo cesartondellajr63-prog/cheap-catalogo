@@ -163,12 +163,12 @@ export class WebhooksController {
     await this.ordersService.updatePaymentInfo(orderId, String(payment.id), payment.preference_id || '', payment.transaction_amount);
     await this.ordersService.updateStatus(orderId, 'PAID', 'webhook_mercadopago');
 
+    const metadata = payment.metadata || {};
+    const customerPhone = metadata.customer_phone || payment.payer?.phone?.number || '';
+
     if (customerPhone && order.orderNumber) {
       void this.notificationsService.sendOrderPaidWhatsApp(customerPhone, order.orderNumber);
     }
-
-    const metadata = payment.metadata || {};
-    const customerPhone = metadata.customer_phone || payment.payer?.phone?.number || '';
     const customerName =
       metadata.customer_name ||
       `${payment.payer?.first_name || ''} ${payment.payer?.last_name || ''}`.trim();
