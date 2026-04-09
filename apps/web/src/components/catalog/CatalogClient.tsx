@@ -23,6 +23,7 @@ type DisplayProduct = ReturnType<typeof toDisplay>;
 export default function CatalogClient() {
   const router = useRouter();
   const [products, setProducts] = useState<DisplayProduct[]>([]);
+  const [loading, setLoading] = useState(true);
   const [activeBrand, setActiveBrand] = useState('all');
   const [search, setSearch] = useState('');
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -60,7 +61,10 @@ export default function CatalogClient() {
   }, []);
 
   useEffect(() => {
-    api.products.list().then(data => setProducts(data.map(toDisplay))).catch(() => {});
+    api.products.list()
+      .then(data => setProducts(data.map(toDisplay)))
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   const updateCart = useCallback((newCart: CartItem[]) => {
@@ -229,59 +233,82 @@ export default function CatalogClient() {
       </div>
 
       <div className="catalog">
-        {brandsToShow.map(brandId => {
-          const brand = BRANDS_DATA.find(b => b.id === brandId)!;
-          const items = filtered.filter(p => p.brand === brandId);
-          if (!items.length) return null;
-          return (
-            <div key={brandId} className="brand-section">
-              <div className="brand-section-header">
-                <span className="brand-section-dot" style={{ background: brand.color }}></span>
-                <span className="brand-section-name">{brand.label}</span>
-                <span className="brand-section-count">{items.length} modelo{items.length > 1 ? 's' : ''}</span>
-              </div>
-              <div className="model-grid">
-                {items.map((p, i) => (
-                  <div
-                    key={p.id}
-                    className="model-card"
-                    style={{ animationDelay: `${Math.min(i * 0.05, 0.5)}s` }}
-                    onClick={() => router.push(`/produto/${p.id}`)}
-                  >
-                    <div className="model-img" style={{ background: BRAND_GRADIENTS[p.brand] }}>
-                      <div className="model-img-placeholder">
-                        <div className="placeholder-icon">{BRAND_ICONS[p.brand]}</div>
-                        <div className="placeholder-line" style={{ background: brand.color }}></div>
-                      </div>
-                      <div className="model-img-overlay"></div>
-                      <div className="model-img-tags">
-                        <span className="brand-tag">
-                          <span className="brand-tag-dot" style={{ background: brand.color }}></span>
-                          {brand.label}
-                        </span>
-                        <span className="puffs-tag">{p.puffs}</span>
-                      </div>
-                    </div>
-                    <div className="model-body">
-                      <div className="model-name">{p.model}</div>
-                      <div className="model-flavors">{p.flavors.length} sabor{p.flavors.length > 1 ? 'es' : ''}</div>
-                      <div className="model-price">{fmtBRLFromDecimal(p.price)}</div>
-                      <div className="model-cta">
-                        <span className="cta-btn">Ver sabores</span>
-                        <span className="cta-arrow">›</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+        {loading ? (
+          <div className="brand-section">
+            <div className="brand-section-header">
+              <span className="skeleton-line" style={{ width: 80, height: 14, borderRadius: 6 }}></span>
             </div>
-          );
-        })}
-        {filtered.length === 0 && (
-          <div className="empty-state">
-            <div className="empty-icon">🔍</div>
-            <p>Nenhum produto encontrado</p>
+            <div className="model-grid">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="model-card skeleton-card">
+                  <div className="model-img skeleton-img"></div>
+                  <div className="model-body" style={{ gap: 10 }}>
+                    <div className="skeleton-line" style={{ width: '70%', height: 14 }}></div>
+                    <div className="skeleton-line" style={{ width: '45%', height: 12 }}></div>
+                    <div className="skeleton-line" style={{ width: '35%', height: 16 }}></div>
+                    <div className="skeleton-line" style={{ width: '60%', height: 32, borderRadius: 8 }}></div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
+        ) : (
+          <>
+            {brandsToShow.map(brandId => {
+              const brand = BRANDS_DATA.find(b => b.id === brandId)!;
+              const items = filtered.filter(p => p.brand === brandId);
+              if (!items.length) return null;
+              return (
+                <div key={brandId} className="brand-section">
+                  <div className="brand-section-header">
+                    <span className="brand-section-dot" style={{ background: brand.color }}></span>
+                    <span className="brand-section-name">{brand.label}</span>
+                    <span className="brand-section-count">{items.length} modelo{items.length > 1 ? 's' : ''}</span>
+                  </div>
+                  <div className="model-grid">
+                    {items.map((p, i) => (
+                      <div
+                        key={p.id}
+                        className="model-card"
+                        style={{ animationDelay: `${Math.min(i * 0.05, 0.5)}s` }}
+                        onClick={() => router.push(`/produto/${p.id}`)}
+                      >
+                        <div className="model-img" style={{ background: BRAND_GRADIENTS[p.brand] }}>
+                          <div className="model-img-placeholder">
+                            <div className="placeholder-icon">{BRAND_ICONS[p.brand]}</div>
+                            <div className="placeholder-line" style={{ background: brand.color }}></div>
+                          </div>
+                          <div className="model-img-overlay"></div>
+                          <div className="model-img-tags">
+                            <span className="brand-tag">
+                              <span className="brand-tag-dot" style={{ background: brand.color }}></span>
+                              {brand.label}
+                            </span>
+                            <span className="puffs-tag">{p.puffs}</span>
+                          </div>
+                        </div>
+                        <div className="model-body">
+                          <div className="model-name">{p.model}</div>
+                          <div className="model-flavors">{p.flavors.length} sabor{p.flavors.length > 1 ? 'es' : ''}</div>
+                          <div className="model-price">{fmtBRLFromDecimal(p.price)}</div>
+                          <div className="model-cta">
+                            <span className="cta-btn">Ver sabores</span>
+                            <span className="cta-arrow">›</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+            {filtered.length === 0 && (
+              <div className="empty-state">
+                <div className="empty-icon">🔍</div>
+                <p>Nenhum produto encontrado</p>
+              </div>
+            )}
+          </>
         )}
       </div>
 

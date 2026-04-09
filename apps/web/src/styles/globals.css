@@ -332,3 +332,8 @@ header::after{content:'';position:absolute;bottom:-80px;right:-60px;width:260px;
 .status-pill.pending{background:rgba(255,200,0,0.1);color:#ffcc00;border:1px solid rgba(255,200,0,0.3);}
 .status-pill.shipped{background:rgba(126,255,245,0.1);color:var(--accent2);border:1px solid rgba(126,255,245,0.3);}
 .status-pill.cancelled{background:rgba(255,80,80,0.1);color:#ff5050;border:1px solid rgba(255,80,80,0.3);}
+@keyframes skeleton-pulse{0%,100%{opacity:0.4}50%{opacity:0.8}}
+.skeleton-card{pointer-events:none;animation:none;}
+.skeleton-img{height:180px;background:linear-gradient(135deg,rgba(255,255,255,0.06),rgba(255,255,255,0.03));animation:skeleton-pulse 1.4s ease-in-out infinite;}
+.skeleton-line{background:rgba(255,255,255,0.08);border-radius:4px;animation:skeleton-pulse 1.4s ease-in-out infinite;display:block;}
+.skeleton-card .model-body{display:flex;flex-direction:column;gap:10px;padding:16px;}
