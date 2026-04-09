@@ -90,16 +90,22 @@ export class OrdersService {
 
     await this.firebaseService.db.collection('orders').doc(id).set(order);
 
-    // Registra/atualiza cliente deduplcado por telefone
-    this.customersService.upsertFromOrder({
-      name: dto.customerName,
-      phone: dto.customerPhone,
-      email: dto.customerEmail,
-      address: `${dto.address}, ${dto.city}`,
-    }).catch((err: Error) => this.logger.error(`Failed to upsert customer: ${err.message}`));
+    const [customerResult, sheetsResult] = await Promise.allSettled([
+      this.customersService.upsertFromOrder({
+        name: dto.customerName,
+        phone: dto.customerPhone,
+        email: dto.customerEmail,
+        address: `${dto.address}, ${dto.city}`,
+      }),
+      this.googleSheetsService.appendOrderRow(order),
+    ]);
 
-    // Sincroniza com Google Sheets
-    this.googleSheetsService.appendOrderRow(order).catch((err: Error) => this.logger.error(`Failed to sync Google Sheets: ${err.message}`));
+    if (customerResult.status === 'rejected') {
+      this.logger.error(`[${order.orderNumber}] Failed to upsert customer: ${customerResult.reason}`);
+    }
+    if (sheetsResult.status === 'rejected') {
+      this.logger.error(`[${order.orderNumber}] Failed to sync Google Sheets: ${sheetsResult.reason}`);
+    }
 
     return order;
   }
@@ -133,16 +139,22 @@ export class OrdersService {
 
     await this.firebaseService.db.collection('orders').doc(id).set(order);
 
-    // Registra/atualiza cliente deduplcado por telefone
-    this.customersService.upsertFromOrder({
-      name: dto.customerName,
-      phone: dto.customerPhone,
-      email: dto.customerEmail,
-      address: `${dto.address}, ${dto.city}`,
-    }).catch((err: Error) => this.logger.error(`Failed to upsert customer: ${err.message}`));
+    const [customerResult, sheetsResult] = await Promise.allSettled([
+      this.customersService.upsertFromOrder({
+        name: dto.customerName,
+        phone: dto.customerPhone,
+        email: dto.customerEmail,
+        address: `${dto.address}, ${dto.city}`,
+      }),
+      this.googleSheetsService.appendOrderRow(order),
+    ]);
 
-    // Sincroniza com Google Sheets
-    this.googleSheetsService.appendOrderRow(order).catch((err: Error) => this.logger.error(`Failed to sync Google Sheets: ${err.message}`));
+    if (customerResult.status === 'rejected') {
+      this.logger.error(`[${order.orderNumber}] Failed to upsert customer: ${customerResult.reason}`);
+    }
+    if (sheetsResult.status === 'rejected') {
+      this.logger.error(`[${order.orderNumber}] Failed to sync Google Sheets: ${sheetsResult.reason}`);
+    }
 
     return order;
   }

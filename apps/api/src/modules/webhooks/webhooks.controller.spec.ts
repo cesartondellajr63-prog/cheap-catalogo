@@ -1,5 +1,5 @@
 import * as crypto from 'crypto';
-import { ForbiddenException } from '@nestjs/common';
+import { UnauthorizedException } from '@nestjs/common';
 import { WebhooksController } from './webhooks.controller';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -27,6 +27,15 @@ function makeOrdersService() {
     updatePaymentInfo: jest.fn().mockResolvedValue(undefined),
     updateStatus: jest.fn().mockResolvedValue(undefined),
     findByOrderNumber: jest.fn().mockResolvedValue({ id: 'order-id', status: 'PENDING' }),
+    findById: jest.fn().mockResolvedValue({ id: 'order-id', status: 'PENDING', total: 89.9, orderNumber: 'CP-12345678' }),
+  } as any;
+}
+
+function makeNotificationsService() {
+  return {
+    sendPaymentApproved: jest.fn().mockResolvedValue(undefined),
+    sendOrderConfirmation: jest.fn().mockResolvedValue(undefined),
+    sendOrderPaidWhatsApp: jest.fn().mockResolvedValue(undefined),
   } as any;
 }
 
@@ -71,7 +80,7 @@ describe('WebhooksController', () => {
 
   describe('handleMercadoPago', () => {
     it('deve ignorar eventos que não são payment e retornar received: true', async () => {
-      controller = new WebhooksController(makeFirebase(), makeOrdersService());
+      controller = new WebhooksController(makeFirebase(), makeOrdersService(), makeNotificationsService());
 
       const result = await controller.handleMercadoPago(
         { type: 'merchant_order' },
@@ -84,7 +93,7 @@ describe('WebhooksController', () => {
     });
 
     it('deve retornar received: true quando não há paymentId', async () => {
-      controller = new WebhooksController(makeFirebase(), makeOrdersService());
+      controller = new WebhooksController(makeFirebase(), makeOrdersService(), makeNotificationsService());
 
       const result = await controller.handleMercadoPago(
         { type: 'payment', data: {} },
@@ -95,21 +104,23 @@ describe('WebhooksController', () => {
       expect(result).toEqual({ received: true });
     });
 
-    it('deve lançar ForbiddenException para assinatura HMAC inválida', async () => {
-      controller = new WebhooksController(makeFirebase(), makeOrdersService());
+    it('deve lançar UnauthorizedException para assinatura HMAC inválida', async () => {
+      controller = new WebhooksController(makeFirebase(), makeOrdersService(), makeNotificationsService());
 
+      // 64-char hex string that is intentionally wrong (all zeros)
+      const wrongHash = '0'.repeat(64);
       await expect(
         controller.handleMercadoPago(
           { type: 'payment', data: { id: 'pay-123' } },
-          makeReq({ 'x-signature': 'ts=123,v1=assinatura-invalida', 'x-request-id': '' }),
+          makeReq({ 'x-signature': `ts=123,v1=${wrongHash}`, 'x-request-id': '' }),
           {},
         ),
-      ).rejects.toThrow(ForbiddenException);
+      ).rejects.toThrow(UnauthorizedException);
     });
 
     it('deve processar pagamento aprovado e atualizar status para PAID', async () => {
       const ordersService = makeOrdersService();
-      controller = new WebhooksController(makeFirebase(true), ordersService);
+      controller = new WebhooksController(makeFirebase(true), ordersService, makeNotificationsService());
 
       const { signatureHeader } = buildSignature('pay-123');
 
@@ -131,7 +142,7 @@ describe('WebhooksController', () => {
     it('deve ignorar pagamento já processado (idempotência)', async () => {
       const ordersService = makeOrdersService();
       // idempotencyEmpty = false → já existe pedido com esse paymentId
-      controller = new WebhooksController(makeFirebase(false), ordersService);
+      controller = new WebhooksController(makeFirebase(false), ordersService, makeNotificationsService());
 
       const { signatureHeader } = buildSignature('pay-123');
 
@@ -152,7 +163,7 @@ describe('WebhooksController', () => {
     it('deve registrar audit_log após pagamento aprovado', async () => {
       const firebase = makeFirebase(true);
       const addSpy = jest.spyOn(firebase.db.collection('audit_logs'), 'add');
-      controller = new WebhooksController(firebase, makeOrdersService());
+      controller = new WebhooksController(firebase, makeOrdersService(), makeNotificationsService());
 
       const { signatureHeader } = buildSignature('pay-123');
 
@@ -174,7 +185,7 @@ describe('WebhooksController', () => {
 
     it('deve lançar erro na inicialização se WEBHOOK_SECRET não estiver configurado', () => {
       delete process.env.WEBHOOK_SECRET;
-      expect(() => new WebhooksController(makeFirebase(), makeOrdersService())).toThrow(
+      expect(() => new WebhooksController(makeFirebase(), makeOrdersService(), makeNotificationsService())).toThrow(
         'WEBHOOK_SECRET environment variable is required.',
       );
     });
@@ -184,18 +195,19 @@ describe('WebhooksController', () => {
 
   describe('handleCielo', () => {
     it('deve retornar received: true sem merchant_order_number', async () => {
-      controller = new WebhooksController(makeFirebase(), makeOrdersService());
+      controller = new WebhooksController(makeFirebase(), makeOrdersService(), makeNotificationsService());
 
-      const result = await controller.handleCielo({ body: {} });
+      const result = await controller.handleCielo({ body: {}, headers: {} });
       expect(result).toEqual({ received: true });
     });
 
     it('deve marcar pedido como PAID para order_status 4', async () => {
       const ordersService = makeOrdersService();
-      controller = new WebhooksController(makeFirebase(), ordersService);
+      controller = new WebhooksController(makeFirebase(), ordersService, makeNotificationsService());
 
       const result = await controller.handleCielo({
         body: { order_status: '4', order_number: 'CP-12345678' },
+        headers: {},
       });
 
       expect(result).toEqual({ received: true });
@@ -205,10 +217,11 @@ describe('WebhooksController', () => {
     it('deve ignorar pedido já marcado como PAID', async () => {
       const ordersService = makeOrdersService();
       ordersService.findByOrderNumber = jest.fn().mockResolvedValue({ id: 'order-id', status: 'PAID' });
-      controller = new WebhooksController(makeFirebase(), ordersService);
+      controller = new WebhooksController(makeFirebase(), ordersService, makeNotificationsService());
 
       await controller.handleCielo({
         body: { order_status: '4', order_number: 'CP-12345678' },
+        headers: {},
       });
 
       expect(ordersService.updateStatus).not.toHaveBeenCalled();

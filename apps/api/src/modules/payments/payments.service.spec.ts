@@ -32,12 +32,25 @@ function makeFirebase({
     delete: jest.fn().mockResolvedValue(undefined),
   };
 
+  const shippingTokenDocRef = {
+    get: jest.fn().mockResolvedValue({
+      exists: true,
+      data: () => ({ price: 5.0, expiresAt: Date.now() + 3600000 }),
+    }),
+  };
+
   const idempotencySnap = { empty: true, docs: [] };
 
   return {
     db: {
       collection: jest.fn().mockImplementation((name: string) => ({
-        doc: jest.fn().mockReturnValue(name === 'sessions' ? sessionDocRef : orderDocRef),
+        doc: jest.fn().mockReturnValue(
+          name === 'sessions'
+            ? sessionDocRef
+            : name === 'shipping_tokens'
+              ? shippingTokenDocRef
+              : orderDocRef,
+        ),
         where: jest.fn().mockReturnThis(),
         limit: jest.fn().mockReturnThis(),
         get: jest.fn().mockResolvedValue(idempotencySnap),
@@ -50,9 +63,15 @@ function makeFirebase({
 }
 
 function makeOrdersService() {
+  const mockOrder = {
+    id: 'order-id',
+    orderNumber: 'CP-12345678',
+    total: 94.9,
+    items: [{ productName: 'Elfbar', variantName: 'Mango Ice', quantity: 1, unitPrice: 89.9 }],
+  };
   return {
-    createWithId: jest.fn().mockResolvedValue({ id: 'order-id', orderNumber: 'CP-12345678' }),
-    create: jest.fn().mockResolvedValue({ id: 'order-id', orderNumber: 'CP-12345678' }),
+    createWithId: jest.fn().mockResolvedValue(mockOrder),
+    create: jest.fn().mockResolvedValue(mockOrder),
     findById: jest.fn().mockResolvedValue({ id: 'order-id', status: 'PENDING' }),
     updatePaymentInfo: jest.fn().mockResolvedValue(undefined),
     updateStatus: jest.fn().mockResolvedValue(undefined),
@@ -61,8 +80,9 @@ function makeOrdersService() {
 
 const basePixDto = {
   orderId: 'order-id',
-  items: [{ model: 'Elfbar', flavor: 'Mango Ice', price: 89.9, qty: 1 }],
+  items: [{ productId: 'p1', model: 'Elfbar', flavor: 'Mango Ice', qty: 1 }],
   shippingPrice: 5.0,
+  shippingToken: 'test-shipping-token',
   customerName: 'João Silva',
   customerEmail: 'joao@teste.com',
   customerPhone: '11999999999',

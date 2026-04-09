@@ -2,14 +2,11 @@
 
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { api, fmtBRL } from '@/lib/api';
+import { fmtBRL } from '@/lib/api';
 import type { Order, OrderStatus } from '@/types';
 import { AppleSelect } from '@/components/AppleSelect';
 
-function getToken(): string {
-  if (typeof window === 'undefined') return '';
-  return sessionStorage.getItem('admin-token') ?? '';
-}
+const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
 const STATUS_OPTIONS: { value: OrderStatus; label: string }[] = [
   { value: 'PENDING',   label: '⏳ Pendente' },
@@ -31,21 +28,28 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const [success, setSuccess] = useState('');
 
   useEffect(() => {
-    const token = getToken();
-    if (!token) { router.replace('/admin/login'); return; }
-    api.orders.getById(id, token)
+    fetch(`${BASE}/auth/verify`, { credentials: 'include' })
+      .then(res => { if (!res.ok) throw new Error(); })
+      .then(() => fetch(`${BASE}/orders/${id}`, { credentials: 'include' }))
+      .then(res => { if (!res.ok) throw new Error(); return res.json(); })
       .then(o => { setOrder(o); setNewStatus(o.status); })
-      .catch(() => setError('Pedido não encontrado.'))
+      .catch(() => { setError('Pedido não encontrado ou sessão expirada.'); router.replace('/admin/login'); })
       .finally(() => setLoading(false));
   }, [id, router]);
 
   const updateStatus = async () => {
     if (!newStatus || !order || newStatus === order.status) return;
-    const token = getToken();
     setUpdating(true);
     setError('');
     try {
-      const updated = await api.orders.updateStatus(order.id, newStatus, token);
+      const res = await fetch(`${BASE}/orders/${order.id}/status`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const updated = await res.json();
       setOrder(updated);
       setSuccess('Status atualizado com sucesso!');
       setTimeout(() => setSuccess(''), 3000);

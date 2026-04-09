@@ -20,6 +20,7 @@ function makeFirebase(cacheData: any = null, cacheExists = false) {
         doc: jest.fn().mockReturnValue(docRef),
       }),
     },
+    _docRef: docRef,
   } as any;
 }
 
@@ -32,7 +33,8 @@ function mockFetch(...responses: any[]) {
   });
 }
 
-const baseDto = { zipCode: '06088-170', address: 'Rua das Flores, 123' };
+// Valid Brazilian coordinates (São Paulo area)
+const baseDto = { lat: '-23.5', lng: '-46.7', zipCode: '06088-170', address: 'Rua das Flores, 123' };
 
 describe('ShippingService', () => {
   beforeEach(() => {
@@ -67,18 +69,14 @@ describe('ShippingService', () => {
       const service = new ShippingService(firebase);
 
       mockFetch(
-        // ViaCEP
-        { ok: true, json: async () => ({ localidade: 'Osasco', uf: 'SP' }) },
-        // Nominatim
-        { ok: true, json: async () => [{ lat: '-23.5', lon: '-46.7' }] },
-        // Lalamove
-        { ok: true, json: async () => ({ data: { priceBreakdown: { total: '2500' } } }) },
+        // Lalamove (only 1 call now — lat/lng come directly from frontend)
+        { ok: true, json: async () => ({ data: { priceBreakdown: { total: '25.00' } } }) },
       );
 
       const result = await service.getQuote(baseDto);
 
       expect(result).toHaveProperty('price');
-      expect(global.fetch).toHaveBeenCalledTimes(3);
+      expect(global.fetch).toHaveBeenCalledTimes(1);
     });
 
     it('deve salvar nova cotação no Firestore com expiresAt no futuro', async () => {
@@ -86,15 +84,15 @@ describe('ShippingService', () => {
       const service = new ShippingService(firebase);
 
       mockFetch(
-        { ok: true, json: async () => ({ localidade: 'Osasco', uf: 'SP' }) },
-        { ok: true, json: async () => [{ lat: '-23.5', lon: '-46.7' }] },
-        { ok: true, json: async () => ({ data: { priceBreakdown: { total: '2500' } } }) },
+        { ok: true, json: async () => ({ data: { priceBreakdown: { total: '25.00' } } }) },
       );
 
       const before = Date.now();
       await service.getQuote(baseDto);
 
-      const docRef = firebase.db.collection('shipping_quotes').doc('06088170');
+      const docRef = (firebase as any)._docRef;
+      // set is called async (fire-and-forget), wait a tick
+      await new Promise(r => setTimeout(r, 50));
       const setCall = (docRef.set as jest.Mock).mock.calls[0]?.[0];
 
       expect(setCall).toHaveProperty('price');
@@ -105,31 +103,11 @@ describe('ShippingService', () => {
   // ── erros ───────────────────────────────────────────────────────────────────
 
   describe('erros', () => {
-    it('deve lançar InternalServerErrorException se CEP não for encontrado pelo ViaCEP', async () => {
-      const firebase = makeFirebase(null, false);
-      const service = new ShippingService(firebase);
-
-      mockFetch({ ok: true, json: async () => ({ erro: true }) });
-
-      await expect(service.getQuote(baseDto)).rejects.toThrow(InternalServerErrorException);
-    });
-
-    it('deve lançar InternalServerErrorException se ViaCEP retornar erro HTTP', async () => {
-      const firebase = makeFirebase(null, false);
-      const service = new ShippingService(firebase);
-
-      mockFetch({ ok: false, status: 400 });
-
-      await expect(service.getQuote(baseDto)).rejects.toThrow(InternalServerErrorException);
-    });
-
     it('deve lançar InternalServerErrorException se Lalamove retornar preço zero', async () => {
       const firebase = makeFirebase(null, false);
       const service = new ShippingService(firebase);
 
       mockFetch(
-        { ok: true, json: async () => ({ localidade: 'Osasco', uf: 'SP' }) },
-        { ok: true, json: async () => [{ lat: '-23.5', lon: '-46.7' }] },
         { ok: true, json: async () => ({ data: { priceBreakdown: { total: '0' } } }) },
       );
 
@@ -141,12 +119,21 @@ describe('ShippingService', () => {
       const service = new ShippingService(firebase);
 
       mockFetch(
-        { ok: true, json: async () => ({ localidade: 'Osasco', uf: 'SP' }) },
-        { ok: true, json: async () => [{ lat: '-23.5', lon: '-46.7' }] },
         { ok: false, status: 500, text: async () => 'Internal Server Error' },
       );
 
       await expect(service.getQuote(baseDto)).rejects.toThrow(InternalServerErrorException);
+    });
+
+    it('deve lançar InternalServerErrorException para coordenadas inválidas', async () => {
+      const firebase = makeFirebase(null, false);
+      const service = new ShippingService(firebase);
+
+      global.fetch = jest.fn();
+      await expect(
+        service.getQuote({ lat: 'abc', lng: 'xyz', zipCode: '00000-000', address: 'Test' }),
+      ).rejects.toThrow(InternalServerErrorException);
+      expect(global.fetch).not.toHaveBeenCalled();
     });
   });
 });

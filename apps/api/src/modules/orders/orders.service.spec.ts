@@ -39,6 +39,14 @@ function makeFirebase(docData: any = {}, docExists = true) {
 
 const mockCustomers = { upsertFromOrder: jest.fn().mockResolvedValue(undefined) } as any;
 const mockSheets = { appendOrderRow: jest.fn().mockResolvedValue(undefined) } as any;
+const mockProducts = {
+  findBySlug: jest.fn().mockResolvedValue({
+    active: true,
+    name: 'Elfbar',
+    basePrice: 89.9,
+    variants: [{ id: 'v1', name: 'Mango Ice', active: true }],
+  }),
+} as any;
 
 const baseDto = {
   customerName: 'João Silva',
@@ -65,7 +73,7 @@ describe('OrdersService', () => {
   describe('createWithId', () => {
     it('deve criar pedido com orderNumber no formato CP-XXXXXXXX', async () => {
       const firebase = makeFirebase();
-      const service = new OrdersService(firebase, mockCustomers, mockSheets);
+      const service = new OrdersService(firebase, mockCustomers, mockSheets, mockProducts);
 
       const result = await service.createWithId('uuid-123', baseDto);
 
@@ -75,7 +83,7 @@ describe('OrdersService', () => {
 
     it('deve calcular total corretamente (subtotal + frete)', async () => {
       const firebase = makeFirebase();
-      const service = new OrdersService(firebase, mockCustomers, mockSheets);
+      const service = new OrdersService(firebase, mockCustomers, mockSheets, mockProducts);
 
       const result = await service.createWithId('uuid-123', baseDto);
 
@@ -86,7 +94,7 @@ describe('OrdersService', () => {
 
     it('deve salvar snapshot dos produtos com nome e preço no momento do pedido', async () => {
       const firebase = makeFirebase();
-      const service = new OrdersService(firebase, mockCustomers, mockSheets);
+      const service = new OrdersService(firebase, mockCustomers, mockSheets, mockProducts);
 
       const result = await service.createWithId('uuid-123', baseDto);
 
@@ -97,10 +105,32 @@ describe('OrdersService', () => {
 
     it('deve salvar o pedido com status PENDING', async () => {
       const firebase = makeFirebase();
-      const service = new OrdersService(firebase, mockCustomers, mockSheets);
+      const service = new OrdersService(firebase, mockCustomers, mockSheets, mockProducts);
 
       const result = await service.createWithId('uuid-123', baseDto);
 
+      expect(result.status).toBe('PENDING');
+    });
+
+    it('deve retornar o pedido mesmo se upsertFromOrder falhar', async () => {
+      const failingCustomers = { upsertFromOrder: jest.fn().mockRejectedValue(new Error('DB error')) } as any;
+      const firebase = makeFirebase();
+      const service = new OrdersService(firebase, failingCustomers, mockSheets, mockProducts);
+
+      const result = await service.createWithId('uuid-123', baseDto);
+
+      expect(result.orderNumber).toMatch(/^CP-\d{8}$/);
+      expect(result.status).toBe('PENDING');
+    });
+
+    it('deve retornar o pedido mesmo se appendOrderRow falhar', async () => {
+      const failingSheets = { appendOrderRow: jest.fn().mockRejectedValue(new Error('Sheets error')) } as any;
+      const firebase = makeFirebase();
+      const service = new OrdersService(firebase, mockCustomers, failingSheets, mockProducts);
+
+      const result = await service.createWithId('uuid-123', baseDto);
+
+      expect(result.orderNumber).toMatch(/^CP-\d{8}$/);
       expect(result.status).toBe('PENDING');
     });
   });
@@ -110,21 +140,21 @@ describe('OrdersService', () => {
   describe('updateStatus', () => {
     it('deve lançar BadRequestException para status inválido', async () => {
       const firebase = makeFirebase();
-      const service = new OrdersService(firebase, mockCustomers, mockSheets);
+      const service = new OrdersService(firebase, mockCustomers, mockSheets, mockProducts);
 
       await expect(service.updateStatus('order-id', 'INVALIDO')).rejects.toThrow(BadRequestException);
     });
 
     it('deve lançar NotFoundException para pedido inexistente', async () => {
       const firebase = makeFirebase({}, false);
-      const service = new OrdersService(firebase, mockCustomers, mockSheets);
+      const service = new OrdersService(firebase, mockCustomers, mockSheets, mockProducts);
 
       await expect(service.updateStatus('nao-existe', 'PAID')).rejects.toThrow(NotFoundException);
     });
 
     it('deve registrar audit_log em cada mudança de status', async () => {
       const firebase = makeFirebase({ id: 'order-id', status: 'PENDING' });
-      const service = new OrdersService(firebase, mockCustomers, mockSheets);
+      const service = new OrdersService(firebase, mockCustomers, mockSheets, mockProducts);
 
       await service.updateStatus('order-id', 'PAID', 'admin');
 
@@ -143,7 +173,7 @@ describe('OrdersService', () => {
 
       for (const status of validStatuses) {
         const firebase = makeFirebase({ id: 'order-id', status: 'PENDING' });
-        const service = new OrdersService(firebase, mockCustomers, mockSheets);
+        const service = new OrdersService(firebase, mockCustomers, mockSheets, mockProducts);
         await expect(service.updateStatus('order-id', status)).resolves.not.toThrow();
       }
     });
@@ -154,14 +184,14 @@ describe('OrdersService', () => {
   describe('findById', () => {
     it('deve lançar NotFoundException para id inexistente', async () => {
       const firebase = makeFirebase({}, false);
-      const service = new OrdersService(firebase, mockCustomers, mockSheets);
+      const service = new OrdersService(firebase, mockCustomers, mockSheets, mockProducts);
 
       await expect(service.findById('nao-existe')).rejects.toThrow(NotFoundException);
     });
 
     it('deve retornar o pedido quando encontrado', async () => {
       const firebase = makeFirebase({ id: 'order-id', status: 'PENDING' });
-      const service = new OrdersService(firebase, mockCustomers, mockSheets);
+      const service = new OrdersService(firebase, mockCustomers, mockSheets, mockProducts);
 
       const result = await service.findById('order-id');
 

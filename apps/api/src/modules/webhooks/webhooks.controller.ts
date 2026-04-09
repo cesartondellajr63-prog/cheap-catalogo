@@ -76,6 +76,14 @@ export class WebhooksController {
       throw new UnauthorizedException('Malformed webhook signature.');
     }
 
+    // Validação de timestamp para prevenir Replay Attacks (tolerância de 5 minutos = 300000ms)
+    const TIMESTAMP_TOLERANCE = 5 * 60 * 1000;
+    const now = Date.now();
+    if (now - Number(ts) > TIMESTAMP_TOLERANCE) {
+      this.logger.warn(`Webhook expirado para paymentId ${paymentId}. TS: ${ts}, Now: ${now}`);
+      throw new UnauthorizedException('Webhook timestamp expired (Replay Attack protection).');
+    }
+
     const manifest = `id:${paymentId};request-id:${requestId || ''};ts:${ts};`;
     const expectedHmac = crypto
       .createHmac('sha256', this.webhookSecret)

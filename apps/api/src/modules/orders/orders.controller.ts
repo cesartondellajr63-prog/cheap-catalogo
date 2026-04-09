@@ -12,11 +12,15 @@ import {
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { JwtAuthGuard } from '../auth/auth.guard';
+import { ThrottleGuard, Throttle, ThrottleKey } from '../../shared/guards/throttle.guard';
 
 @Controller('orders')
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
+  @UseGuards(ThrottleGuard)
+  @Throttle({ limit: 10, windowSeconds: 300, lockoutSeconds: 300 })
+  @ThrottleKey('order_create')
   @Post()
   create(@Body() dto: CreateOrderDto) {
     return this.ordersService.create(dto);
@@ -28,6 +32,9 @@ export class OrdersController {
     return this.ordersService.findAll(status ? { status } : undefined);
   }
 
+  @UseGuards(ThrottleGuard)
+  @Throttle({ limit: 30, windowSeconds: 60, lockoutSeconds: 120 })
+  @ThrottleKey('order_track')
   @Get('track/:orderNumber')
   async trackOrder(@Param('orderNumber') orderNumber: string) {
     const order = await this.ordersService.findByOrderNumber(orderNumber);

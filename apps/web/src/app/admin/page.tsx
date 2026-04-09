@@ -8,15 +8,11 @@ import { BRANDS_STATIC } from '@/types';
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
-function getToken(): string {
-  if (typeof window === 'undefined') return '';
-  return sessionStorage.getItem('admin-token') ?? '';
-}
-
-async function apiFetch<T>(path: string, token: string, init?: RequestInit): Promise<T> {
+async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     ...init,
-    headers: { 'x-auth-token': token, ...(init?.headers ?? {}) },
+    credentials: 'include',
+    headers: { ...(init?.headers ?? {}) },
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
@@ -164,13 +160,12 @@ export default function AdminDashboard() {
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const loginTimeRef = useRef<number>(0);
 
   const loadOrders = useCallback(async (silent = false) => {
-    const token = getToken();
-    if (!token) { router.replace('/admin/login'); return; }
     if (!silent) setRefreshing(true);
     try {
-      const raw = await apiFetch<any[]>('/orders', token);
+      const raw = await apiFetch<any[]>('/orders');
       const data = raw.map(normalizeOrder);
       if (silent) {
         setOrders(prev => {
@@ -193,10 +188,9 @@ export default function AdminDashboard() {
   }, [router]);
 
   const loadProducts = useCallback(async () => {
-    const token = getToken();
     setLoadingProducts(true);
     try {
-      const data = await apiFetch<Product[]>('/products/admin', token);
+      const data = await apiFetch<Product[]>('/products/admin');
       setProducts(data);
     } catch {
       // ignore
@@ -206,10 +200,9 @@ export default function AdminDashboard() {
   }, []);
 
   const loadCustomers = useCallback(async () => {
-    const token = getToken();
     setLoadingClients(true);
     try {
-      const data = await apiFetch<Customer[]>('/customers', token);
+      const data = await apiFetch<Customer[]>('/customers');
       setCustomers(data);
     } catch {
       // ignore
@@ -219,15 +212,15 @@ export default function AdminDashboard() {
   }, []);
 
   useEffect(() => {
-    const token = getToken();
-    if (!token) { router.replace('/admin/login'); return; }
-    setAuthChecked(true);
-    // Try to get username from token payload
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      setUsuario(payload.u || payload.sub || 'admin');
-    } catch { setUsuario('admin'); }
-    loadOrders();
+    fetch(`${BASE}/auth/verify`, { credentials: 'include' })
+      .then(res => { if (!res.ok) throw new Error(); return res.json(); })
+      .then(payload => {
+        setUsuario(payload.u || payload.sub || 'admin');
+        loginTimeRef.current = Date.now();
+        setAuthChecked(true);
+        loadOrders();
+      })
+      .catch(() => router.replace('/admin/login'));
   }, [router, loadOrders]);
 
   // Auto-refresh
@@ -248,15 +241,11 @@ export default function AdminDashboard() {
   useEffect(() => {
     const TWO_HOURS = 2 * 60 * 60 * 1000;
     const check = () => {
-      const loginTime = parseInt(sessionStorage.getItem('admin-login-time') ?? '0', 10);
-      if (loginTime && Date.now() - loginTime >= TWO_HOURS) {
-        sessionStorage.removeItem('admin-token');
-        sessionStorage.removeItem('admin-login-time');
+      if (loginTimeRef.current && Date.now() - loginTimeRef.current >= TWO_HOURS) {
         fetch(`${BASE}/auth/logout`, { method: 'POST', credentials: 'include' }).catch(() => {});
         router.push('/admin/login');
       }
     };
-    check();
     const id = setInterval(check, 60_000);
     return () => clearInterval(id);
   }, [router]);
@@ -299,11 +288,10 @@ export default function AdminDashboard() {
   }, [orders, loading, page]);
 
   const updateTrackingLink = useCallback(async (id: string, trackingLink: string) => {
-    const token = getToken();
     setOrders(list => list.map(o => o.id === id ? { ...o, trackingLink } as any : o));
     if (modalOrder?.id === id) setModalOrder(m => m ? { ...m, trackingLink } as any : m);
     try {
-      await apiFetch<any>(`/orders/${id}/tracking`, token, {
+      await apiFetch<any>(`/orders/${id}/tracking`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ trackingLink }),
@@ -314,13 +302,12 @@ export default function AdminDashboard() {
   }, [modalOrder]);
 
   const updateShippingStatus = useCallback(async (id: string, shippingStatus: string) => {
-    const token = getToken();
     const prev = orders.find(o => o.id === id);
     // Optimistic update
     setOrders(list => list.map(o => o.id === id ? { ...o, shippingStatus } : o));
     if (modalOrder?.id === id) setModalOrder(m => m ? { ...m, shippingStatus } as any : m);
     try {
-      await apiFetch<any>(`/orders/${id}/shipping-status`, token, {
+      await apiFetch<any>(`/orders/${id}/shipping-status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ shippingStatus }),
@@ -336,13 +323,12 @@ export default function AdminDashboard() {
   }, [orders, modalOrder]);
 
   const updateMotoboy = useCallback(async (id: string, motoboy: string) => {
-    const token = getToken();
     const prev = orders.find(o => o.id === id);
     // Optimistic update
     setOrders(list => list.map(o => o.id === id ? { ...o, motoboy } : o));
     if (modalOrder?.id === id) setModalOrder(m => m ? { ...m, motoboy } as any : m);
     try {
-      await apiFetch<any>(`/orders/${id}/motoboy`, token, {
+      await apiFetch<any>(`/orders/${id}/motoboy`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ motoboy }),
@@ -358,13 +344,12 @@ export default function AdminDashboard() {
   }, [orders, modalOrder]);
 
   const updateOrderStatus = useCallback(async (id: string, status: OrderStatus) => {
-    const token = getToken();
     const prev = orders.find(o => o.id === id);
     // Optimistic update
     setOrders(list => list.map(o => o.id === id ? { ...o, status } : o));
     if (modalOrder?.id === id) setModalOrder(m => m ? { ...m, status } : m);
     try {
-      await apiFetch<any>(`/orders/${id}/status`, token, {
+      await apiFetch<any>(`/orders/${id}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
@@ -380,12 +365,11 @@ export default function AdminDashboard() {
   }, [orders, modalOrder]);
 
   const updatePaymentMethod = useCallback(async (id: string, method: 'mp' | 'cielo') => {
-    const token = getToken();
     const prev = orders.find(o => o.id === id);
     setOrders(list => list.map(o => o.id === id ? { ...o, status: 'PAID' as OrderStatus, mpPaymentId: method === 'mp' ? 'manual' : null } as any : o));
     if (modalOrder?.id === id) setModalOrder(m => m ? { ...m, status: 'PAID' as OrderStatus, mpPaymentId: method === 'mp' ? 'manual' : null } as any : m);
     try {
-      await apiFetch<any>(`/orders/${id}/payment-method`, token, {
+      await apiFetch<any>(`/orders/${id}/payment-method`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ method }),
@@ -400,10 +384,9 @@ export default function AdminDashboard() {
   }, [orders, modalOrder]);
 
   const archiveOrder = useCallback(async (id: string, archived: boolean) => {
-    const token = getToken();
     setOrders(list => list.map(o => o.id === id ? { ...o, archived } as any : o));
     try {
-      await apiFetch(`/orders/${id}/${archived ? 'archive' : 'unarchive'}`, token, { method: 'PATCH' });
+      await apiFetch(`/orders/${id}/${archived ? 'archive' : 'unarchive'}`, { method: 'PATCH' });
     } catch (e) {
       setOrders(list => list.map(o => o.id === id ? { ...o, archived: !archived } as any : o));
       alert('Erro ao arquivar pedido.');
@@ -411,7 +394,6 @@ export default function AdminDashboard() {
   }, []);
 
   const logout = () => {
-    sessionStorage.removeItem('admin-token');
     fetch(`${BASE}/auth/logout`, { method: 'POST', credentials: 'include' }).catch(() => {});
     router.push('/admin/login');
   };
@@ -858,9 +840,8 @@ export default function AdminDashboard() {
                                 {p.active ? (
                                   <button onClick={async () => {
                                     if (!confirm('Desativar "' + p.name + '"?')) return;
-                                    const token = getToken();
                                     try {
-                                      await apiFetch(`/products/${p.id}`, token, { method: 'DELETE' });
+                                      await apiFetch(`/products/${p.id}`, { method: 'DELETE' });
                                       setProducts(prev => prev.map(x => x.id === p.id ? { ...x, active: false } : x));
                                     } catch { alert('Erro ao desativar produto.'); }
                                   }} style={{ padding:'5px 12px',borderRadius:8,background:'rgba(255,77,77,0.08)',border:'1px solid rgba(255,77,77,0.2)',color:'#ff4d4d',fontFamily:'Satoshi,sans-serif',fontSize:11,fontWeight:700,cursor:'pointer',transition:'all 0.2s' }}
@@ -870,9 +851,8 @@ export default function AdminDashboard() {
                                   </button>
                                 ) : (
                                   <button onClick={async () => {
-                                    const token = getToken();
                                     try {
-                                      const updated = await apiFetch<Product>(`/products/${p.id}`, token, { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ active: true }) });
+                                      const updated = await apiFetch<Product>(`/products/${p.id}`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ active: true }) });
                                       setProducts(prev => prev.map(x => x.id === p.id ? updated : x));
                                     } catch { alert('Erro ao reativar produto.'); }
                                   }} style={{ padding:'5px 12px',borderRadius:8,background:'rgba(200,255,0,0.08)',border:'1px solid rgba(200,255,0,0.2)',color:'#c8ff00',fontFamily:'Satoshi,sans-serif',fontSize:11,fontWeight:700,cursor:'pointer',transition:'all 0.2s' }}
@@ -1504,8 +1484,7 @@ function ProductModal({ mode, product, onSaved, onClose }: {
   const [savingBrand, setSavingBrand] = React.useState(false);
 
   React.useEffect(() => {
-    const token = getToken();
-    apiFetch<{ id: string; name: string; color: string }[]>('/brands', token)
+    apiFetch<{ id: string; name: string; color: string }[]>('/brands')
       .then(data => {
         if (data.length > 0) {
           const staticIds = new Set(BRANDS_STATIC.map(b => b.id));
@@ -1519,11 +1498,10 @@ function ProductModal({ mode, product, onSaved, onClose }: {
   async function saveNewBrand() {
     if (!newBrand?.name) return;
     setSavingBrand(true);
-    const token = getToken();
     try {
       const slug = newBrand.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
       const created = await apiFetch<{ id: string; name: string; color: string }>(
-        '/brands', token,
+        '/brands',
         { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: newBrand.name, slug, color: newBrand.color, active: true }) }
       );
       setBrands(prev => [...prev, created]);
@@ -1552,14 +1530,13 @@ function ProductModal({ mode, product, onSaved, onClose }: {
   async function save() {
     if (!form.name || !form.slug || !form.basePrice) { alert('Preencha nome, slug e preço.'); return; }
     setSaving(true);
-    const token = getToken();
     try {
       const images = form.images.split(/[\n,]/).map(s => s.trim()).filter(Boolean);
       const variants = form.variants.map(v => ({ id: v._key, name: v.name, stock: parseInt(v.stock) || 0, priceOverride: v.priceOverride ? parseFloat(v.priceOverride) : undefined, active: v.active, image: v.image || undefined }));
       const body = { name: form.name, slug: form.slug, brandId: form.brandId, description: form.description, basePrice: parseFloat(form.basePrice) || 0, puffs: form.puffs || undefined, images, active: form.active, variants };
       const result = mode === 'create'
-        ? await apiFetch<Product>('/products', token, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) })
-        : await apiFetch<Product>(`/products/${product!.id}`, token, { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+        ? await apiFetch<Product>('/products', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) })
+        : await apiFetch<Product>(`/products/${product!.id}`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
       onSaved(result);
     } catch (e) {
       alert('Erro ao salvar: ' + (e instanceof Error ? e.message : 'desconhecido'));
