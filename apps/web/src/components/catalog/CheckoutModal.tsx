@@ -574,6 +574,9 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
               )}
             </div>
             <div className="secure-badge">
+              🚚 Prazo de entrega <strong style={{ color: '#fff', marginLeft: 4 }}>45 a 150 minutos</strong>
+            </div>
+            <div className="secure-badge">
               🔒 Pagamento seguro via <strong style={{ color: '#fff', marginLeft: 4 }}>Mercado Pago / Cielo</strong>
             </div>
             {pagError && <div className="error-msg visible">{pagError}</div>}
