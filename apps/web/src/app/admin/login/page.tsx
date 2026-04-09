@@ -19,6 +19,7 @@ export default function AdminLoginPage() {
     try {
       const result = await api.admin.login({ usuario, senha });
       sessionStorage.setItem('admin-token', result.token);
+      sessionStorage.setItem('admin-login-time', Date.now().toString());
       router.push('/admin');
     } catch {
       setError('Usuário ou senha incorretos.');

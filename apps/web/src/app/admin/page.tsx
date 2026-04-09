@@ -244,6 +244,23 @@ export default function AdminDashboard() {
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [loadOrders]);
 
+  // Auto-logout after 2 hours
+  useEffect(() => {
+    const TWO_HOURS = 2 * 60 * 60 * 1000;
+    const check = () => {
+      const loginTime = parseInt(sessionStorage.getItem('admin-login-time') ?? '0', 10);
+      if (loginTime && Date.now() - loginTime >= TWO_HOURS) {
+        sessionStorage.removeItem('admin-token');
+        sessionStorage.removeItem('admin-login-time');
+        fetch(`${BASE}/auth/logout`, { method: 'POST', credentials: 'include' }).catch(() => {});
+        router.push('/admin/login');
+      }
+    };
+    check();
+    const id = setInterval(check, 60_000);
+    return () => clearInterval(id);
+  }, [router]);
+
   // Load customers when navigating to clientes
   useEffect(() => {
     if (page === 'clientes' && customers.length === 0) {
