@@ -172,7 +172,13 @@ export class WebhooksController {
     await this.ordersService.updateStatus(orderId, 'PAID', 'webhook_mercadopago');
 
     const metadata = payment.metadata || {};
-    const customerPhone = metadata.customer_phone || payment.payer?.phone?.number || '';
+    const customerPhone =
+      order.customerPhone ||
+      metadata.customer_phone ||
+      payment.payer?.phone?.number ||
+      '';
+
+    this.logger.log(`[WHATSAPP] phone=${customerPhone} orderNumber=${order.orderNumber}`);
 
     if (customerPhone && order.orderNumber) {
       void this.notificationsService.sendOrderPaidWhatsApp(customerPhone, order.orderNumber);
