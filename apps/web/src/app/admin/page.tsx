@@ -1153,7 +1153,7 @@ function OrderRow({ o, onRowClick, onStatusChange, onShippingChange, onMotoboyCh
       </td>
       <td style={td} onClick={e => e.stopPropagation()}>
         {isPaid(o.status) && phone ? (() => {
-          const waUrl = `https://wa.me/55${phone}?text=Que%20bom%20que%20concluiu%20seu%20pedido%20conosco%20%F0%9F%8E%89%0A%0ASegue%20o%20link%20para%20acompanhamento%3A%0A%0Ahttps%3A%2F%2Fcheap-catalogo.vercel.app%2Facompanhar%2F${o.orderNumber}`;
+          const waUrl = `https://wa.me/55${phone}?text=Que%20bom%20que%20concluiu%20seu%20pedido%20conosco!%0A%0ASegue%20o%20link%20para%20acompanhamento%3A%0A%0Ahttps%3A%2F%2Fcheap-catalogo.vercel.app%2Facompanhar%2F${o.orderNumber}`;
           return (
             <a
               href={waUrl}
