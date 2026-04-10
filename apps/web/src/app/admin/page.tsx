@@ -8,11 +8,19 @@ import { BRANDS_STATIC } from '@/types';
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
+function getAdminToken(): string {
+  try { return localStorage.getItem('admin-token') ?? ''; } catch { return ''; }
+}
+
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  const token = getAdminToken();
   const res = await fetch(`${BASE}${path}`, {
     ...init,
     credentials: 'include',
-    headers: { ...(init?.headers ?? {}) },
+    headers: {
+      ...(init?.headers ?? {}),
+      ...(token ? { 'x-auth-token': token } : {}),
+    },
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
@@ -212,7 +220,11 @@ export default function AdminDashboard() {
   }, []);
 
   useEffect(() => {
-    fetch(`${BASE}/auth/verify`, { credentials: 'include' })
+    const token = getAdminToken();
+    fetch(`${BASE}/auth/verify`, {
+      credentials: 'include',
+      headers: token ? { 'x-auth-token': token } : {},
+    })
       .then(res => { if (!res.ok) throw new Error(); return res.json(); })
       .then(payload => {
         setUsuario(payload.u || payload.sub || 'admin');
@@ -243,6 +255,7 @@ export default function AdminDashboard() {
     const check = () => {
       if (loginTimeRef.current && Date.now() - loginTimeRef.current >= TWO_HOURS) {
         fetch(`${BASE}/auth/logout`, { method: 'POST', credentials: 'include' }).catch(() => {});
+        try { localStorage.removeItem('admin-token'); } catch {}
         router.push('/admin/login');
       }
     };
@@ -395,6 +408,7 @@ export default function AdminDashboard() {
 
   const logout = () => {
     fetch(`${BASE}/auth/logout`, { method: 'POST', credentials: 'include' }).catch(() => {});
+    try { localStorage.removeItem('admin-token'); } catch {}
     router.push('/admin/login');
   };
 

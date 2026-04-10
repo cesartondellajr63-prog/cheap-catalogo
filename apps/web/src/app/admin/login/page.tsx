@@ -17,7 +17,10 @@ export default function AdminLoginPage() {
     setError('');
     setLoading(true);
     try {
-      await api.admin.login({ usuario, senha });
+      const result = await api.admin.login({ usuario, senha });
+      if (result?.token) {
+        localStorage.setItem('admin-token', result.token);
+      }
       router.push('/admin');
     } catch (err: any) {
       const msg = err?.message || '';
