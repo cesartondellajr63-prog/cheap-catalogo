@@ -527,10 +527,26 @@ export default function AdminDashboard() {
         {/* ── DASHBOARD PAGE ── */}
         {page === 'dashboard' && (
           <>
-            <header className="admin-topbar" style={topbar}>
+            <header className="admin-topbar" style={{ ...topbar, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
               <div style={{ fontSize:15,fontWeight:700,color:'#fff',letterSpacing:-0.3 }}>
                 Dashboard <span style={{ color:'#6a6a6a',fontWeight:400 }}>/ Visão Geral</span>
               </div>
+              <a
+                href="/"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display:'flex', alignItems:'center', gap:6,
+                  background:'#c8ff00', color:'#0a0a0a',
+                  fontWeight:700, fontSize:13, padding:'7px 16px',
+                  borderRadius:8, textDecoration:'none', letterSpacing:-0.2,
+                  transition:'opacity .15s',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.opacity = '0.8')}
+                onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+              >
+                ↗ Ver Loja
+              </a>
             </header>
 
             <div style={{ padding: isMobile ? '16px' : '28px 32px', flex:1 }}>
