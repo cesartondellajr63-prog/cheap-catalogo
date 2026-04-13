@@ -127,6 +127,7 @@ export default function AdminDashboard() {
   const router = useRouter();
   const [page, setPage] = useState<Page>('dashboard');
   const [orders, setOrders] = useState<Order[]>([]);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [authChecked, setAuthChecked] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -315,46 +316,42 @@ export default function AdminDashboard() {
   }, [modalOrder]);
 
   const updateShippingStatus = useCallback(async (id: string, shippingStatus: string) => {
-    const prev = orders.find(o => o.id === id);
-    // Optimistic update
-    setOrders(list => list.map(o => o.id === id ? { ...o, shippingStatus } : o));
-    if (modalOrder?.id === id) setModalOrder(m => m ? { ...m, shippingStatus } as any : m);
+    const idsToUpdate = selectedIds.has(id) && selectedIds.size > 1 ? [...selectedIds] : [id];
+    const prevMap = new Map(orders.filter(o => idsToUpdate.includes(o.id)).map(o => [o.id, o]));
+    setOrders(list => list.map(o => idsToUpdate.includes(o.id) ? { ...o, shippingStatus } : o));
+    if (modalOrder && idsToUpdate.includes(modalOrder.id)) setModalOrder(m => m ? { ...m, shippingStatus } as any : m);
     try {
-      await apiFetch<any>(`/orders/${id}/shipping-status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ shippingStatus }),
-      });
+      await Promise.all(idsToUpdate.map(tid =>
+        apiFetch<any>(`/orders/${tid}/shipping-status`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ shippingStatus }),
+        })
+      ));
     } catch (e) {
-      // Revert on error
-      if (prev) {
-        setOrders(list => list.map(o => o.id === id ? prev : o));
-        if (modalOrder?.id === id) setModalOrder(prev);
-      }
+      setOrders(list => list.map(o => prevMap.has(o.id) ? prevMap.get(o.id)! : o));
       alert('Erro ao atualizar frete: ' + (e instanceof Error ? e.message : 'desconhecido'));
     }
-  }, [orders, modalOrder]);
+  }, [orders, modalOrder, selectedIds]);
 
   const updateMotoboy = useCallback(async (id: string, motoboy: string) => {
-    const prev = orders.find(o => o.id === id);
-    // Optimistic update
-    setOrders(list => list.map(o => o.id === id ? { ...o, motoboy } : o));
-    if (modalOrder?.id === id) setModalOrder(m => m ? { ...m, motoboy } as any : m);
+    const idsToUpdate = selectedIds.has(id) && selectedIds.size > 1 ? [...selectedIds] : [id];
+    const prevMap = new Map(orders.filter(o => idsToUpdate.includes(o.id)).map(o => [o.id, o]));
+    setOrders(list => list.map(o => idsToUpdate.includes(o.id) ? { ...o, motoboy } as any : o));
+    if (modalOrder && idsToUpdate.includes(modalOrder.id)) setModalOrder(m => m ? { ...m, motoboy } as any : m);
     try {
-      await apiFetch<any>(`/orders/${id}/motoboy`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ motoboy }),
-      });
+      await Promise.all(idsToUpdate.map(tid =>
+        apiFetch<any>(`/orders/${tid}/motoboy`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ motoboy }),
+        })
+      ));
     } catch (e) {
-      // Revert on error
-      if (prev) {
-        setOrders(list => list.map(o => o.id === id ? prev : o));
-        if (modalOrder?.id === id) setModalOrder(prev);
-      }
+      setOrders(list => list.map(o => prevMap.has(o.id) ? prevMap.get(o.id)! : o));
       alert('Erro ao atualizar motoboy: ' + (e instanceof Error ? e.message : 'desconhecido'));
     }
-  }, [orders, modalOrder]);
+  }, [orders, modalOrder, selectedIds]);
 
   const updateOrderStatus = useCallback(async (id: string, status: OrderStatus) => {
     const prev = orders.find(o => o.id === id);
@@ -404,6 +401,14 @@ export default function AdminDashboard() {
       setOrders(list => list.map(o => o.id === id ? { ...o, archived: !archived } as any : o));
       alert('Erro ao arquivar pedido.');
     }
+  }, []);
+
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
   }, []);
 
   const logout = () => {
@@ -656,6 +661,9 @@ export default function AdminDashboard() {
                 onShippingChange={updateShippingStatus}
                 onMotoboyChange={updateMotoboy}
                 onPaymentMethodChange={updatePaymentMethod}
+                selectedIds={selectedIds}
+                onToggleSelect={toggleSelect}
+                onClearSelection={() => setSelectedIds(new Set())}
               />
             </div>
           </>
@@ -713,6 +721,9 @@ export default function AdminDashboard() {
                 onShippingChange={updateShippingStatus}
                 onMotoboyChange={updateMotoboy}
                 onPaymentMethodChange={updatePaymentMethod}
+                selectedIds={selectedIds}
+                onToggleSelect={toggleSelect}
+                onClearSelection={() => setSelectedIds(new Set())}
               />
             </div>
           </>
@@ -1053,13 +1064,15 @@ function StatCard({ label, value, sub, color, icon, featured, onClick, active }:
 }
 
 // ── OrderRow ──
-function OrderRow({ o, onRowClick, onStatusChange, onShippingChange, onMotoboyChange, onPaymentMethodChange }: {
+function OrderRow({ o, onRowClick, onStatusChange, onShippingChange, onMotoboyChange, onPaymentMethodChange, isSelected, onToggleSelect }: {
   o: Order;
   onRowClick: (o: Order) => void;
   onStatusChange: (id: string, status: OrderStatus) => void;
   onShippingChange: (id: string, shippingStatus: string) => void;
   onMotoboyChange: (id: string, motoboy: string) => void;
   onPaymentMethodChange: (id: string, method: 'mp' | 'cielo') => void;
+  isSelected: boolean;
+  onToggleSelect: (id: string) => void;
 }) {
   const produtos = (o.items ?? []).map(i => `${i.productName ?? ''} — ${i.variantName ?? ''} ×${i.quantity ?? 0}`).join(' | ');
   const phone = o.customer?.phone?.replace(/\D/g, '');
@@ -1072,10 +1085,10 @@ function OrderRow({ o, onRowClick, onStatusChange, onShippingChange, onMotoboyCh
 
   return (
     <tr
-      onClick={() => onRowClick(o)}
-      style={{ borderBottom: '1px solid rgba(255,255,255,0.07)', cursor: 'pointer', transition: 'background 0.15s' }}
-      onMouseEnter={e => (e.currentTarget.style.background = 'rgba(200,255,0,0.06)')}
-      onMouseLeave={e => (e.currentTarget.style.background = '')}
+      onClick={e => { if (e.ctrlKey || e.metaKey) { e.preventDefault(); onToggleSelect(o.id); } else { onRowClick(o); } }}
+      style={{ borderBottom: '1px solid rgba(255,255,255,0.07)', cursor: 'pointer', transition: 'background 0.15s', background: isSelected ? 'rgba(200,255,0,0.10)' : '', outline: isSelected ? '1px solid rgba(200,255,0,0.3)' : '' }}
+      onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'rgba(200,255,0,0.06)'; }}
+      onMouseLeave={e => { e.currentTarget.style.background = isSelected ? 'rgba(200,255,0,0.10)' : ''; }}
     >
       <td style={tdMono}>{o.orderNumber ?? '—'}</td>
       <td style={tdMono}>{o.createdAt ? fmtDate(o.createdAt) : '—'}</td>
@@ -1223,7 +1236,7 @@ function exportCSV(orders: Order[]) {
 }
 
 // ── OrdersTable ──
-function OrdersTable({ orders, loading, onRowClick, onStatusChange, onShippingChange, onMotoboyChange, onPaymentMethodChange }: {
+function OrdersTable({ orders, loading, onRowClick, onStatusChange, onShippingChange, onMotoboyChange, onPaymentMethodChange, selectedIds, onToggleSelect, onClearSelection }: {
   orders: Order[];
   loading: boolean;
   onRowClick: (o: Order) => void;
@@ -1231,12 +1244,21 @@ function OrdersTable({ orders, loading, onRowClick, onStatusChange, onShippingCh
   onShippingChange: (id: string, shippingStatus: string) => void;
   onMotoboyChange: (id: string, motoboy: string) => void;
   onPaymentMethodChange: (id: string, method: 'mp' | 'cielo') => void;
+  selectedIds: Set<string>;
+  onToggleSelect: (id: string) => void;
+  onClearSelection: () => void;
 }) {
   return (
     <div style={tableCard}>
       <div style={tableHead}>
         <span style={{ fontSize:13,fontWeight:800,color:'#fff' }}>Pedidos</span>
         <div style={{ display:'flex',alignItems:'center',gap:10 }}>
+          {selectedIds.size > 0 && (
+            <span style={{ display:'flex',alignItems:'center',gap:6,padding:'4px 10px',borderRadius:8,background:'rgba(200,255,0,0.12)',border:'1px solid rgba(200,255,0,0.3)',fontSize:11,fontWeight:700,color:'#c8ff00' }}>
+              {selectedIds.size} selecionado{selectedIds.size !== 1 ? 's' : ''}
+              <button onClick={onClearSelection} style={{ background:'none',border:'none',color:'#c8ff00',cursor:'pointer',fontSize:13,lineHeight:1,padding:0,marginLeft:2 }}>✕</button>
+            </span>
+          )}
           <span style={tableCount}>{orders.length} pedido{orders.length !== 1 ? 's' : ''}</span>
         </div>
       </div>
@@ -1254,7 +1276,7 @@ function OrdersTable({ orders, loading, onRowClick, onStatusChange, onShippingCh
               ? <tr><td colSpan={14}><StateBox loading /></td></tr>
               : orders.length === 0
                 ? <tr><td colSpan={14}><StateBox icon="🔍" text="Nenhum pedido encontrado." /></td></tr>
-                : orders.map(o => <OrderRow key={o.id} o={o} onRowClick={onRowClick} onStatusChange={onStatusChange} onShippingChange={onShippingChange} onMotoboyChange={onMotoboyChange} onPaymentMethodChange={onPaymentMethodChange} />)
+                : orders.map(o => <OrderRow key={o.id} o={o} onRowClick={onRowClick} onStatusChange={onStatusChange} onShippingChange={onShippingChange} onMotoboyChange={onMotoboyChange} onPaymentMethodChange={onPaymentMethodChange} isSelected={selectedIds.has(o.id)} onToggleSelect={onToggleSelect} />)
             }
           </tbody>
         </table>
