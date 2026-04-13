@@ -131,32 +131,32 @@ export default function CatalogClient() {
 
   const count = getCartCount(cart);
 
-  if (storeStatus && !storeStatus.isOpen) {
-    return (
-      <div style={{
-        minHeight: '100vh', background: '#080808',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontFamily: 'Satoshi, sans-serif', padding: '24px',
-      }}>
-        <div style={{
-          textAlign: 'center', maxWidth: 480, width: '100%',
-          background: '#161616', border: '1px solid rgba(255,255,255,0.12)',
-          borderRadius: 24, padding: '48px 40px',
-        }}>
-          <div style={{ fontSize: 56, marginBottom: 24, lineHeight: 1 }}>🔒</div>
-          <div style={{ fontSize: 22, fontWeight: 800, color: '#ffffff', marginBottom: 16, letterSpacing: -0.5 }}>
-            Loja Fechada
-          </div>
-          <div style={{ fontSize: 15, color: '#9a9a9a', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
-            {storeStatus.closedMessage}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <>
+      {/* Overlay loja fechada — fixed para evitar hydration mismatch */}
+      {storeStatus && !storeStatus.isOpen && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9999,
+          background: '#080808',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontFamily: 'Satoshi, sans-serif', padding: '24px',
+        }}>
+          <div style={{
+            textAlign: 'center', maxWidth: 480, width: '100%',
+            background: '#161616', border: '1px solid rgba(255,255,255,0.15)',
+            borderRadius: 24, padding: '48px 40px',
+          }}>
+            <div style={{ fontSize: 56, marginBottom: 24, lineHeight: 1 }}>🔒</div>
+            <div style={{ fontSize: 22, fontWeight: 800, color: '#ffffff', marginBottom: 16, letterSpacing: -0.5 }}>
+              Loja Fechada
+            </div>
+            <div style={{ fontSize: 15, color: '#9a9a9a', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
+              {storeStatus.closedMessage}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Age Gate */}
       {ageConfirmed === null && (
         <div className="age-gate">
