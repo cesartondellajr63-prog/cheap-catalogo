@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { AppleSelect } from '@/components/AppleSelect';
 import { useRouter } from 'next/navigation';
 import type { Order, OrderStatus, Product } from '@/types';
@@ -147,6 +148,9 @@ export default function AdminDashboard() {
   const [pFiltro, setPFiltro] = useState<'todos' | 'aguardando' | 'pendente' | 'concluido' | 'arquivado'>('todos');
   const [filterMenuOpen, setFilterMenuOpen] = useState(false);
   const [dashFilterMenuOpen, setDashFilterMenuOpen] = useState(false);
+  const filterBtnRef = useRef<HTMLButtonElement>(null);
+  const dashFilterBtnRef = useRef<HTMLButtonElement>(null);
+  const [filterMenuPos, setFilterMenuPos] = useState({ top: 0, right: 0 });
   const [pFilterPagamento, setPFilterPagamento] = useState<'pendente' | 'pago' | null>(null);
   const [pFilterMetodo, setPFilterMetodo] = useState<'mp' | 'cielo' | null>(null);
   const [pFilterMotoboy, setPFilterMotoboy] = useState<string | null>(null);
@@ -562,135 +566,22 @@ export default function AdminDashboard() {
               <div style={{ fontSize:15,fontWeight:700,color:'#fff',letterSpacing:-0.3 }}>
                 Dashboard <span style={{ color:'#6a6a6a',fontWeight:400 }}>/ Visão Geral</span>
               </div>
-              <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                {/* ── Botão Filtros Dashboard ── */}
-                <div style={{ position: 'relative' }}>
-                  {(() => {
-                    const hasFilter = !!(pFilterPagamento || pFilterMetodo || pFilterMotoboy || pFilterFrete);
-                    return (
-                      <button
-                        onClick={() => setDashFilterMenuOpen(v => !v)}
-                        style={{ display:'flex',alignItems:'center',gap:6,padding:'7px 14px',borderRadius:8,border:'1px solid',fontFamily:'Satoshi,sans-serif',fontSize:12,fontWeight:700,cursor:'pointer',transition:'all 0.2s',
-                          background: hasFilter ? 'rgba(200,255,0,0.1)' : 'rgba(255,255,255,0.04)',
-                          borderColor: hasFilter ? 'rgba(200,255,0,0.35)' : 'rgba(255,255,255,0.12)',
-                          color: hasFilter ? '#c8ff00' : '#b0b0b0',
-                        }}
-                      >
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
-                        </svg>
-                        Filtros
-                        {hasFilter && (
-                          <span style={{ background:'#c8ff00',color:'#000',borderRadius:'50%',width:15,height:15,fontSize:9,fontWeight:900,display:'flex',alignItems:'center',justifyContent:'center' }}>
-                            {[pFilterPagamento, pFilterMetodo, pFilterMotoboy, pFilterFrete].filter(Boolean).length}
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })()}
-
-                  {dashFilterMenuOpen && (
-                    <>
-                      <div onClick={() => setDashFilterMenuOpen(false)} style={{ position:'fixed',inset:0,zIndex:99 }} />
-                      <div style={{ position:'absolute',top:'calc(100% + 10px)',right:0,zIndex:100,background:'#141414',border:'1px solid rgba(255,255,255,0.12)',borderRadius:16,padding:20,minWidth:280,boxShadow:'0 16px 40px rgba(0,0,0,0.6)' }}>
-
-                        {/* Pagamento */}
-                        <div style={{ marginBottom:18 }}>
-                          <div style={{ fontSize:11,fontWeight:700,color:'#6a6a6a',letterSpacing:0.8,textTransform:'uppercase',marginBottom:8 }}>Pagamento</div>
-                          <div style={{ display:'flex',gap:6,flexWrap:'wrap' }}>
-                            {([['pendente','Pendente'],['pago','Pago']] as const).map(([val, label]) => (
-                              <button key={val} onClick={() => setPFilterPagamento(v => v === val ? null : val)}
-                                style={{ padding:'6px 14px',borderRadius:8,border:'1px solid',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'Satoshi,sans-serif',transition:'all 0.15s',
-                                  background: pFilterPagamento === val ? 'rgba(200,255,0,0.12)' : 'rgba(255,255,255,0.04)',
-                                  borderColor: pFilterPagamento === val ? 'rgba(200,255,0,0.4)' : 'rgba(255,255,255,0.1)',
-                                  color: pFilterPagamento === val ? '#c8ff00' : '#9a9a9a',
-                                }}>
-                                {label}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Método de pagamento */}
-                        <div style={{ marginBottom:18 }}>
-                          <div style={{ fontSize:11,fontWeight:700,color:'#6a6a6a',letterSpacing:0.8,textTransform:'uppercase',marginBottom:8 }}>Método de pagamento</div>
-                          <div style={{ display:'flex',gap:6,flexWrap:'wrap' }}>
-                            {([['mp','Mercado Pago'],['cielo','Cielo']] as const).map(([val, label]) => (
-                              <button key={val} onClick={() => setPFilterMetodo(v => v === val ? null : val)}
-                                style={{ padding:'6px 14px',borderRadius:8,border:'1px solid',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'Satoshi,sans-serif',transition:'all 0.15s',
-                                  background: pFilterMetodo === val ? 'rgba(200,255,0,0.12)' : 'rgba(255,255,255,0.04)',
-                                  borderColor: pFilterMetodo === val ? 'rgba(200,255,0,0.4)' : 'rgba(255,255,255,0.1)',
-                                  color: pFilterMetodo === val ? '#c8ff00' : '#9a9a9a',
-                                }}>
-                                {label}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Motoboy */}
-                        <div style={{ marginBottom:20 }}>
-                          <div style={{ fontSize:11,fontWeight:700,color:'#6a6a6a',letterSpacing:0.8,textTransform:'uppercase',marginBottom:8 }}>Motoboy</div>
-                          <div style={{ display:'flex',gap:6,flexWrap:'wrap' }}>
-                            {['⏳ Pendente','🛵 Lala Move','🏍️ Motoboy Próprio'].map(opt => (
-                              <button key={opt} onClick={() => setPFilterMotoboy(v => v === opt ? null : opt)}
-                                style={{ padding:'6px 14px',borderRadius:8,border:'1px solid',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'Satoshi,sans-serif',transition:'all 0.15s',
-                                  background: pFilterMotoboy === opt ? 'rgba(200,255,0,0.12)' : 'rgba(255,255,255,0.04)',
-                                  borderColor: pFilterMotoboy === opt ? 'rgba(200,255,0,0.4)' : 'rgba(255,255,255,0.1)',
-                                  color: pFilterMotoboy === opt ? '#c8ff00' : '#9a9a9a',
-                                }}>
-                                {opt}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Status do frete */}
-                        <div style={{ marginBottom:20 }}>
-                          <div style={{ fontSize:11,fontWeight:700,color:'#6a6a6a',letterSpacing:0.8,textTransform:'uppercase',marginBottom:8 }}>Status do frete</div>
-                          <div style={{ display:'flex',gap:6,flexWrap:'wrap' }}>
-                            {FRETE_OPTIONS.map(opt => (
-                              <button key={opt} onClick={() => setPFilterFrete(v => v === opt ? null : opt)}
-                                style={{ padding:'6px 14px',borderRadius:8,border:'1px solid',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'Satoshi,sans-serif',transition:'all 0.15s',
-                                  background: pFilterFrete === opt ? 'rgba(200,255,0,0.12)' : 'rgba(255,255,255,0.04)',
-                                  borderColor: pFilterFrete === opt ? 'rgba(200,255,0,0.4)' : 'rgba(255,255,255,0.1)',
-                                  color: pFilterFrete === opt ? '#c8ff00' : '#9a9a9a',
-                                }}>
-                                {opt}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Limpar */}
-                        {(pFilterPagamento || pFilterMetodo || pFilterMotoboy || pFilterFrete) && (
-                          <button onClick={() => { setPFilterPagamento(null); setPFilterMetodo(null); setPFilterMotoboy(null); setPFilterFrete(null); }}
-                            style={{ width:'100%',padding:'8px',borderRadius:8,border:'1px solid rgba(255,80,80,0.3)',background:'rgba(255,80,80,0.08)',color:'#ff6060',fontSize:12,fontWeight:700,cursor:'pointer',fontFamily:'Satoshi,sans-serif' }}>
-                            Limpar filtros
-                          </button>
-                        )}
-                      </div>
-                    </>
-                  )}
-                </div>
-
-                <a
-                  href="/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display:'flex', alignItems:'center', gap:6,
-                    background:'#c8ff00', color:'#0a0a0a',
-                    fontWeight:700, fontSize:13, padding:'7px 16px',
-                    borderRadius:8, textDecoration:'none', letterSpacing:-0.2,
-                    transition:'opacity .15s',
-                  }}
-                  onMouseEnter={e => (e.currentTarget.style.opacity = '0.8')}
-                  onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
-                >
-                  ↗ Ver Loja
-                </a>
-              </div>
+              <a
+                href="/"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display:'flex', alignItems:'center', gap:6,
+                  background:'#c8ff00', color:'#0a0a0a',
+                  fontWeight:700, fontSize:13, padding:'7px 16px',
+                  borderRadius:8, textDecoration:'none', letterSpacing:-0.2,
+                  transition:'opacity .15s',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.opacity = '0.8')}
+                onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+              >
+                ↗ Ver Loja
+              </a>
             </header>
 
             <div style={{ padding: isMobile ? '16px' : '28px 32px', flex:1 }}>
@@ -789,6 +680,29 @@ export default function AdminDashboard() {
                 selectedIds={selectedIds}
                 onToggleSelect={toggleSelect}
                 onClearSelection={() => setSelectedIds(new Set())}
+                filterButton={
+                  <button ref={dashFilterBtnRef}
+                    onClick={() => {
+                      const r = dashFilterBtnRef.current?.getBoundingClientRect();
+                      if (r) setFilterMenuPos({ top: r.bottom + 10, right: window.innerWidth - r.right });
+                      setFilterMenuOpen(v => !v);
+                    }}
+                    style={{ display:'flex',alignItems:'center',gap:6,padding:'6px 12px',borderRadius:8,border:'1px solid',fontFamily:'Satoshi,sans-serif',fontSize:12,fontWeight:700,cursor:'pointer',transition:'all 0.2s',
+                      background: !!(pFilterPagamento || pFilterMetodo || pFilterMotoboy || pFilterFrete) ? 'rgba(200,255,0,0.1)' : 'rgba(255,255,255,0.04)',
+                      borderColor: !!(pFilterPagamento || pFilterMetodo || pFilterMotoboy || pFilterFrete) ? 'rgba(200,255,0,0.35)' : 'rgba(255,255,255,0.12)',
+                      color: !!(pFilterPagamento || pFilterMetodo || pFilterMotoboy || pFilterFrete) ? '#c8ff00' : '#b0b0b0',
+                    }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+                    </svg>
+                    Filtros
+                    {!!(pFilterPagamento || pFilterMetodo || pFilterMotoboy || pFilterFrete) && (
+                      <span style={{ background:'#c8ff00',color:'#000',borderRadius:'50%',width:15,height:15,fontSize:9,fontWeight:900,display:'flex',alignItems:'center',justifyContent:'center' }}>
+                        {[pFilterPagamento, pFilterMetodo, pFilterMotoboy, pFilterFrete].filter(Boolean).length}
+                      </span>
+                    )}
+                  </button>
+                }
               />
             </div>
           </>
@@ -830,115 +744,27 @@ export default function AdminDashboard() {
                 onToggleSelect={toggleSelect}
                 onClearSelection={() => setSelectedIds(new Set())}
                 filterButton={
-                  <div style={{ position: 'relative' }}>
-                    {(() => {
-                      const hasFilter = !!(pFilterPagamento || pFilterMetodo || pFilterMotoboy || pFilterFrete);
-                      return (
-                        <button
-                          onClick={() => setFilterMenuOpen(v => !v)}
-                          style={{ display:'flex',alignItems:'center',gap:6,padding:'6px 12px',borderRadius:8,border:'1px solid',fontFamily:'Satoshi,sans-serif',fontSize:12,fontWeight:700,cursor:'pointer',transition:'all 0.2s',
-                            background: hasFilter ? 'rgba(200,255,0,0.1)' : 'rgba(255,255,255,0.04)',
-                            borderColor: hasFilter ? 'rgba(200,255,0,0.35)' : 'rgba(255,255,255,0.12)',
-                            color: hasFilter ? '#c8ff00' : '#b0b0b0',
-                          }}
-                        >
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
-                          </svg>
-                          Filtros
-                          {hasFilter && (
-                            <span style={{ background:'#c8ff00',color:'#000',borderRadius:'50%',width:15,height:15,fontSize:9,fontWeight:900,display:'flex',alignItems:'center',justifyContent:'center' }}>
-                              {[pFilterPagamento, pFilterMetodo, pFilterMotoboy, pFilterFrete].filter(Boolean).length}
-                            </span>
-                          )}
-                        </button>
-                      );
-                    })()}
-
-                    {filterMenuOpen && (
-                      <>
-                        <div onClick={() => setFilterMenuOpen(false)} style={{ position:'fixed',inset:0,zIndex:99 }} />
-                        <div style={{ position:'absolute',top:'calc(100% + 10px)',right:0,zIndex:100,background:'#141414',border:'1px solid rgba(255,255,255,0.12)',borderRadius:16,padding:20,minWidth:280,boxShadow:'0 16px 40px rgba(0,0,0,0.6)' }}>
-
-                          {/* Pagamento */}
-                          <div style={{ marginBottom:18 }}>
-                            <div style={{ fontSize:11,fontWeight:700,color:'#6a6a6a',letterSpacing:0.8,textTransform:'uppercase',marginBottom:8 }}>Pagamento</div>
-                            <div style={{ display:'flex',gap:6,flexWrap:'wrap' }}>
-                              {([['pendente','Pendente'],['pago','Pago']] as const).map(([val, label]) => (
-                                <button key={val} onClick={() => setPFilterPagamento(v => v === val ? null : val)}
-                                  style={{ padding:'6px 14px',borderRadius:8,border:'1px solid',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'Satoshi,sans-serif',transition:'all 0.15s',
-                                    background: pFilterPagamento === val ? 'rgba(200,255,0,0.12)' : 'rgba(255,255,255,0.04)',
-                                    borderColor: pFilterPagamento === val ? 'rgba(200,255,0,0.4)' : 'rgba(255,255,255,0.1)',
-                                    color: pFilterPagamento === val ? '#c8ff00' : '#9a9a9a',
-                                  }}>
-                                  {label}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Método de pagamento */}
-                          <div style={{ marginBottom:18 }}>
-                            <div style={{ fontSize:11,fontWeight:700,color:'#6a6a6a',letterSpacing:0.8,textTransform:'uppercase',marginBottom:8 }}>Método de pagamento</div>
-                            <div style={{ display:'flex',gap:6,flexWrap:'wrap' }}>
-                              {([['mp','Mercado Pago'],['cielo','Cielo']] as const).map(([val, label]) => (
-                                <button key={val} onClick={() => setPFilterMetodo(v => v === val ? null : val)}
-                                  style={{ padding:'6px 14px',borderRadius:8,border:'1px solid',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'Satoshi,sans-serif',transition:'all 0.15s',
-                                    background: pFilterMetodo === val ? 'rgba(200,255,0,0.12)' : 'rgba(255,255,255,0.04)',
-                                    borderColor: pFilterMetodo === val ? 'rgba(200,255,0,0.4)' : 'rgba(255,255,255,0.1)',
-                                    color: pFilterMetodo === val ? '#c8ff00' : '#9a9a9a',
-                                  }}>
-                                  {label}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Motoboy */}
-                          <div style={{ marginBottom:20 }}>
-                            <div style={{ fontSize:11,fontWeight:700,color:'#6a6a6a',letterSpacing:0.8,textTransform:'uppercase',marginBottom:8 }}>Motoboy</div>
-                            <div style={{ display:'flex',gap:6,flexWrap:'wrap' }}>
-                              {['⏳ Pendente','🛵 Lala Move','🏍️ Motoboy Próprio'].map(opt => (
-                                <button key={opt} onClick={() => setPFilterMotoboy(v => v === opt ? null : opt)}
-                                  style={{ padding:'6px 14px',borderRadius:8,border:'1px solid',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'Satoshi,sans-serif',transition:'all 0.15s',
-                                    background: pFilterMotoboy === opt ? 'rgba(200,255,0,0.12)' : 'rgba(255,255,255,0.04)',
-                                    borderColor: pFilterMotoboy === opt ? 'rgba(200,255,0,0.4)' : 'rgba(255,255,255,0.1)',
-                                    color: pFilterMotoboy === opt ? '#c8ff00' : '#9a9a9a',
-                                  }}>
-                                  {opt}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Status do frete */}
-                          <div style={{ marginBottom:20 }}>
-                            <div style={{ fontSize:11,fontWeight:700,color:'#6a6a6a',letterSpacing:0.8,textTransform:'uppercase',marginBottom:8 }}>Status do frete</div>
-                            <div style={{ display:'flex',gap:6,flexWrap:'wrap' }}>
-                              {FRETE_OPTIONS.map(opt => (
-                                <button key={opt} onClick={() => setPFilterFrete(v => v === opt ? null : opt)}
-                                  style={{ padding:'6px 14px',borderRadius:8,border:'1px solid',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'Satoshi,sans-serif',transition:'all 0.15s',
-                                    background: pFilterFrete === opt ? 'rgba(200,255,0,0.12)' : 'rgba(255,255,255,0.04)',
-                                    borderColor: pFilterFrete === opt ? 'rgba(200,255,0,0.4)' : 'rgba(255,255,255,0.1)',
-                                    color: pFilterFrete === opt ? '#c8ff00' : '#9a9a9a',
-                                  }}>
-                                  {opt}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Limpar */}
-                          {(pFilterPagamento || pFilterMetodo || pFilterMotoboy || pFilterFrete) && (
-                            <button onClick={() => { setPFilterPagamento(null); setPFilterMetodo(null); setPFilterMotoboy(null); setPFilterFrete(null); }}
-                              style={{ width:'100%',padding:'8px',borderRadius:8,border:'1px solid rgba(255,80,80,0.3)',background:'rgba(255,80,80,0.08)',color:'#ff6060',fontSize:12,fontWeight:700,cursor:'pointer',fontFamily:'Satoshi,sans-serif' }}>
-                              Limpar filtros
-                            </button>
-                          )}
-                        </div>
-                      </>
+                  <button ref={filterBtnRef}
+                    onClick={() => {
+                      const r = filterBtnRef.current?.getBoundingClientRect();
+                      if (r) setFilterMenuPos({ top: r.bottom + 10, right: window.innerWidth - r.right });
+                      setFilterMenuOpen(v => !v);
+                    }}
+                    style={{ display:'flex',alignItems:'center',gap:6,padding:'6px 12px',borderRadius:8,border:'1px solid',fontFamily:'Satoshi,sans-serif',fontSize:12,fontWeight:700,cursor:'pointer',transition:'all 0.2s',
+                      background: !!(pFilterPagamento || pFilterMetodo || pFilterMotoboy || pFilterFrete) ? 'rgba(200,255,0,0.1)' : 'rgba(255,255,255,0.04)',
+                      borderColor: !!(pFilterPagamento || pFilterMetodo || pFilterMotoboy || pFilterFrete) ? 'rgba(200,255,0,0.35)' : 'rgba(255,255,255,0.12)',
+                      color: !!(pFilterPagamento || pFilterMetodo || pFilterMotoboy || pFilterFrete) ? '#c8ff00' : '#b0b0b0',
+                    }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+                    </svg>
+                    Filtros
+                    {!!(pFilterPagamento || pFilterMetodo || pFilterMotoboy || pFilterFrete) && (
+                      <span style={{ background:'#c8ff00',color:'#000',borderRadius:'50%',width:15,height:15,fontSize:9,fontWeight:900,display:'flex',alignItems:'center',justifyContent:'center' }}>
+                        {[pFilterPagamento, pFilterMetodo, pFilterMotoboy, pFilterFrete].filter(Boolean).length}
+                      </span>
                     )}
-                  </div>
+                  </button>
                 }
               />
             </div>
@@ -1179,6 +1005,79 @@ export default function AdminDashboard() {
       )}
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+
+      {/* ── Filter Menu Portal ── */}
+      {filterMenuOpen && typeof document !== 'undefined' && createPortal(
+        <>
+          <div onClick={() => setFilterMenuOpen(false)} style={{ position:'fixed',inset:0,zIndex:199 }} />
+          <div style={{ position:'fixed',top:filterMenuPos.top,right:filterMenuPos.right,zIndex:200,background:'#141414',border:'1px solid rgba(255,255,255,0.12)',borderRadius:16,padding:20,minWidth:280,boxShadow:'0 16px 40px rgba(0,0,0,0.6)' }}>
+
+            <div style={{ marginBottom:18 }}>
+              <div style={{ fontSize:11,fontWeight:700,color:'#6a6a6a',letterSpacing:0.8,textTransform:'uppercase',marginBottom:8 }}>Pagamento</div>
+              <div style={{ display:'flex',gap:6,flexWrap:'wrap' }}>
+                {([['pendente','Pendente'],['pago','Pago']] as const).map(([val, label]) => (
+                  <button key={val} onClick={() => setPFilterPagamento(v => v === val ? null : val)}
+                    style={{ padding:'6px 14px',borderRadius:8,border:'1px solid',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'Satoshi,sans-serif',transition:'all 0.15s',
+                      background: pFilterPagamento === val ? 'rgba(200,255,0,0.12)' : 'rgba(255,255,255,0.04)',
+                      borderColor: pFilterPagamento === val ? 'rgba(200,255,0,0.4)' : 'rgba(255,255,255,0.1)',
+                      color: pFilterPagamento === val ? '#c8ff00' : '#9a9a9a',
+                    }}>{label}</button>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ marginBottom:18 }}>
+              <div style={{ fontSize:11,fontWeight:700,color:'#6a6a6a',letterSpacing:0.8,textTransform:'uppercase',marginBottom:8 }}>Método de pagamento</div>
+              <div style={{ display:'flex',gap:6,flexWrap:'wrap' }}>
+                {([['mp','Mercado Pago'],['cielo','Cielo']] as const).map(([val, label]) => (
+                  <button key={val} onClick={() => setPFilterMetodo(v => v === val ? null : val)}
+                    style={{ padding:'6px 14px',borderRadius:8,border:'1px solid',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'Satoshi,sans-serif',transition:'all 0.15s',
+                      background: pFilterMetodo === val ? 'rgba(200,255,0,0.12)' : 'rgba(255,255,255,0.04)',
+                      borderColor: pFilterMetodo === val ? 'rgba(200,255,0,0.4)' : 'rgba(255,255,255,0.1)',
+                      color: pFilterMetodo === val ? '#c8ff00' : '#9a9a9a',
+                    }}>{label}</button>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ marginBottom:18 }}>
+              <div style={{ fontSize:11,fontWeight:700,color:'#6a6a6a',letterSpacing:0.8,textTransform:'uppercase',marginBottom:8 }}>Motoboy</div>
+              <div style={{ display:'flex',gap:6,flexWrap:'wrap' }}>
+                {['⏳ Pendente','🛵 Lala Move','🏍️ Motoboy Próprio'].map(opt => (
+                  <button key={opt} onClick={() => setPFilterMotoboy(v => v === opt ? null : opt)}
+                    style={{ padding:'6px 14px',borderRadius:8,border:'1px solid',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'Satoshi,sans-serif',transition:'all 0.15s',
+                      background: pFilterMotoboy === opt ? 'rgba(200,255,0,0.12)' : 'rgba(255,255,255,0.04)',
+                      borderColor: pFilterMotoboy === opt ? 'rgba(200,255,0,0.4)' : 'rgba(255,255,255,0.1)',
+                      color: pFilterMotoboy === opt ? '#c8ff00' : '#9a9a9a',
+                    }}>{opt}</button>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ marginBottom:20 }}>
+              <div style={{ fontSize:11,fontWeight:700,color:'#6a6a6a',letterSpacing:0.8,textTransform:'uppercase',marginBottom:8 }}>Status do frete</div>
+              <div style={{ display:'flex',gap:6,flexWrap:'wrap' }}>
+                {FRETE_OPTIONS.map(opt => (
+                  <button key={opt} onClick={() => setPFilterFrete(v => v === opt ? null : opt)}
+                    style={{ padding:'6px 14px',borderRadius:8,border:'1px solid',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'Satoshi,sans-serif',transition:'all 0.15s',
+                      background: pFilterFrete === opt ? 'rgba(200,255,0,0.12)' : 'rgba(255,255,255,0.04)',
+                      borderColor: pFilterFrete === opt ? 'rgba(200,255,0,0.4)' : 'rgba(255,255,255,0.1)',
+                      color: pFilterFrete === opt ? '#c8ff00' : '#9a9a9a',
+                    }}>{opt}</button>
+                ))}
+              </div>
+            </div>
+
+            {(pFilterPagamento || pFilterMetodo || pFilterMotoboy || pFilterFrete) && (
+              <button onClick={() => { setPFilterPagamento(null); setPFilterMetodo(null); setPFilterMotoboy(null); setPFilterFrete(null); }}
+                style={{ width:'100%',padding:'8px',borderRadius:8,border:'1px solid rgba(255,80,80,0.3)',background:'rgba(255,80,80,0.08)',color:'#ff6060',fontSize:12,fontWeight:700,cursor:'pointer',fontFamily:'Satoshi,sans-serif' }}>
+                Limpar filtros
+              </button>
+            )}
+          </div>
+        </>,
+        document.body
+      )}
     </>
   );
 }
