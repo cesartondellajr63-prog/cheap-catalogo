@@ -171,6 +171,10 @@ export default function AcompanharPedidoPage() {
     order.shippingStatus === '🟡 A Caminho' &&
     !!order.trackingLink &&
     order.motoboy !== '🏍️ Motoboy Próprio';
+
+  const showOwnMotoboy =
+    order.shippingStatus === '🟡 A Caminho' &&
+    order.motoboy === '🏍️ Motoboy Próprio';
   const paymentCfg = PAYMENT_CONFIG[order.status];
   const deliveryCfg = getDeliveryStatus(order.shippingStatus);
 
@@ -315,6 +319,21 @@ export default function AcompanharPedidoPage() {
             title="Rastreio de entrega"
             allow="geolocation"
           />
+        </div>
+      )}
+
+      {/* Motoboy próprio — sem link de rastreio */}
+      {showOwnMotoboy && (
+        <div style={{ maxWidth:520, margin:'16px auto 0', borderRadius:20, overflow:'hidden', border:'1px solid rgba(126,255,245,0.2)', background:'rgba(126,255,245,0.05)', padding:'20px 24px', display:'flex', gap:16, alignItems:'flex-start' }}>
+          <span style={{ fontSize:32, lineHeight:1, flexShrink:0 }}>🏍️</span>
+          <div>
+            <p style={{ fontFamily:'var(--font-syne),Syne,sans-serif', fontWeight:700, fontSize:15, color:'#7efff5', marginBottom:8 }}>
+              Pedido saiu para entrega!
+            </p>
+            <p style={{ fontSize:13, color:'rgba(255,255,255,0.6)', lineHeight:1.6 }}>
+              O seu pedido já saiu para entrega com um dos nossos motoboys próprios. Infelizmente não conseguimos te disponibilizar o link de rastreio, mas quando chegar iremos te avisar.
+            </p>
+          </div>
         </div>
       )}
 
