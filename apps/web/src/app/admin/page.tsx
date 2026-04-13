@@ -439,6 +439,20 @@ export default function AdminDashboard() {
     }
     if (dFrom) r = r.filter(o => new Date(o.createdAt) >= new Date(dFrom));
     if (dTo) r = r.filter(o => new Date(o.createdAt) <= new Date(dTo + 'T23:59:59'));
+    if (pFilterPagamento === 'pendente') r = r.filter(o => o.status === 'PENDING');
+    else if (pFilterPagamento === 'pago') r = r.filter(o => o.status !== 'PENDING');
+    if (pFilterMetodo === 'mp') r = r.filter(o => !!(o as any).mpPaymentId);
+    else if (pFilterMetodo === 'cielo') r = r.filter(o => !(o as any).mpPaymentId);
+    if (pFilterMotoboy) r = r.filter(o => {
+      const val = (o as any).motoboy;
+      const effective = (!val || val === '') ? '⏳ Pendente' : val;
+      return effective === pFilterMotoboy;
+    });
+    if (pFilterFrete) r = r.filter(o => {
+      const val = (o as any).shippingStatus;
+      const effective = (!val || val === '') ? '🔴 Pendente' : val;
+      return effective === pFilterFrete;
+    });
     return r;
   }
 
