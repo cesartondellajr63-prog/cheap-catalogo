@@ -29,6 +29,7 @@ export default function CatalogClient() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [ageConfirmed, setAgeConfirmed] = useState<boolean | null>(null);
+  const [storeStatus, setStoreStatus] = useState<{ isOpen: boolean; closedMessage: string } | null>(null);
 
   const brandFilterRef = useRef<HTMLDivElement>(null);
   const dragState = useRef({ dragging: false, startX: 0, scrollLeft: 0 });
@@ -65,6 +66,18 @@ export default function CatalogClient() {
       .then(data => setProducts(data.map(toDisplay)))
       .catch(() => {})
       .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const check = () => {
+      api.store.get()
+        .then(s => { if (!cancelled) setStoreStatus(s); })
+        .catch(() => { if (!cancelled) setStoreStatus(prev => prev ?? { isOpen: true, closedMessage: '' }); });
+    };
+    check();
+    const interval = setInterval(check, 5000);
+    return () => { cancelled = true; clearInterval(interval); };
   }, []);
 
   const updateCart = useCallback((newCart: CartItem[]) => {
@@ -113,6 +126,30 @@ export default function CatalogClient() {
   const brandsToShow = activeBrand === 'all' ? BRANDS_DATA.map(b => b.id) : [activeBrand];
 
   const count = getCartCount(cart);
+
+  if (storeStatus && !storeStatus.isOpen) {
+    return (
+      <div style={{
+        minHeight: '100vh', background: '#080808',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontFamily: 'Satoshi, sans-serif', padding: '24px',
+      }}>
+        <div style={{
+          textAlign: 'center', maxWidth: 480,
+          background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',
+          borderRadius: 24, padding: '48px 40px',
+        }}>
+          <div style={{ fontSize: 56, marginBottom: 24 }}>🔒</div>
+          <div style={{ fontSize: 22, fontWeight: 800, color: '#fff', marginBottom: 16, letterSpacing: -0.5 }}>
+            Loja Fechada
+          </div>
+          <div style={{ fontSize: 15, color: '#8a8a8a', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+            {storeStatus.closedMessage}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>

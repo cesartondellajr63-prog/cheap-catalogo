@@ -19,7 +19,10 @@
       "Bash(grep -r \"calculateFrete\\\\|calcularFrete\\\\|fetchCEP\" '/c/Users/CesarJunior/Desktop/Cheap Pods/catalago-cheaps/apps/web' --include=*.tsx --include=*.ts)",
       "Bash(find '/c/Users/CesarJunior/Desktop/Cheap Pods/catalago-cheaps' -type f \\\\\\(-name *.md -o -name README* \\\\\\))",
       "WebSearch",
-      "Bash(xargs grep:*)"
+      "Bash(xargs grep:*)",
+      "Bash(find 'C:\\\\Users\\\\CesarJunior\\\\Desktop\\\\Cheap Pods\\\\catalago-cheaps' -path */node_modules -prune -o -path */.next -prune -o -type f \\\\\\(-name *admin* -o -path *admin* \\\\\\) -print)",
+      "Bash(find 'C:\\\\Users\\\\CesarJunior\\\\Desktop\\\\Cheap Pods\\\\catalago-cheaps/apps/api/src' -type f \\\\\\(-name *.ts -o -name *.js \\\\\\))",
+      "Bash(find 'C:\\\\Users\\\\CesarJunior\\\\Desktop\\\\Cheap Pods\\\\catalago-cheaps/apps/web/src' -path *components* -name *.tsx)"
     ]
   }
 }

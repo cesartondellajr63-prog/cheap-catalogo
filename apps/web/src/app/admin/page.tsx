@@ -36,7 +36,7 @@ interface Customer {
   createdAt: number;
 }
 
-type Page = 'dashboard' | 'pedidos' | 'clientes' | 'produtos' | 'config';
+type Page = 'dashboard' | 'pedidos' | 'clientes' | 'produtos' | 'loja' | 'config';
 
 function fmtR(v: number) {
   return 'R$ ' + v.toFixed(2).replace('.', ',');
@@ -158,6 +158,12 @@ export default function AdminDashboard() {
 
   // Filters — clientes
   const [cSearch, setCSearch] = useState('');
+
+  // Funcionamento da loja
+  const [storeIsOpen, setStoreIsOpen] = useState(true);
+  const [storeMessage, setStoreMessage] = useState('Loja temporariamente fechada. Voltamos em breve!');
+  const [storeLoading, setStoreLoading] = useState(false);
+  const [storeSaving, setStoreSaving] = useState(false);
 
   // Produtos
   const [products, setProducts] = useState<Product[]>([]);
@@ -310,6 +316,30 @@ export default function AdminDashboard() {
       ['#c8ff00', '#ff4d4d'].filter((_, i) => [concluidos, pendentes][i] > 0)
     );
   }, [orders, loading, page]);
+
+  useEffect(() => {
+    if (page !== 'loja') return;
+    setStoreLoading(true);
+    apiFetch<{ isOpen: boolean; closedMessage: string }>('/config/store')
+      .then(s => { setStoreIsOpen(s.isOpen); setStoreMessage(s.closedMessage); })
+      .catch(() => {})
+      .finally(() => setStoreLoading(false));
+  }, [page]);
+
+  const saveStoreConfig = useCallback(async () => {
+    setStoreSaving(true);
+    try {
+      await apiFetch<any>('/config/store', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isOpen: storeIsOpen, closedMessage: storeMessage }),
+      });
+    } catch (e) {
+      alert('Erro ao salvar: ' + (e instanceof Error ? e.message : 'desconhecido'));
+    } finally {
+      setStoreSaving(false);
+    }
+  }, [storeIsOpen, storeMessage]);
 
   const updateTrackingLink = useCallback(async (id: string, trackingLink: string) => {
     setOrders(list => list.map(o => o.id === id ? { ...o, trackingLink } as any : o));
@@ -547,6 +577,7 @@ export default function AdminDashboard() {
             { id:'pedidos',   icon:'📦', label:'Pedidos' },
             { id:'clientes',  icon:'👥', label:'Clientes' },
             { id:'produtos',  icon:'🛍️', label:'Produtos' },
+            { id:'loja',      icon:'🏪', label:'Funcionamento da Loja' },
           ] as { id: Page; icon: string; label: string }[]).map(item => (
             <div key={item.id}
               onClick={() => setPage(item.id)}
@@ -975,6 +1006,85 @@ export default function AdminDashboard() {
                   </table>
                 </div>
               </div>
+            </div>
+          </>
+        )}
+
+        {/* ── LOJA PAGE ── */}
+        {page === 'loja' && (
+          <>
+            <header className="admin-topbar" style={topbar}>
+              <div style={{ fontSize:15,fontWeight:700,color:'#fff',letterSpacing:-0.3 }}>
+                Funcionamento da Loja
+              </div>
+            </header>
+
+            <div style={{ padding: isMobile ? '16px' : '28px 32px', flex:1, maxWidth: 560 }}>
+              {storeLoading ? (
+                <div style={{ color:'#8a8a8a',fontSize:13 }}>Carregando...</div>
+              ) : (
+                <>
+                  {/* Toggle */}
+                  <div style={{ ...glassCard, marginBottom:20 }}>
+                    <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',gap:16 }}>
+                      <div>
+                        <div style={{ fontSize:15,fontWeight:700,color:'#fff',marginBottom:4 }}>Status da loja</div>
+                        <div style={{ fontSize:13,color:'#8a8a8a' }}>
+                          {storeIsOpen ? 'Loja aberta — clientes podem comprar normalmente.' : 'Loja fechada — nenhuma compra pode ser realizada.'}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setStoreIsOpen(v => !v)}
+                        style={{
+                          position:'relative', width:56, height:30, borderRadius:15,
+                          border:'none', cursor:'pointer', transition:'background 0.25s', flexShrink:0,
+                          background: storeIsOpen ? '#c8ff00' : 'rgba(255,255,255,0.12)',
+                        }}
+                      >
+                        <span style={{
+                          position:'absolute', top:3, left: storeIsOpen ? 28 : 3,
+                          width:24, height:24, borderRadius:'50%',
+                          background: storeIsOpen ? '#0a0a0a' : '#6a6a6a',
+                          transition:'left 0.25s, background 0.25s',
+                        }} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Mensagem */}
+                  <div style={{ ...glassCard, marginBottom:20 }}>
+                    <div style={{ fontSize:13,fontWeight:700,color:'#fff',marginBottom:10 }}>
+                      Mensagem exibida quando fechada
+                    </div>
+                    <textarea
+                      value={storeMessage}
+                      onChange={e => setStoreMessage(e.target.value)}
+                      rows={4}
+                      style={{
+                        width:'100%', boxSizing:'border-box',
+                        background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.12)',
+                        borderRadius:10, padding:'12px 14px', color:'#fff',
+                        fontFamily:'Satoshi,sans-serif', fontSize:13, resize:'vertical', outline:'none',
+                      }}
+                      placeholder="Ex: Estamos fechados hoje. Voltamos amanhã às 9h!"
+                    />
+                  </div>
+
+                  {/* Botão salvar */}
+                  <button
+                    onClick={saveStoreConfig}
+                    disabled={storeSaving}
+                    style={{
+                      padding:'11px 28px', borderRadius:10, border:'none', cursor:'pointer',
+                      fontFamily:'Satoshi,sans-serif', fontSize:13, fontWeight:700,
+                      background: storeSaving ? 'rgba(200,255,0,0.4)' : '#c8ff00',
+                      color:'#0a0a0a', transition:'all 0.2s',
+                    }}
+                  >
+                    {storeSaving ? 'Salvando...' : 'Salvar alterações'}
+                  </button>
+                </>
+              )}
             </div>
           </>
         )}

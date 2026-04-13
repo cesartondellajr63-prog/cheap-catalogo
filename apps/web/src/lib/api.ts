@@ -133,6 +133,17 @@ export const api = {
         body: JSON.stringify(body),
       }),
   },
+
+  store: {
+    get: (): Promise<{ isOpen: boolean; closedMessage: string }> =>
+      request('/config/store'),
+    update: (body: { isOpen?: boolean; closedMessage?: string }, token: string): Promise<{ isOpen: boolean; closedMessage: string }> =>
+      request('/config/store', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+        body: JSON.stringify(body),
+      }),
+  },
 };
 
 export function fmtBRL(centavos: number): string {
