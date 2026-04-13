@@ -347,7 +347,7 @@ export default function CatalogClient() {
 
                   {/* WhatsApp CTA */}
                   <a
-                    href={`https://wa.me/5511951047070?text=${encodeURIComponent('Olá! Tenho interesse em comprar na loja. Pode me avisar assim que abrir? 😊')}`}
+                    href={`https://wa.me/5511951047070?text=${encodeURIComponent('Olá! Tenho interesse em comprar na loja. Pode me avisar assim que abrir?')}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
