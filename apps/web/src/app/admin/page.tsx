@@ -455,8 +455,16 @@ export default function AdminDashboard() {
     else if (pFilterPagamento === 'pago') r = r.filter(o => o.status !== 'PENDING');
     if (pFilterMetodo === 'mp') r = r.filter(o => !!(o as any).mpPaymentId);
     else if (pFilterMetodo === 'cielo') r = r.filter(o => !(o as any).mpPaymentId);
-    if (pFilterMotoboy) r = r.filter(o => (o as any).motoboy === pFilterMotoboy);
-    if (pFilterFrete) r = r.filter(o => (o as any).shippingStatus === pFilterFrete);
+    if (pFilterMotoboy) r = r.filter(o => {
+      const val = (o as any).motoboy;
+      const effective = (!val || val === '') ? '⏳ Pendente' : val;
+      return effective === pFilterMotoboy;
+    });
+    if (pFilterFrete) r = r.filter(o => {
+      const val = (o as any).shippingStatus;
+      const effective = (!val || val === '') ? '🔴 Pendente' : val;
+      return effective === pFilterFrete;
+    });
     if (search) {
       const q = search.toLowerCase();
       r = r.filter(o =>
