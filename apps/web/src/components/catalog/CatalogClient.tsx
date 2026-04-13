@@ -30,6 +30,7 @@ export default function CatalogClient() {
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [ageConfirmed, setAgeConfirmed] = useState<boolean | null>(null);
   const [storeStatus, setStoreStatus] = useState<{ isOpen: boolean; closedMessage: string } | null>(null);
+  const [visibleBrands, setVisibleBrands] = useState<string[] | null>(null);
 
   const brandFilterRef = useRef<HTMLDivElement>(null);
   const dragState = useRef({ dragging: false, startX: 0, scrollLeft: 0 });
@@ -84,6 +85,13 @@ export default function CatalogClient() {
     return () => { cancelled = true; clearInterval(interval); };
   }, []);
 
+  // Busca marcas visíveis
+  useEffect(() => {
+    api.brandsFilter.get()
+      .then(r => setVisibleBrands(r.visibleBrands))
+      .catch(() => setVisibleBrands(null)); // null = mostra todas
+  }, []);
+
   const updateCart = useCallback((newCart: CartItem[]) => {
     setCart(newCart);
     saveCart(newCart);
@@ -127,7 +135,11 @@ export default function CatalogClient() {
     return true;
   });
 
-  const brandsToShow = activeBrand === 'all' ? BRANDS_DATA.map(b => b.id) : [activeBrand];
+  const activeBrandsData = visibleBrands
+    ? BRANDS_DATA.filter(b => visibleBrands.includes(b.id))
+    : BRANDS_DATA;
+
+  const brandsToShow = activeBrand === 'all' ? activeBrandsData.map(b => b.id) : [activeBrand];
 
   const count = getCartCount(cart);
 
@@ -238,7 +250,7 @@ export default function CatalogClient() {
             >
               Todas
             </button>
-            {BRANDS_DATA.map(b => (
+            {activeBrandsData.map(b => (
               <button
                 key={b.id}
                 className={`brand-btn${activeBrand === b.id ? ' active' : ''}`}

@@ -171,6 +171,20 @@ export default function AdminDashboard() {
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [prodModal, setProdModal] = useState<{ mode: 'create' | 'edit'; product?: Product } | null>(null);
 
+  // Filtros de marcas
+  const ALL_BRANDS = [
+    { id: 'ignite',     label: 'Ignite',      color: '#ff6a00' },
+    { id: 'elfbar',     label: 'Elf Bar',     color: '#3b9eff' },
+    { id: 'lostmary',   label: 'Lost Mary',   color: '#ff4e6a' },
+    { id: 'oxbar',      label: 'Oxbar',       color: '#a855f7' },
+    { id: 'hqd',        label: 'HQD',         color: '#00c9a7' },
+    { id: 'nikbar',     label: 'Nikbar',      color: '#e040fb' },
+    { id: 'dinnerlady', label: 'Dinner Lady', color: '#f06292' },
+    { id: 'rabbeats',   label: 'Rabbeats',    color: '#ffca28' },
+  ];
+  const [visibleBrandsAdmin, setVisibleBrandsAdmin] = useState<string[]>(ALL_BRANDS.map(b => b.id));
+  const [brandsSaving, setBrandsSaving] = useState(false);
+
   // Modal
   const [modalOrder, setModalOrder] = useState<Order | null>(null);
 
@@ -293,7 +307,27 @@ export default function AdminDashboard() {
     if (page === 'produtos' && products.length === 0) {
       loadProducts();
     }
+    if (page === 'produtos') {
+      apiFetch<{ visibleBrands: string[] }>('/config/brands-filter')
+        .then(r => setVisibleBrandsAdmin(r.visibleBrands))
+        .catch(() => {});
+    }
   }, [page, products.length, loadProducts]);
+
+  const saveBrandsFilter = useCallback(async () => {
+    setBrandsSaving(true);
+    try {
+      await apiFetch<any>('/config/brands-filter', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ visibleBrands: visibleBrandsAdmin }),
+      });
+    } catch (e) {
+      alert('Erro ao salvar: ' + (e instanceof Error ? e.message : 'desconhecido'));
+    } finally {
+      setBrandsSaving(false);
+    }
+  }, [visibleBrandsAdmin]);
 
   // Sync modal with latest orders data
   useEffect(() => {
@@ -1006,6 +1040,47 @@ export default function AdminDashboard() {
                       })}
                     </tbody>
                   </table>
+                </div>
+              </div>
+
+              {/* ── Filtros de Marcas ── */}
+              <div style={{ padding: isMobile ? '0 16px 24px' : '0 32px 32px' }}>
+                <div style={{ ...glassCard }}>
+                  <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:18, flexWrap:'wrap', gap:10 }}>
+                    <div>
+                      <div style={{ fontSize:14, fontWeight:700, color:'#fff', marginBottom:3 }}>Filtros de marcas</div>
+                      <div style={{ fontSize:12, color:'#6a6a6a' }}>Controle quais marcas aparecem na barra de filtros da loja</div>
+                    </div>
+                    <button
+                      onClick={saveBrandsFilter}
+                      disabled={brandsSaving}
+                      style={{ padding:'9px 20px', borderRadius:10, border:'none', cursor:'pointer', fontFamily:'Satoshi,sans-serif', fontSize:12, fontWeight:700, background: brandsSaving ? 'rgba(200,255,0,0.4)' : '#c8ff00', color:'#0a0a0a', transition:'all 0.2s', opacity: brandsSaving ? 0.7 : 1 }}
+                    >
+                      {brandsSaving ? 'Salvando...' : 'Salvar'}
+                    </button>
+                  </div>
+
+                  <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+                    {ALL_BRANDS.map(brand => {
+                      const visible = visibleBrandsAdmin.includes(brand.id);
+                      return (
+                        <div key={brand.id} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 16px', borderRadius:12, background:'rgba(255,255,255,0.03)', border:`1px solid ${visible ? brand.color + '33' : 'rgba(255,255,255,0.07)'}`, transition:'all 0.2s' }}>
+                          <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                            <span style={{ width:10, height:10, borderRadius:'50%', background: visible ? brand.color : '#3a3a3a', flexShrink:0, transition:'background 0.2s', boxShadow: visible ? `0 0 8px ${brand.color}88` : 'none' }} />
+                            <span style={{ fontSize:13, fontWeight:600, color: visible ? '#fff' : '#5a5a5a', transition:'color 0.2s' }}>{brand.label}</span>
+                          </div>
+                          <button
+                            onClick={() => setVisibleBrandsAdmin(prev =>
+                              prev.includes(brand.id) ? prev.filter(id => id !== brand.id) : [...prev, brand.id]
+                            )}
+                            style={{ position:'relative', width:44, height:24, borderRadius:12, border:'none', cursor:'pointer', transition:'background 0.25s', flexShrink:0, background: visible ? '#c8ff00' : 'rgba(255,255,255,0.12)' }}
+                          >
+                            <span style={{ position:'absolute', top:2, left: visible ? 22 : 2, width:20, height:20, borderRadius:'50%', background: visible ? '#0a0a0a' : '#6a6a6a', transition:'left 0.25s, background 0.25s' }} />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             </div>

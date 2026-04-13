@@ -3,6 +3,8 @@ import { FirebaseService } from '../../shared/firebase/firebase.service';
 
 const DEFAULT_MESSAGE = 'Loja temporariamente fechada. Voltamos em breve!';
 
+const ALL_BRAND_IDS = ['ignite','elfbar','lostmary','oxbar','hqd','nikbar','dinnerlady','rabbeats'];
+
 @Injectable()
 export class StoreConfigService {
   constructor(private readonly firebaseService: FirebaseService) {}
@@ -22,5 +24,19 @@ export class StoreConfigService {
   async update(body: { isOpen?: boolean; closedMessage?: string }): Promise<{ isOpen: boolean; closedMessage: string }> {
     await this.firebaseService.db.doc('config/store').set(body, { merge: true });
     return this.get();
+  }
+
+  async getBrandsFilter(): Promise<{ visibleBrands: string[] }> {
+    const doc = await this.firebaseService.db.doc('config/brands-filter').get();
+    if (!doc.exists) {
+      return { visibleBrands: ALL_BRAND_IDS };
+    }
+    const data = doc.data()!;
+    return { visibleBrands: data.visibleBrands ?? ALL_BRAND_IDS };
+  }
+
+  async updateBrandsFilter(body: { visibleBrands: string[] }): Promise<{ visibleBrands: string[] }> {
+    await this.firebaseService.db.doc('config/brands-filter').set(body, { merge: true });
+    return this.getBrandsFilter();
   }
 }

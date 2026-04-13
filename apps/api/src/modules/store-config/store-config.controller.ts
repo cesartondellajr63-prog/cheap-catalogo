@@ -17,3 +17,19 @@ export class StoreConfigController {
     return this.storeConfigService.update(body);
   }
 }
+
+@Controller('config/brands-filter')
+export class BrandsFilterController {
+  constructor(private readonly storeConfigService: StoreConfigService) {}
+
+  @Get()
+  get() {
+    return this.storeConfigService.getBrandsFilter();
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch()
+  update(@Body() body: { visibleBrands: string[] }) {
+    return this.storeConfigService.updateBrandsFilter(body);
+  }
+}

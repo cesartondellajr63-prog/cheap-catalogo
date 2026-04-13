@@ -144,6 +144,17 @@ export const api = {
         body: JSON.stringify(body),
       }),
   },
+
+  brandsFilter: {
+    get: (): Promise<{ visibleBrands: string[] }> =>
+      request('/config/brands-filter'),
+    update: (body: { visibleBrands: string[] }, token: string): Promise<{ visibleBrands: string[] }> =>
+      request('/config/brands-filter', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+        body: JSON.stringify(body),
+      }),
+  },
 };
 
 export function fmtBRL(centavos: number): string {
