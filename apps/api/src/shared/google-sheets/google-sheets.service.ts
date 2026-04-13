@@ -124,7 +124,7 @@ export class GoogleSheetsService implements OnModuleInit {
     };
     const statusLabel = statusMap[status] ?? status;
 
-    this.logger.log(`[Sheets] Looking for order ${orderNumber} to update status → ${statusLabel}`);
+    console.log(`[Sheets] Looking for order ${orderNumber} to update status → ${statusLabel}`);
 
     // Find the row that matches the orderNumber in column A
     const response = await this.sheets.spreadsheets.values.get({
@@ -133,17 +133,17 @@ export class GoogleSheetsService implements OnModuleInit {
     });
 
     const rows = response.data.values ?? [];
-    this.logger.log(`[Sheets] Total rows in column A: ${rows.length}`);
+    console.log(`[Sheets] Total rows in column A: ${rows.length}`);
 
     const rowIndex = rows.findIndex((r) => r[0] === orderNumber);
     if (rowIndex === -1) {
-      this.logger.warn(`[Sheets] Order ${orderNumber} not found in column A — skipping status sync.`);
+      console.warn(`[Sheets] Order ${orderNumber} not found in column A — skipping status sync.`);
       return;
     }
 
     // Rows are 1-indexed in Sheets API; column K = 11
     const sheetRow = rowIndex + 1;
-    this.logger.log(`[Sheets] Found at row ${sheetRow}. Updating K${sheetRow} → ${statusLabel}`);
+    console.log(`[Sheets] Found at row ${sheetRow}. Updating K${sheetRow} → ${statusLabel}`);
 
     await this.sheets.spreadsheets.values.update({
       spreadsheetId: this.spreadsheetId,
@@ -152,6 +152,6 @@ export class GoogleSheetsService implements OnModuleInit {
       requestBody: { values: [[statusLabel]] },
     });
 
-    this.logger.log(`[Sheets] Order ${orderNumber} status updated to "${statusLabel}" successfully.`);
+    console.log(`[Sheets] Order ${orderNumber} status updated to "${statusLabel}" successfully.`);
   }
 }
