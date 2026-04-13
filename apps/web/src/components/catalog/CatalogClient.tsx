@@ -133,30 +133,6 @@ export default function CatalogClient() {
 
   return (
     <>
-      {/* Overlay loja fechada — fixed para evitar hydration mismatch */}
-      {storeStatus && !storeStatus.isOpen && (
-        <div style={{
-          position: 'fixed', inset: 0, zIndex: 9999,
-          background: '#080808',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontFamily: 'Satoshi, sans-serif', padding: '24px',
-        }}>
-          <div style={{
-            textAlign: 'center', maxWidth: 480, width: '100%',
-            background: '#161616', border: '1px solid rgba(255,255,255,0.15)',
-            borderRadius: 24, padding: '48px 40px',
-          }}>
-            <div style={{ fontSize: 56, marginBottom: 24, lineHeight: 1 }}>🔒</div>
-            <div style={{ fontSize: 22, fontWeight: 800, color: '#ffffff', marginBottom: 16, letterSpacing: -0.5 }}>
-              Loja Fechada
-            </div>
-            <div style={{ fontSize: 15, color: '#9a9a9a', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
-              {storeStatus.closedMessage}
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Age Gate */}
       {ageConfirmed === null && (
         <div className="age-gate">
@@ -194,7 +170,10 @@ export default function CatalogClient() {
           <div className="header-top">
             <div className="logo">Cheap<span>.</span>Pods</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div className="header-badge"><span className="badge-dot"></span> Online agora</div>
+              {storeStatus && !storeStatus.isOpen
+                ? <div className="header-badge" style={{ background:'rgba(255,60,60,0.12)', borderColor:'rgba(255,60,60,0.3)', color:'#ff6060' }}><span className="badge-dot" style={{ background:'#ff4444' }}></span> Loja fechada</div>
+                : <div className="header-badge"><span className="badge-dot"></span> Online agora</div>
+              }
               {count > 0 && (
                 <button
                   onClick={() => setCheckoutOpen(true)}
@@ -274,7 +253,26 @@ export default function CatalogClient() {
       </div>
 
       <div className="catalog">
-        {loading ? (
+        {storeStatus && !storeStatus.isOpen ? (
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '80px 24px',
+          }}>
+            <div style={{
+              textAlign: 'center', maxWidth: 440, width: '100%',
+              background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: 24, padding: '56px 40px',
+            }}>
+              <div style={{ fontSize: 52, marginBottom: 20, lineHeight: 1 }}>🔒</div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: '#fff', marginBottom: 12, letterSpacing: -0.4, fontFamily: 'var(--font-syne),Syne,sans-serif' }}>
+                Loja Fechada
+              </div>
+              <div style={{ fontSize: 14, color: '#8a8a8a', lineHeight: 1.7, whiteSpace: 'pre-wrap', fontFamily: 'var(--font-inter),Inter,sans-serif' }}>
+                {storeStatus.closedMessage}
+              </div>
+            </div>
+          </div>
+        ) : loading ? (
           <div className="brand-section">
             <div className="brand-section-header">
               <span className="skeleton-line" style={{ width: 80, height: 14, borderRadius: 6 }}></span>
