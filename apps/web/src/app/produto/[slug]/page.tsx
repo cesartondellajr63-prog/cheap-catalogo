@@ -37,6 +37,19 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
       .finally(() => setLoading(false));
   }, [slug, router]);
 
+  // Redireciona para home se loja fechar enquanto usuário está na página
+  useEffect(() => {
+    let cancelled = false;
+    const check = () => {
+      api.store.get()
+        .then(s => { if (!cancelled && !s.isOpen) router.replace('/'); })
+        .catch(() => {});
+    };
+    check();
+    const interval = setInterval(check, 5000);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [router]);
+
   if (loading) return null;
   if (!product) return null;
 
