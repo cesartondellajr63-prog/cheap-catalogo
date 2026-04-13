@@ -1991,15 +1991,35 @@ function ProductModal({ mode, product, onSaved, onClose }: {
   const [savingBrand, setSavingBrand] = React.useState(false);
 
   React.useEffect(() => {
-    apiFetch<{ id: string; name: string; color: string }[]>('/brands')
-      .then(data => {
-        if (data.length > 0) {
-          const staticIds = new Set(BRANDS_STATIC.map(b => b.id));
-          const extra = data.filter(b => !staticIds.has(b.id));
-          setBrands([...BRANDS_STATIC, ...extra]);
-        }
-      })
-      .catch(() => {});
+    Promise.allSettled([
+      apiFetch<{ id: string; name: string; color: string }[]>('/brands'),
+      apiFetch<{ visibleBrands: string[]; customBrands: { id: string; label: string; color: string }[] }>('/config/brands-filter'),
+    ]).then(([brandsRes, filterRes]) => {
+      const staticIds = new Set(BRANDS_STATIC.map(b => b.id));
+
+      // marcas do /brands (Firestore brands collection)
+      const fromBrands: { id: string; name: string; color: string }[] =
+        brandsRes.status === 'fulfilled' && brandsRes.value.length > 0
+          ? brandsRes.value.filter(b => !staticIds.has(b.id))
+          : [];
+
+      // marcas customizadas do /config/brands-filter
+      const fromFilter: { id: string; name: string; color: string }[] =
+        filterRes.status === 'fulfilled'
+          ? (filterRes.value.customBrands ?? [])
+              .filter(b => !staticIds.has(b.id))
+              .map(b => ({ id: b.id, name: b.label, color: b.color }))
+          : [];
+
+      // merge: fromFilter tem prioridade sobre fromBrands para evitar duplicatas
+      const allExtraIds = new Set<string>();
+      const allExtra: { id: string; name: string; color: string }[] = [];
+      [...fromFilter, ...fromBrands].forEach(b => {
+        if (!allExtraIds.has(b.id)) { allExtraIds.add(b.id); allExtra.push(b); }
+      });
+
+      setBrands([...BRANDS_STATIC, ...allExtra]);
+    });
   }, []);
 
   async function saveNewBrand() {
