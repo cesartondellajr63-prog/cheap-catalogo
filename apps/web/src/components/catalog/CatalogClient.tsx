@@ -174,7 +174,7 @@ export default function CatalogClient() {
                 ? <div className="header-badge" style={{ background:'rgba(255,60,60,0.12)', borderColor:'rgba(255,60,60,0.3)', color:'#ff6060' }}><span className="badge-dot" style={{ background:'#ff4444' }}></span> Loja fechada</div>
                 : <div className="header-badge"><span className="badge-dot"></span> Online agora</div>
               }
-              {count > 0 && (
+              {count > 0 && !(storeStatus && !storeStatus.isOpen) && (
                 <button
                   onClick={() => setCheckoutOpen(true)}
                   style={{
@@ -352,7 +352,7 @@ export default function CatalogClient() {
       </div>
 
       {/* Cart FAB */}
-      {count > 0 && (
+      {count > 0 && !(storeStatus && !storeStatus.isOpen) && (
         <button className="cart-fab visible" onClick={() => setCheckoutOpen(true)}>
           🛒
           <div className="cart-fab-count">{count}</div>
