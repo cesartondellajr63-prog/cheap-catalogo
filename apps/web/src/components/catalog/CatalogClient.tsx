@@ -254,24 +254,99 @@ export default function CatalogClient() {
 
       <div className="catalog">
         {storeStatus && !storeStatus.isOpen ? (
-          <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            padding: '80px 24px',
-          }}>
+          <>
+            <style>{`
+              @keyframes storeFadeIn {
+                from { opacity: 0; transform: translateY(24px) scale(0.97); }
+                to   { opacity: 1; transform: translateY(0)    scale(1);    }
+              }
+              @keyframes storeLockFloat {
+                0%, 100% { transform: translateY(0px) rotate(-4deg); }
+                50%       { transform: translateY(-10px) rotate(4deg); }
+              }
+              @keyframes storeGlow {
+                0%, 100% { box-shadow: 0 0 0 0 rgba(255,60,60,0); }
+                50%       { box-shadow: 0 0 40px 6px rgba(255,60,60,0.12); }
+              }
+              @keyframes storeBorderSpin {
+                0%   { background-position: 0% 50%; }
+                50%  { background-position: 100% 50%; }
+                100% { background-position: 0% 50%; }
+              }
+              @keyframes storeDotPulse {
+                0%, 100% { opacity: 0.5; transform: scale(1); }
+                50%       { opacity: 1;   transform: scale(1.4); }
+              }
+            `}</style>
+
             <div style={{
-              textAlign: 'center', maxWidth: 440, width: '100%',
-              background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',
-              borderRadius: 24, padding: '56px 40px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              padding: '80px 24px',
             }}>
-              <div style={{ fontSize: 52, marginBottom: 20, lineHeight: 1 }}>🔒</div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: '#fff', marginBottom: 12, letterSpacing: -0.4, fontFamily: 'var(--font-syne),Syne,sans-serif' }}>
-                Loja Fechada
-              </div>
-              <div style={{ fontSize: 14, color: '#8a8a8a', lineHeight: 1.7, whiteSpace: 'pre-wrap', fontFamily: 'var(--font-inter),Inter,sans-serif' }}>
-                {storeStatus.closedMessage}
+              {/* gradient border wrapper */}
+              <div style={{
+                position: 'relative', maxWidth: 460, width: '100%',
+                borderRadius: 28, padding: 2,
+                background: 'linear-gradient(135deg, rgba(255,80,80,0.5) 0%, rgba(120,0,0,0.3) 40%, rgba(255,80,80,0.4) 100%)',
+                backgroundSize: '200% 200%',
+                animation: 'storeFadeIn 0.6s cubic-bezier(.22,.68,0,1.2) both, storeGlow 3s ease-in-out 0.6s infinite, storeBorderSpin 4s linear infinite',
+              }}>
+                <div style={{
+                  textAlign: 'center', width: '100%',
+                  background: 'linear-gradient(160deg, rgba(28,8,8,0.96) 0%, rgba(18,18,18,0.98) 100%)',
+                  borderRadius: 26, padding: '56px 44px 48px',
+                  backdropFilter: 'blur(20px)',
+                }}>
+                  {/* icon */}
+                  <div style={{
+                    fontSize: 60, lineHeight: 1, marginBottom: 24,
+                    display: 'inline-block',
+                    animation: 'storeLockFloat 3.2s ease-in-out 0.6s infinite',
+                    filter: 'drop-shadow(0 0 16px rgba(255,60,60,0.5))',
+                  }}>🔒</div>
+
+                  {/* red dots row */}
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginBottom: 20 }}>
+                    {[0, 0.3, 0.6].map((delay, i) => (
+                      <div key={i} style={{
+                        width: 6, height: 6, borderRadius: '50%', background: '#ff4444',
+                        animation: `storeDotPulse 1.6s ease-in-out ${delay}s infinite`,
+                      }} />
+                    ))}
+                  </div>
+
+                  <div style={{
+                    fontSize: 22, fontWeight: 800, color: '#fff', marginBottom: 6,
+                    letterSpacing: -0.5, fontFamily: 'var(--font-syne),Syne,sans-serif',
+                  }}>
+                    Loja Fechada
+                  </div>
+                  <div style={{
+                    fontSize: 12, fontWeight: 600, letterSpacing: 2,
+                    color: '#ff6060', textTransform: 'uppercase',
+                    marginBottom: 24, fontFamily: 'var(--font-inter),Inter,sans-serif',
+                  }}>
+                    Temporariamente indisponível
+                  </div>
+
+                  <div style={{
+                    width: 40, height: 1,
+                    background: 'linear-gradient(90deg, transparent, rgba(255,60,60,0.4), transparent)',
+                    margin: '0 auto 24px',
+                  }} />
+
+                  {storeStatus.closedMessage && (
+                    <div style={{
+                      fontSize: 14, color: '#9a9a9a', lineHeight: 1.75,
+                      whiteSpace: 'pre-wrap', fontFamily: 'var(--font-inter),Inter,sans-serif',
+                    }}>
+                      {storeStatus.closedMessage}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
+          </>
         ) : loading ? (
           <div className="brand-section">
             <div className="brand-section-header">
