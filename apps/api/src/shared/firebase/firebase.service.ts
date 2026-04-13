@@ -21,6 +21,7 @@ export class FirebaseService implements OnModuleInit {
         clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
         privateKey,
       }),
+      storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
     });
 
     this.logger.log('Firebase Admin SDK initialized successfully.');
@@ -32,5 +33,9 @@ export class FirebaseService implements OnModuleInit {
 
   get auth(): admin.auth.Auth {
     return this.firebaseApp.auth();
+  }
+
+  get storage(): admin.storage.Storage {
+    return this.firebaseApp.storage();
   }
 }

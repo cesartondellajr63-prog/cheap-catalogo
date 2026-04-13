@@ -11,6 +11,7 @@ import { CustomersModule } from './modules/customers/customers.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { BrandsModule } from './modules/brands/brands.module';
 import { StoreConfigModule } from './modules/store-config/store-config.module';
+import { UploadModule } from './modules/upload/upload.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { StoreConfigModule } from './modules/store-config/store-config.module';
     CustomersModule,
     NotificationsModule,
     StoreConfigModule,
+    UploadModule,
   ],
 })
 export class AppModule {}

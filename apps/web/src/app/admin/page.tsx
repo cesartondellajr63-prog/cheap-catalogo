@@ -1986,6 +1986,8 @@ function ProductModal({ mode, product, onSaved, onClose }: {
     variants: (product.variants ?? []).map(v => ({ _key: v.id || String(Math.random()), name: v.name, stock: String(v.stock), priceOverride: v.priceOverride != null ? String(v.priceOverride) : '', active: v.active, image: v.image ?? '' })),
   } : emptyForm);
   const [saving, setSaving] = React.useState(false);
+  const [uploadingImage, setUploadingImage] = React.useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [brands, setBrands] = React.useState<{ id: string; name: string; color: string }[]>([...BRANDS_STATIC]);
   const [newBrand, setNewBrand] = React.useState<{ name: string; color: string } | null>(null);
   const [savingBrand, setSavingBrand] = React.useState(false);
@@ -2153,8 +2155,56 @@ function ProductModal({ mode, product, onSaved, onClose }: {
 
           {/* Images */}
           <div>
-            <label style={{ fontSize:10,fontWeight:700,letterSpacing:1,textTransform:'uppercase',color:'#8a8a8a',display:'block',marginBottom:6 }}>Imagens (uma URL por linha)</label>
-            <textarea style={{ ...inp,minHeight:64,resize:'vertical',fontSize:11 }} value={form.images} onChange={e => setForm(f => ({ ...f, images: e.target.value }))} placeholder="https://..." />
+            <label style={{ fontSize:10,fontWeight:700,letterSpacing:1,textTransform:'uppercase',color:'#8a8a8a',display:'block',marginBottom:6 }}>Imagem do Produto</label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={async e => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                setUploadingImage(true);
+                try {
+                  const fd = new FormData();
+                  fd.append('file', file);
+                  const res = await fetch(`${BASE}/upload/image`, {
+                    method: 'POST',
+                    headers: { 'x-auth-token': getAdminToken() },
+                    body: fd,
+                  });
+                  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                  const data: { url: string } = await res.json();
+                  setForm(f => ({ ...f, images: data.url }));
+                } catch {
+                  alert('Erro ao fazer upload da imagem. Tente novamente.');
+                } finally {
+                  setUploadingImage(false);
+                  if (fileInputRef.current) fileInputRef.current.value = '';
+                }
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadingImage}
+              style={{ padding:'8px 16px',borderRadius:10,background:'rgba(200,255,0,0.08)',border:'1px solid rgba(200,255,0,0.25)',color:'#c8ff00',fontFamily:'Satoshi,sans-serif',fontSize:12,fontWeight:700,cursor:uploadingImage?'not-allowed':'pointer',opacity:uploadingImage?0.6:1,marginBottom:8 }}
+            >
+              {uploadingImage ? '⏳ Enviando...' : '📷 Upload de imagem'}
+            </button>
+            {form.images && (
+              <img
+                src={form.images}
+                alt="Preview"
+                style={{ width:'100%',maxHeight:200,objectFit:'contain',borderRadius:10,marginTop:4,marginBottom:8,background:'rgba(255,255,255,0.04)',display:'block' }}
+              />
+            )}
+            <input
+              style={{ ...inp,fontSize:11 }}
+              value={form.images}
+              onChange={e => setForm(f => ({ ...f, images: e.target.value }))}
+              placeholder="Ou cole uma URL aqui..."
+            />
           </div>
 
           {/* Variants */}

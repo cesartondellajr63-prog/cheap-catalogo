@@ -16,6 +16,7 @@ function toDisplay(p: Product) {
     puffs: p.puffs ?? '',
     price: p.basePrice,
     flavors: (p.variants ?? []).filter(v => v.active !== false).map(v => v.name),
+    image: (p.images ?? [])[0] ?? '',
   };
 }
 type DisplayProduct = ReturnType<typeof toDisplay>;
@@ -432,12 +433,21 @@ export default function CatalogClient() {
                         style={{ animationDelay: `${Math.min(i * 0.05, 0.5)}s` }}
                         onClick={() => router.push(`/produto/${p.id}`)}
                       >
-                        <div className="model-img" style={{ background: BRAND_GRADIENTS[p.brand] }}>
-                          <div className="model-img-placeholder">
-                            <div className="placeholder-icon">{BRAND_ICONS[p.brand]}</div>
-                            <div className="placeholder-line" style={{ background: brand.color }}></div>
-                          </div>
-                          <div className="model-img-overlay"></div>
+                        <div className="model-img" style={{ background: p.image ? 'transparent' : BRAND_GRADIENTS[p.brand] }}>
+                          {p.image ? (
+                            <img
+                              src={p.image}
+                              alt={p.model}
+                              style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
+                              loading="lazy"
+                            />
+                          ) : (
+                            <div className="model-img-placeholder">
+                              <div className="placeholder-icon">{BRAND_ICONS[p.brand]}</div>
+                              <div className="placeholder-line" style={{ background: brand.color }}></div>
+                            </div>
+                          )}
+                          <div className="model-img-overlay" style={{ opacity: p.image ? 0.3 : 1 }}></div>
                           <div className="model-img-tags">
                             <span className="brand-tag">
                               <span className="brand-tag-dot" style={{ background: brand.color }}></span>
