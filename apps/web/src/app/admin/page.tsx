@@ -1987,7 +1987,9 @@ function ProductModal({ mode, product, onSaved, onClose }: {
   } : emptyForm);
   const [saving, setSaving] = React.useState(false);
   const [uploadingImage, setUploadingImage] = React.useState(false);
+  const [uploadingVariant, setUploadingVariant] = React.useState<Record<string, boolean>>({});
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const variantFileRefs = React.useRef<Record<string, HTMLInputElement | null>>({});
   const [brands, setBrands] = React.useState<{ id: string; name: string; color: string }[]>([...BRANDS_STATIC]);
   const [newBrand, setNewBrand] = React.useState<{ name: string; color: string } | null>(null);
   const [savingBrand, setSavingBrand] = React.useState(false);
@@ -2229,10 +2231,51 @@ function ProductModal({ mode, product, onSaved, onClose }: {
                     </label>
                     <button onClick={() => removeVariant(v._key)} style={{ background:'none',border:'none',color:'#ff4d4d',fontSize:16,cursor:'pointer',padding:0,lineHeight:1 }}>×</button>
                   </div>
-                  <div style={{ display:'flex',alignItems:'center',gap:8 }}>
-                    <span style={{ fontSize:10,color:'#6a6a6a',whiteSpace:'nowrap',fontWeight:600 }}>📷 Foto:</span>
-                    <input style={{ ...inp,padding:'5px 10px',fontSize:11,flex:1 }} value={v.image} onChange={e => updateVariant(v._key,'image',e.target.value)} placeholder="https://... (link da imagem deste sabor)" />
-                    {v.image && <img src={v.image} alt="" style={{ width:32,height:32,borderRadius:6,objectFit:'cover',border:'1px solid rgba(255,255,255,0.12)',flexShrink:0 }} onError={e => (e.currentTarget.style.display='none')} />}
+                  <div style={{ display:'flex',alignItems:'center',gap:8,flexWrap:'wrap' }}>
+                    <span style={{ fontSize:10,color:'#6a6a6a',whiteSpace:'nowrap',fontWeight:600 }}>📷 Foto do sabor:</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      style={{ display:'none' }}
+                      ref={el => { variantFileRefs.current[v._key] = el; }}
+                      onChange={async e => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        setUploadingVariant(prev => ({ ...prev, [v._key]: true }));
+                        try {
+                          const fd = new FormData();
+                          fd.append('file', file);
+                          const res = await fetch(`${BASE}/upload/image`, {
+                            method: 'POST',
+                            headers: { 'x-auth-token': getAdminToken() },
+                            body: fd,
+                          });
+                          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                          const data: { url: string } = await res.json();
+                          updateVariant(v._key, 'image', data.url);
+                        } catch {
+                          alert('Erro ao fazer upload. Tente novamente.');
+                        } finally {
+                          setUploadingVariant(prev => ({ ...prev, [v._key]: false }));
+                          const ref = variantFileRefs.current[v._key];
+                          if (ref) ref.value = '';
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => variantFileRefs.current[v._key]?.click()}
+                      disabled={uploadingVariant[v._key]}
+                      style={{ padding:'4px 12px',borderRadius:8,background:'rgba(200,255,0,0.06)',border:'1px solid rgba(200,255,0,0.2)',color:'#c8ff00',fontFamily:'Satoshi,sans-serif',fontSize:11,fontWeight:700,cursor:uploadingVariant[v._key]?'not-allowed':'pointer',opacity:uploadingVariant[v._key]?0.6:1,whiteSpace:'nowrap' }}
+                    >
+                      {uploadingVariant[v._key] ? '⏳ Enviando...' : '📷 Upload'}
+                    </button>
+                    {v.image && (
+                      <>
+                        <img src={v.image} alt="" style={{ width:36,height:36,borderRadius:8,objectFit:'contain',border:'1px solid rgba(255,255,255,0.12)',flexShrink:0,background:'rgba(255,255,255,0.04)' }} onError={e => (e.currentTarget.style.display='none')} />
+                        <button type="button" onClick={() => updateVariant(v._key,'image','')} style={{ background:'none',border:'none',color:'#ff4d4d',fontSize:16,cursor:'pointer',padding:0,lineHeight:1,flexShrink:0 }} title="Remover foto">×</button>
+                      </>
+                    )}
                   </div>
                 </div>
               ))}

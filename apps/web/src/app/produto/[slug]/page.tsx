@@ -57,6 +57,9 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
   const activeFlavors = (product.variants ?? []).filter(v => v.active !== false);
   const count = getCartCount(cart);
 
+  const selectedVariant = activeFlavors.find(v => v.name === selectedFlavor);
+  const displayImage = selectedVariant?.image || (product.images ?? [])[0] || null;
+
   const addToCart = () => {
     if (!selectedFlavor) return;
     const variant = activeFlavors.find(v => v.name === selectedFlavor);
@@ -103,11 +106,20 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
 
       <div className="product-page">
         <div className="product-left">
-          <div className="product-img" style={{ background: BRAND_GRADIENTS[product.brandId] }}>
-            <div className="product-img-placeholder">
-              <div className="placeholder-big-icon">{BRAND_ICONS[product.brandId]}</div>
-            </div>
-            <div className="product-img-overlay"></div>
+          <div className="product-img" style={{ background: displayImage ? 'transparent' : BRAND_GRADIENTS[product.brandId], transition: 'background 0.3s' }}>
+            {displayImage ? (
+              <img
+                key={displayImage}
+                src={displayImage}
+                alt={product.name}
+                style={{ width:'100%', height:'100%', objectFit:'contain', display:'block', animation:'fadeIn 0.25s ease' }}
+              />
+            ) : (
+              <div className="product-img-placeholder">
+                <div className="placeholder-big-icon">{BRAND_ICONS[product.brandId]}</div>
+              </div>
+            )}
+            <div className="product-img-overlay" style={{ opacity: displayImage ? 0.15 : 1 }}></div>
             <div className="product-tags">
               <span className="product-brand-tag">
                 <span className="product-brand-dot" style={{ background: brand.color }}></span>
