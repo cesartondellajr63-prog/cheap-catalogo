@@ -353,19 +353,19 @@ export default function CatalogClient() {
                     style={{
                       display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 10,
                       padding: '13px 28px', borderRadius: 14, textDecoration: 'none',
-                      background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)',
-                      color: '#fff', fontSize: 14, fontWeight: 700,
+                      background: '#c8ff00',
+                      color: '#0a0a0a', fontSize: 14, fontWeight: 700,
                       fontFamily: 'var(--font-inter),Inter,sans-serif',
-                      boxShadow: '0 4px 24px rgba(37,211,102,0.28)',
+                      boxShadow: '0 4px 24px rgba(200,255,0,0.28)',
                       transition: 'transform 0.15s, box-shadow 0.15s',
                     }}
                     onMouseEnter={e => {
                       (e.currentTarget as HTMLAnchorElement).style.transform = 'translateY(-2px)';
-                      (e.currentTarget as HTMLAnchorElement).style.boxShadow = '0 8px 32px rgba(37,211,102,0.40)';
+                      (e.currentTarget as HTMLAnchorElement).style.boxShadow = '0 8px 32px rgba(200,255,0,0.45)';
                     }}
                     onMouseLeave={e => {
                       (e.currentTarget as HTMLAnchorElement).style.transform = 'translateY(0)';
-                      (e.currentTarget as HTMLAnchorElement).style.boxShadow = '0 4px 24px rgba(37,211,102,0.28)';
+                      (e.currentTarget as HTMLAnchorElement).style.boxShadow = '0 4px 24px rgba(200,255,0,0.28)';
                     }}
                   >
                     {/* WhatsApp icon */}
