@@ -71,9 +71,13 @@ export default function CatalogClient() {
   useEffect(() => {
     let cancelled = false;
     const check = () => {
+      // Fallback: se a API não responder em 4s, assume loja aberta
+      const fallback = setTimeout(() => {
+        if (!cancelled) setStoreStatus(prev => prev ?? { isOpen: true, closedMessage: '' });
+      }, 4000);
       api.store.get()
-        .then(s => { if (!cancelled) setStoreStatus(s); })
-        .catch(() => { if (!cancelled) setStoreStatus(prev => prev ?? { isOpen: true, closedMessage: '' }); });
+        .then(s => { clearTimeout(fallback); if (!cancelled) setStoreStatus(s); })
+        .catch(() => { clearTimeout(fallback); if (!cancelled) setStoreStatus(prev => prev ?? { isOpen: true, closedMessage: '' }); });
     };
     check();
     const interval = setInterval(check, 5000);
@@ -127,12 +131,7 @@ export default function CatalogClient() {
 
   const count = getCartCount(cart);
 
-  // Enquanto status da loja carrega, mostra tela preta simples (evita flash do age gate)
-  if (storeStatus === null) {
-    return <div style={{ minHeight: '100vh', background: '#080808' }} />;
-  }
-
-  if (!storeStatus.isOpen) {
+  if (storeStatus && !storeStatus.isOpen) {
     return (
       <div style={{
         minHeight: '100vh', background: '#080808',
