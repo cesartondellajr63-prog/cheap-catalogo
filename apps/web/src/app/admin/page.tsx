@@ -1014,8 +1014,27 @@ export default function AdminDashboard() {
         {page === 'loja' && (
           <>
             <header className="admin-topbar" style={topbar}>
-              <div style={{ fontSize:15,fontWeight:700,color:'#fff',letterSpacing:-0.3 }}>
-                Funcionamento da Loja
+              <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+                <div style={{ fontSize:15,fontWeight:700,color:'#fff',letterSpacing:-0.3 }}>
+                  Funcionamento da Loja
+                </div>
+                <div style={{
+                  display:'flex', alignItems:'center', gap:6,
+                  padding:'4px 12px', borderRadius:99,
+                  background: storeIsOpen ? 'rgba(100,255,100,0.08)' : 'rgba(255,60,60,0.10)',
+                  border: storeIsOpen ? '1px solid rgba(100,255,100,0.25)' : '1px solid rgba(255,60,60,0.28)',
+                  fontSize:12, fontWeight:600,
+                  color: storeIsOpen ? '#7dff7d' : '#ff6060',
+                  letterSpacing:0.2,
+                }}>
+                  <span style={{
+                    width:7, height:7, borderRadius:'50%',
+                    background: storeIsOpen ? '#44ff44' : '#ff4444',
+                    boxShadow: storeIsOpen ? '0 0 6px #44ff44' : '0 0 6px #ff4444',
+                    flexShrink:0,
+                  }} />
+                  {storeIsOpen ? 'Online agora' : 'Loja fechada'}
+                </div>
               </div>
             </header>
 
