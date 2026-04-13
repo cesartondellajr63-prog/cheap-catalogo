@@ -31,6 +31,7 @@ export default function CatalogClient() {
   const [ageConfirmed, setAgeConfirmed] = useState<boolean | null>(null);
   const [storeStatus, setStoreStatus] = useState<{ isOpen: boolean; closedMessage: string } | null>(null);
   const [visibleBrands, setVisibleBrands] = useState<string[] | null>(null);
+  const [customBrands, setCustomBrands] = useState<{ id: string; label: string; color: string }[]>([]);
 
   const brandFilterRef = useRef<HTMLDivElement>(null);
   const dragState = useRef({ dragging: false, startX: 0, scrollLeft: 0 });
@@ -85,10 +86,10 @@ export default function CatalogClient() {
     return () => { cancelled = true; clearInterval(interval); };
   }, []);
 
-  // Busca marcas visíveis
+  // Busca marcas visíveis e customizadas
   useEffect(() => {
     api.brandsFilter.get()
-      .then(r => setVisibleBrands(r.visibleBrands))
+      .then(r => { setVisibleBrands(r.visibleBrands); setCustomBrands(r.customBrands ?? []); })
       .catch(() => setVisibleBrands(null)); // null = mostra todas
   }, []);
 
@@ -135,9 +136,10 @@ export default function CatalogClient() {
     return true;
   });
 
+  const allBrandsData = [...BRANDS_DATA, ...customBrands.filter(c => !BRANDS_DATA.find(b => b.id === c.id))];
   const activeBrandsData = visibleBrands
-    ? BRANDS_DATA.filter(b => visibleBrands.includes(b.id))
-    : BRANDS_DATA;
+    ? allBrandsData.filter(b => visibleBrands.includes(b.id))
+    : allBrandsData;
 
   const brandsToShow = activeBrand === 'all' ? activeBrandsData.map(b => b.id) : [activeBrand];
 
@@ -412,7 +414,7 @@ export default function CatalogClient() {
         ) : (
           <>
             {brandsToShow.map(brandId => {
-              const brand = BRANDS_DATA.find(b => b.id === brandId)!;
+              const brand = allBrandsData.find(b => b.id === brandId)!;
               const items = filtered.filter(p => p.brand === brandId);
               if (!items.length) return null;
               return (

@@ -146,9 +146,9 @@ export const api = {
   },
 
   brandsFilter: {
-    get: (): Promise<{ visibleBrands: string[] }> =>
+    get: (): Promise<{ visibleBrands: string[]; customBrands: { id: string; label: string; color: string }[] }> =>
       request('/config/brands-filter'),
-    update: (body: { visibleBrands: string[] }, token: string): Promise<{ visibleBrands: string[] }> =>
+    update: (body: { visibleBrands?: string[]; customBrands?: { id: string; label: string; color: string }[] }, token: string): Promise<{ visibleBrands: string[]; customBrands: { id: string; label: string; color: string }[] }> =>
       request('/config/brands-filter', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', 'x-auth-token': token },

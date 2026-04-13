@@ -26,16 +26,19 @@ export class StoreConfigService {
     return this.get();
   }
 
-  async getBrandsFilter(): Promise<{ visibleBrands: string[] }> {
+  async getBrandsFilter(): Promise<{ visibleBrands: string[]; customBrands: { id: string; label: string; color: string }[] }> {
     const doc = await this.firebaseService.db.doc('config/brands-filter').get();
     if (!doc.exists) {
-      return { visibleBrands: ALL_BRAND_IDS };
+      return { visibleBrands: ALL_BRAND_IDS, customBrands: [] };
     }
     const data = doc.data()!;
-    return { visibleBrands: data.visibleBrands ?? ALL_BRAND_IDS };
+    return {
+      visibleBrands: data.visibleBrands ?? ALL_BRAND_IDS,
+      customBrands: data.customBrands ?? [],
+    };
   }
 
-  async updateBrandsFilter(body: { visibleBrands: string[] }): Promise<{ visibleBrands: string[] }> {
+  async updateBrandsFilter(body: { visibleBrands?: string[]; customBrands?: { id: string; label: string; color: string }[] }): Promise<{ visibleBrands: string[]; customBrands: { id: string; label: string; color: string }[] }> {
     await this.firebaseService.db.doc('config/brands-filter').set(body, { merge: true });
     return this.getBrandsFilter();
   }

@@ -29,7 +29,7 @@ export class BrandsFilterController {
 
   @UseGuards(JwtAuthGuard)
   @Patch()
-  update(@Body() body: { visibleBrands: string[] }) {
+  update(@Body() body: { visibleBrands?: string[]; customBrands?: { id: string; label: string; color: string }[] }) {
     return this.storeConfigService.updateBrandsFilter(body);
   }
 }

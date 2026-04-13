@@ -183,7 +183,11 @@ export default function AdminDashboard() {
     { id: 'rabbeats',   label: 'Rabbeats',    color: '#ffca28' },
   ];
   const [visibleBrandsAdmin, setVisibleBrandsAdmin] = useState<string[]>(ALL_BRANDS.map(b => b.id));
+  const [customBrandsAdmin, setCustomBrandsAdmin] = useState<{ id: string; label: string; color: string }[]>([]);
   const [brandsSaving, setBrandsSaving] = useState(false);
+  const [newBrandName, setNewBrandName] = useState('');
+  const [newBrandColor, setNewBrandColor] = useState('#c8ff00');
+  const [showNewBrandForm, setShowNewBrandForm] = useState(false);
 
   // Modal
   const [modalOrder, setModalOrder] = useState<Order | null>(null);
@@ -308,8 +312,8 @@ export default function AdminDashboard() {
       loadProducts();
     }
     if (page === 'produtos') {
-      apiFetch<{ visibleBrands: string[] }>('/config/brands-filter')
-        .then(r => setVisibleBrandsAdmin(r.visibleBrands))
+      apiFetch<{ visibleBrands: string[]; customBrands: { id: string; label: string; color: string }[] }>('/config/brands-filter')
+        .then(r => { setVisibleBrandsAdmin(r.visibleBrands); setCustomBrandsAdmin(r.customBrands ?? []); })
         .catch(() => {});
     }
   }, [page, products.length, loadProducts]);
@@ -320,14 +324,36 @@ export default function AdminDashboard() {
       await apiFetch<any>('/config/brands-filter', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ visibleBrands: visibleBrandsAdmin }),
+        body: JSON.stringify({ visibleBrands: visibleBrandsAdmin, customBrands: customBrandsAdmin }),
       });
     } catch (e) {
       alert('Erro ao salvar: ' + (e instanceof Error ? e.message : 'desconhecido'));
     } finally {
       setBrandsSaving(false);
     }
-  }, [visibleBrandsAdmin]);
+  }, [visibleBrandsAdmin, customBrandsAdmin]);
+
+  const addCustomBrand = useCallback(() => {
+    const name = newBrandName.trim();
+    if (!name) return;
+    const id = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const allExisting = [...ALL_BRANDS, ...customBrandsAdmin];
+    if (allExisting.find(b => b.id === id)) {
+      alert('Já existe uma marca com esse nome.');
+      return;
+    }
+    const newBrand = { id, label: name, color: newBrandColor };
+    setCustomBrandsAdmin(prev => [...prev, newBrand]);
+    setVisibleBrandsAdmin(prev => [...prev, id]);
+    setNewBrandName('');
+    setNewBrandColor('#c8ff00');
+    setShowNewBrandForm(false);
+  }, [newBrandName, newBrandColor, customBrandsAdmin]);
+
+  const removeCustomBrand = useCallback((id: string) => {
+    setCustomBrandsAdmin(prev => prev.filter(b => b.id !== id));
+    setVisibleBrandsAdmin(prev => prev.filter(bid => bid !== id));
+  }, []);
 
   // Sync modal with latest orders data
   useEffect(() => {
@@ -1044,23 +1070,71 @@ export default function AdminDashboard() {
               </div>
 
               {/* ── Filtros de Marcas ── */}
-              <div style={{ padding: isMobile ? '0 16px 24px' : '0 32px 32px' }}>
+              <div style={{ padding: isMobile ? '16px 16px 24px' : '24px 32px 32px' }}>
                 <div style={{ ...glassCard }}>
+                  {/* Header */}
                   <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:18, flexWrap:'wrap', gap:10 }}>
                     <div>
                       <div style={{ fontSize:14, fontWeight:700, color:'#fff', marginBottom:3 }}>Filtros de marcas</div>
                       <div style={{ fontSize:12, color:'#6a6a6a' }}>Controle quais marcas aparecem na barra de filtros da loja</div>
                     </div>
-                    <button
-                      onClick={saveBrandsFilter}
-                      disabled={brandsSaving}
-                      style={{ padding:'9px 20px', borderRadius:10, border:'none', cursor:'pointer', fontFamily:'Satoshi,sans-serif', fontSize:12, fontWeight:700, background: brandsSaving ? 'rgba(200,255,0,0.4)' : '#c8ff00', color:'#0a0a0a', transition:'all 0.2s', opacity: brandsSaving ? 0.7 : 1 }}
-                    >
-                      {brandsSaving ? 'Salvando...' : 'Salvar'}
-                    </button>
+                    <div style={{ display:'flex', gap:8 }}>
+                      <button
+                        onClick={() => setShowNewBrandForm(v => !v)}
+                        style={{ padding:'9px 16px', borderRadius:10, border:'1px solid rgba(200,255,0,0.3)', cursor:'pointer', fontFamily:'Satoshi,sans-serif', fontSize:12, fontWeight:700, background:'rgba(200,255,0,0.08)', color:'#c8ff00', transition:'all 0.2s' }}
+                      >
+                        + Nova marca
+                      </button>
+                      <button
+                        onClick={saveBrandsFilter}
+                        disabled={brandsSaving}
+                        style={{ padding:'9px 20px', borderRadius:10, border:'none', cursor:'pointer', fontFamily:'Satoshi,sans-serif', fontSize:12, fontWeight:700, background: brandsSaving ? 'rgba(200,255,0,0.4)' : '#c8ff00', color:'#0a0a0a', transition:'all 0.2s', opacity: brandsSaving ? 0.7 : 1 }}
+                      >
+                        {brandsSaving ? 'Salvando...' : 'Salvar'}
+                      </button>
+                    </div>
                   </div>
 
-                  <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+                  {/* Formulário nova marca */}
+                  {showNewBrandForm && (
+                    <div style={{ marginBottom:16, padding:'16px', borderRadius:12, background:'rgba(200,255,0,0.04)', border:'1px solid rgba(200,255,0,0.15)' }}>
+                      <div style={{ fontSize:12, fontWeight:700, color:'#c8ff00', marginBottom:12, textTransform:'uppercase', letterSpacing:1 }}>Nova marca</div>
+                      <div style={{ display:'flex', gap:10, alignItems:'center', flexWrap:'wrap' }}>
+                        <input
+                          value={newBrandName}
+                          onChange={e => setNewBrandName(e.target.value)}
+                          onKeyDown={e => e.key === 'Enter' && addCustomBrand()}
+                          placeholder="Nome da marca"
+                          style={{ flex:1, minWidth:160, background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.12)', borderRadius:8, padding:'9px 12px', color:'#fff', fontFamily:'Satoshi,sans-serif', fontSize:13, outline:'none' }}
+                        />
+                        <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                          <span style={{ fontSize:12, color:'#8a8a8a' }}>Cor:</span>
+                          <input
+                            type="color"
+                            value={newBrandColor}
+                            onChange={e => setNewBrandColor(e.target.value)}
+                            style={{ width:36, height:36, borderRadius:8, border:'1px solid rgba(255,255,255,0.15)', cursor:'pointer', padding:2, background:'transparent' }}
+                          />
+                        </div>
+                        <button
+                          onClick={addCustomBrand}
+                          style={{ padding:'9px 18px', borderRadius:8, border:'none', cursor:'pointer', fontFamily:'Satoshi,sans-serif', fontSize:12, fontWeight:700, background:'#c8ff00', color:'#0a0a0a' }}
+                        >
+                          Adicionar
+                        </button>
+                        <button
+                          onClick={() => setShowNewBrandForm(false)}
+                          style={{ padding:'9px 14px', borderRadius:8, border:'1px solid rgba(255,255,255,0.1)', cursor:'pointer', fontFamily:'Satoshi,sans-serif', fontSize:12, fontWeight:600, background:'transparent', color:'#6a6a6a' }}
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Lista de marcas */}
+                  <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                    {/* Marcas padrão */}
                     {ALL_BRANDS.map(brand => {
                       const visible = visibleBrandsAdmin.includes(brand.id);
                       return (
@@ -1080,6 +1154,42 @@ export default function AdminDashboard() {
                         </div>
                       );
                     })}
+
+                    {/* Marcas customizadas */}
+                    {customBrandsAdmin.length > 0 && (
+                      <>
+                        <div style={{ fontSize:11, color:'#4a4a4a', fontWeight:600, textTransform:'uppercase', letterSpacing:1, padding:'6px 4px 2px' }}>Marcas personalizadas</div>
+                        {customBrandsAdmin.map(brand => {
+                          const visible = visibleBrandsAdmin.includes(brand.id);
+                          return (
+                            <div key={brand.id} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 16px', borderRadius:12, background:'rgba(255,255,255,0.03)', border:`1px solid ${visible ? brand.color + '33' : 'rgba(255,255,255,0.07)'}`, transition:'all 0.2s' }}>
+                              <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                                <span style={{ width:10, height:10, borderRadius:'50%', background: visible ? brand.color : '#3a3a3a', flexShrink:0, transition:'background 0.2s', boxShadow: visible ? `0 0 8px ${brand.color}88` : 'none' }} />
+                                <span style={{ fontSize:13, fontWeight:600, color: visible ? '#fff' : '#5a5a5a', transition:'color 0.2s' }}>{brand.label}</span>
+                                <span style={{ fontSize:10, color:'#4a4a4a', fontWeight:600, padding:'2px 6px', borderRadius:4, background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)' }}>custom</span>
+                              </div>
+                              <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                                <button
+                                  onClick={() => setVisibleBrandsAdmin(prev =>
+                                    prev.includes(brand.id) ? prev.filter(id => id !== brand.id) : [...prev, brand.id]
+                                  )}
+                                  style={{ position:'relative', width:44, height:24, borderRadius:12, border:'none', cursor:'pointer', transition:'background 0.25s', flexShrink:0, background: visible ? '#c8ff00' : 'rgba(255,255,255,0.12)' }}
+                                >
+                                  <span style={{ position:'absolute', top:2, left: visible ? 22 : 2, width:20, height:20, borderRadius:'50%', background: visible ? '#0a0a0a' : '#6a6a6a', transition:'left 0.25s, background 0.25s' }} />
+                                </button>
+                                <button
+                                  onClick={() => removeCustomBrand(brand.id)}
+                                  title="Remover marca"
+                                  style={{ width:28, height:28, borderRadius:8, border:'1px solid rgba(255,77,77,0.2)', background:'rgba(255,77,77,0.06)', color:'#ff4d4d', cursor:'pointer', fontSize:14, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
