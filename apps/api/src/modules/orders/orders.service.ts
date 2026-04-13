@@ -97,7 +97,7 @@ export class OrdersService {
         email: dto.customerEmail,
         address: `${dto.address}, ${dto.city}`,
       }),
-      this.googleSheetsService.appendOrderRow(order),
+      this.googleSheetsService.appendOrderRow({ ...order, paymentMethod: 'mp' }),
     ]);
 
     if (customerResult.status === 'rejected') {
@@ -146,7 +146,7 @@ export class OrdersService {
         email: dto.customerEmail,
         address: `${dto.address}, ${dto.city}`,
       }),
-      this.googleSheetsService.appendOrderRow(order),
+      this.googleSheetsService.appendOrderRow({ ...order, paymentMethod: 'cielo' }),
     ]);
 
     if (customerResult.status === 'rejected') {

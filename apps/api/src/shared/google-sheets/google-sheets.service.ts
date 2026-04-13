@@ -105,7 +105,7 @@ export class GoogleSheetsService implements OnModuleInit {
     subtotal: number;
     shippingCost: number;
     total: number;
-    mpPaymentId?: string | null;
+    paymentMethod?: 'mp' | 'cielo';
   }): Promise<void> {
     if (!this.sheets || !this.spreadsheetId) return;
 
@@ -120,9 +120,9 @@ export class GoogleSheetsService implements OnModuleInit {
         .map((i) => `${i.quantity}x ${i.productName}`)
         .join(', ');
 
-      const metodoPagamento = order.mpPaymentId === undefined || order.mpPaymentId === null
-        ? 'Cielo (Cartão)'
-        : 'Mercado Pago (PIX)';
+      const metodoPagamento = order.paymentMethod === 'mp'
+        ? 'Mercado Pago (PIX)'
+        : 'Cielo (Cartão)';
 
       const row = [
         order.orderNumber,                                   // A  Nº Pedido
