@@ -127,7 +127,12 @@ export default function CatalogClient() {
 
   const count = getCartCount(cart);
 
-  if (storeStatus && !storeStatus.isOpen) {
+  // Enquanto status da loja carrega, mostra tela preta simples (evita flash do age gate)
+  if (storeStatus === null) {
+    return <div style={{ minHeight: '100vh', background: '#080808' }} />;
+  }
+
+  if (!storeStatus.isOpen) {
     return (
       <div style={{
         minHeight: '100vh', background: '#080808',
@@ -135,15 +140,15 @@ export default function CatalogClient() {
         fontFamily: 'Satoshi, sans-serif', padding: '24px',
       }}>
         <div style={{
-          textAlign: 'center', maxWidth: 480,
-          background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',
+          textAlign: 'center', maxWidth: 480, width: '100%',
+          background: '#161616', border: '1px solid rgba(255,255,255,0.12)',
           borderRadius: 24, padding: '48px 40px',
         }}>
-          <div style={{ fontSize: 56, marginBottom: 24 }}>🔒</div>
-          <div style={{ fontSize: 22, fontWeight: 800, color: '#fff', marginBottom: 16, letterSpacing: -0.5 }}>
+          <div style={{ fontSize: 56, marginBottom: 24, lineHeight: 1 }}>🔒</div>
+          <div style={{ fontSize: 22, fontWeight: 800, color: '#ffffff', marginBottom: 16, letterSpacing: -0.5 }}>
             Loja Fechada
           </div>
-          <div style={{ fontSize: 15, color: '#8a8a8a', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+          <div style={{ fontSize: 15, color: '#9a9a9a', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
             {storeStatus.closedMessage}
           </div>
         </div>
