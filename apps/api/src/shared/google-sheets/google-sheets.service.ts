@@ -109,7 +109,10 @@ export class GoogleSheetsService implements OnModuleInit {
   }
 
   async updateOrderStatus(orderNumber: string, status: string): Promise<void> {
-    if (!this.sheets || !this.spreadsheetId) return;
+    if (!this.sheets || !this.spreadsheetId) {
+      this.logger.warn('[Sheets] updateOrderStatus skipped — not configured.');
+      return;
+    }
 
     const statusMap: Record<string, string> = {
       PENDING: 'PENDENTE',
@@ -121,32 +124,34 @@ export class GoogleSheetsService implements OnModuleInit {
     };
     const statusLabel = statusMap[status] ?? status;
 
-    try {
-      // Find the row that matches the orderNumber in column A
-      const response = await this.sheets.spreadsheets.values.get({
-        spreadsheetId: this.spreadsheetId,
-        range: 'A:A',
-      });
+    this.logger.log(`[Sheets] Looking for order ${orderNumber} to update status → ${statusLabel}`);
 
-      const rows = response.data.values ?? [];
-      const rowIndex = rows.findIndex((r) => r[0] === orderNumber);
-      if (rowIndex === -1) {
-        this.logger.warn(`Order ${orderNumber} not found in Google Sheets — skipping status sync.`);
-        return;
-      }
+    // Find the row that matches the orderNumber in column A
+    const response = await this.sheets.spreadsheets.values.get({
+      spreadsheetId: this.spreadsheetId,
+      range: 'A:A',
+    });
 
-      // Rows are 1-indexed in Sheets API; column K = index 11
-      const sheetRow = rowIndex + 1;
-      await this.sheets.spreadsheets.values.update({
-        spreadsheetId: this.spreadsheetId,
-        range: `K${sheetRow}`,
-        valueInputOption: 'USER_ENTERED',
-        requestBody: { values: [[statusLabel]] },
-      });
+    const rows = response.data.values ?? [];
+    this.logger.log(`[Sheets] Total rows in column A: ${rows.length}`);
 
-      this.logger.log(`Order ${orderNumber} status updated to "${statusLabel}" in Google Sheets.`);
-    } catch (err) {
-      this.logger.error('Failed to update order status in Google Sheets:', err);
+    const rowIndex = rows.findIndex((r) => r[0] === orderNumber);
+    if (rowIndex === -1) {
+      this.logger.warn(`[Sheets] Order ${orderNumber} not found in column A — skipping status sync.`);
+      return;
     }
+
+    // Rows are 1-indexed in Sheets API; column K = 11
+    const sheetRow = rowIndex + 1;
+    this.logger.log(`[Sheets] Found at row ${sheetRow}. Updating K${sheetRow} → ${statusLabel}`);
+
+    await this.sheets.spreadsheets.values.update({
+      spreadsheetId: this.spreadsheetId,
+      range: `K${sheetRow}`,
+      valueInputOption: 'USER_ENTERED',
+      requestBody: { values: [[statusLabel]] },
+    });
+
+    this.logger.log(`[Sheets] Order ${orderNumber} status updated to "${statusLabel}" successfully.`);
   }
 }

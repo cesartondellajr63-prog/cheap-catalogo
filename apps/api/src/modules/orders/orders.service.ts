@@ -225,9 +225,8 @@ export class OrdersService {
     });
 
     const orderData = (docSnap.data() as any);
-    Promise.allSettled([
-      this.googleSheetsService.updateOrderStatus(orderData.orderNumber, status),
-    ]).catch(() => {});
+    this.googleSheetsService.updateOrderStatus(orderData.orderNumber, status)
+      .catch((err) => this.logger.error(`[Sheets] Failed to update status for ${orderData.orderNumber}:`, err));
 
     const updated = await docRef.get();
     return { id, ...updated.data() };
