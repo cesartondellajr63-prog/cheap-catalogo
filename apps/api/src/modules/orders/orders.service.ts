@@ -224,6 +224,11 @@ export class OrdersService {
       createdAt: now,
     });
 
+    const orderData = (docSnap.data() as any);
+    Promise.allSettled([
+      this.googleSheetsService.updateOrderStatus(orderData.orderNumber, status),
+    ]).catch(() => {});
+
     const updated = await docRef.get();
     return { id, ...updated.data() };
   }

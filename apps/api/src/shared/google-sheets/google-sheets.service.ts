@@ -107,4 +107,46 @@ export class GoogleSheetsService implements OnModuleInit {
       this.logger.error('Failed to append row to Google Sheets:', err);
     }
   }
+
+  async updateOrderStatus(orderNumber: string, status: string): Promise<void> {
+    if (!this.sheets || !this.spreadsheetId) return;
+
+    const statusMap: Record<string, string> = {
+      PENDING: 'PENDENTE',
+      PAID: 'PAGO',
+      SHIPPED: 'ENVIADO',
+      DELIVERED: 'ENTREGUE',
+      CANCELLED: 'CANCELADO',
+      REFUNDED: 'REEMBOLSADO',
+    };
+    const statusLabel = statusMap[status] ?? status;
+
+    try {
+      // Find the row that matches the orderNumber in column A
+      const response = await this.sheets.spreadsheets.values.get({
+        spreadsheetId: this.spreadsheetId,
+        range: 'A:A',
+      });
+
+      const rows = response.data.values ?? [];
+      const rowIndex = rows.findIndex((r) => r[0] === orderNumber);
+      if (rowIndex === -1) {
+        this.logger.warn(`Order ${orderNumber} not found in Google Sheets — skipping status sync.`);
+        return;
+      }
+
+      // Rows are 1-indexed in Sheets API; column K = index 11
+      const sheetRow = rowIndex + 1;
+      await this.sheets.spreadsheets.values.update({
+        spreadsheetId: this.spreadsheetId,
+        range: `K${sheetRow}`,
+        valueInputOption: 'USER_ENTERED',
+        requestBody: { values: [[statusLabel]] },
+      });
+
+      this.logger.log(`Order ${orderNumber} status updated to "${statusLabel}" in Google Sheets.`);
+    } catch (err) {
+      this.logger.error('Failed to update order status in Google Sheets:', err);
+    }
+  }
 }
