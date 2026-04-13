@@ -2,6 +2,30 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { google, sheets_v4 } from 'googleapis';
 
+// Column layout (1-indexed):
+// A=1  Nº Pedido
+// B=2  Data/Hora
+// C=3  Nome
+// D=4  WhatsApp
+// E=5  Endereço
+// F=6  Produtos + Sabores
+// G=7  Valor Produtos (R$)
+// H=8  Frete (R$)
+// I=9  Total (R$)
+// J=10 Método de Pagamento
+// K=11 Pagamento
+// L=12 Motoboy
+// M=13 Frete (status)
+
+const COL_PAGAMENTO  = 'K';
+const COL_MOTOBOY    = 'L';
+const COL_FRETE      = 'M';
+
+/** Remove leading emoji + space, e.g. "🛵 Lala Move" → "Lala Move" */
+function stripEmoji(value: string): string {
+  return value.replace(/^[\p{Emoji_Presentation}\p{Extended_Pictographic}]+\s*/u, '').trim();
+}
+
 @Injectable()
 export class GoogleSheetsService implements OnModuleInit {
   private readonly logger = new Logger(GoogleSheetsService.name);
@@ -46,6 +70,30 @@ export class GoogleSheetsService implements OnModuleInit {
     this.logger.log('Google Sheets sync enabled.');
   }
 
+  // ─── Internal helpers ────────────────────────────────────────────────────────
+
+  /** Returns the 1-indexed sheet row for the given orderNumber, or -1 if not found. */
+  private async findOrderRow(orderNumber: string): Promise<number> {
+    const response = await this.sheets!.spreadsheets.values.get({
+      spreadsheetId: this.spreadsheetId!,
+      range: 'A:A',
+    });
+    const rows = response.data.values ?? [];
+    const idx = rows.findIndex((r) => r[0] === orderNumber);
+    return idx === -1 ? -1 : idx + 1;
+  }
+
+  private async updateCell(col: string, row: number, value: string): Promise<void> {
+    await this.sheets!.spreadsheets.values.update({
+      spreadsheetId: this.spreadsheetId!,
+      range: `${col}${row}`,
+      valueInputOption: 'USER_ENTERED',
+      requestBody: { values: [[value]] },
+    });
+  }
+
+  // ─── Public API ──────────────────────────────────────────────────────────────
+
   async appendOrderRow(order: {
     orderNumber: string;
     createdAt: number;
@@ -77,18 +125,19 @@ export class GoogleSheetsService implements OnModuleInit {
         : 'Mercado Pago (PIX)';
 
       const row = [
-        order.orderNumber,           // Nº Pedido
-        dataHora,                    // Data/Hora
-        order.customerName,          // Nome
-        order.customerPhone,         // WhatsApp
-        `${order.address}, ${order.city}`, // Endereço
-        produtos,                    // Produtos + Sabores
-        order.subtotal.toFixed(2).replace('.', ','),    // Valor Produtos (R$)
-        order.shippingCost.toFixed(2).replace('.', ','), // Frete (R$)
-        order.total.toFixed(2).replace('.', ','),        // Total (R$)
-        metodoPagamento,             // Método de Pagamento
-        'PENDENTE',                  // Pagamento (status inicial)
-        'Pendente',                  // Frete (status inicial)
+        order.orderNumber,                                   // A  Nº Pedido
+        dataHora,                                            // B  Data/Hora
+        order.customerName,                                  // C  Nome
+        order.customerPhone,                                 // D  WhatsApp
+        `${order.address}, ${order.city}`,                   // E  Endereço
+        produtos,                                            // F  Produtos + Sabores
+        order.subtotal.toFixed(2).replace('.', ','),         // G  Valor Produtos (R$)
+        order.shippingCost.toFixed(2).replace('.', ','),     // H  Frete (R$)
+        order.total.toFixed(2).replace('.', ','),            // I  Total (R$)
+        metodoPagamento,                                     // J  Método de Pagamento
+        'PENDENTE',                                          // K  Pagamento
+        'Pendente',                                          // L  Motoboy
+        'Pendente',                                          // M  Frete (status)
       ];
 
       await this.sheets.spreadsheets.values.append({
@@ -96,23 +145,17 @@ export class GoogleSheetsService implements OnModuleInit {
         range: 'A1',
         valueInputOption: 'USER_ENTERED',
         insertDataOption: 'INSERT_ROWS',
-        requestBody: {
-          values: [row],
-        },
+        requestBody: { values: [row] },
       });
 
       this.logger.log(`Order ${order.orderNumber} appended to Google Sheets.`);
     } catch (err) {
-      // Never block the order creation if Sheets fails
       this.logger.error('Failed to append row to Google Sheets:', err);
     }
   }
 
   async updateOrderStatus(orderNumber: string, status: string): Promise<void> {
-    if (!this.sheets || !this.spreadsheetId) {
-      this.logger.warn('[Sheets] updateOrderStatus skipped — not configured.');
-      return;
-    }
+    if (!this.sheets || !this.spreadsheetId) return;
 
     const statusMap: Record<string, string> = {
       PENDING: 'PENDENTE',
@@ -122,36 +165,43 @@ export class GoogleSheetsService implements OnModuleInit {
       CANCELLED: 'CANCELADO',
       REFUNDED: 'REEMBOLSADO',
     };
-    const statusLabel = statusMap[status] ?? status;
+    const label = statusMap[status] ?? status;
 
-    console.log(`[Sheets] Looking for order ${orderNumber} to update status → ${statusLabel}`);
-
-    // Find the row that matches the orderNumber in column A
-    const response = await this.sheets.spreadsheets.values.get({
-      spreadsheetId: this.spreadsheetId,
-      range: 'A:A',
-    });
-
-    const rows = response.data.values ?? [];
-    console.log(`[Sheets] Total rows in column A: ${rows.length}`);
-
-    const rowIndex = rows.findIndex((r) => r[0] === orderNumber);
-    if (rowIndex === -1) {
-      console.warn(`[Sheets] Order ${orderNumber} not found in column A — skipping status sync.`);
+    console.log(`[Sheets] updateOrderStatus ${orderNumber} → ${label}`);
+    const row = await this.findOrderRow(orderNumber);
+    if (row === -1) {
+      console.warn(`[Sheets] Order ${orderNumber} not found — skipping.`);
       return;
     }
+    await this.updateCell(COL_PAGAMENTO, row, label);
+    console.log(`[Sheets] K${row} updated to "${label}".`);
+  }
 
-    // Rows are 1-indexed in Sheets API; column K = 11
-    const sheetRow = rowIndex + 1;
-    console.log(`[Sheets] Found at row ${sheetRow}. Updating K${sheetRow} → ${statusLabel}`);
+  async updateOrderMotoboy(orderNumber: string, motoboy: string): Promise<void> {
+    if (!this.sheets || !this.spreadsheetId) return;
 
-    await this.sheets.spreadsheets.values.update({
-      spreadsheetId: this.spreadsheetId,
-      range: `K${sheetRow}`,
-      valueInputOption: 'USER_ENTERED',
-      requestBody: { values: [[statusLabel]] },
-    });
+    const label = stripEmoji(motoboy);
+    console.log(`[Sheets] updateOrderMotoboy ${orderNumber} → ${label}`);
+    const row = await this.findOrderRow(orderNumber);
+    if (row === -1) {
+      console.warn(`[Sheets] Order ${orderNumber} not found — skipping.`);
+      return;
+    }
+    await this.updateCell(COL_MOTOBOY, row, label);
+    console.log(`[Sheets] L${row} updated to "${label}".`);
+  }
 
-    console.log(`[Sheets] Order ${orderNumber} status updated to "${statusLabel}" successfully.`);
+  async updateOrderShippingStatus(orderNumber: string, shippingStatus: string): Promise<void> {
+    if (!this.sheets || !this.spreadsheetId) return;
+
+    const label = stripEmoji(shippingStatus);
+    console.log(`[Sheets] updateOrderShippingStatus ${orderNumber} → ${label}`);
+    const row = await this.findOrderRow(orderNumber);
+    if (row === -1) {
+      console.warn(`[Sheets] Order ${orderNumber} not found — skipping.`);
+      return;
+    }
+    await this.updateCell(COL_FRETE, row, label);
+    console.log(`[Sheets] M${row} updated to "${label}".`);
   }
 }

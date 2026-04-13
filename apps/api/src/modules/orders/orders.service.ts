@@ -239,6 +239,9 @@ export class OrdersService {
     const docSnap = await docRef.get();
     if (!docSnap.exists) throw new NotFoundException(`Order with id "${id}" not found.`);
     await docRef.update({ shippingStatus, updatedAt: Date.now() });
+    const orderNumber = (docSnap.data() as any).orderNumber;
+    this.googleSheetsService.updateOrderShippingStatus(orderNumber, shippingStatus)
+      .catch((err) => console.error(`[Sheets] Failed to update shippingStatus for ${orderNumber}:`, err));
     const updated = await docRef.get();
     return { id, ...updated.data() };
   }
@@ -257,6 +260,9 @@ export class OrdersService {
     const docSnap = await docRef.get();
     if (!docSnap.exists) throw new NotFoundException(`Order with id "${id}" not found.`);
     await docRef.update({ motoboy, updatedAt: Date.now() });
+    const orderNumber = (docSnap.data() as any).orderNumber;
+    this.googleSheetsService.updateOrderMotoboy(orderNumber, motoboy)
+      .catch((err) => console.error(`[Sheets] Failed to update motoboy for ${orderNumber}:`, err));
     const updated = await docRef.get();
     return { id, ...updated.data() };
   }
