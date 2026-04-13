@@ -195,6 +195,7 @@ export class OrdersService {
   }
 
   async updateStatus(id: string, status: string, actorId?: string): Promise<any> {
+    console.log(`[DEBUG] updateStatus called — id=${id} status=${status}`);
     if (!VALID_STATUSES.includes(status)) {
       throw new BadRequestException(
         `Invalid status "${status}". Must be one of: ${VALID_STATUSES.join(', ')}.`,
