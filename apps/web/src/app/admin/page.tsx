@@ -160,7 +160,8 @@ export default function AdminDashboard() {
   const [cSearch, setCSearch] = useState('');
 
   // Funcionamento da loja
-  const [storeIsOpen, setStoreIsOpen] = useState(true);
+  const [storeIsOpen, setStoreIsOpen] = useState(true);       // estado salvo (badge)
+  const [storeIsOpenDraft, setStoreIsOpenDraft] = useState(true); // estado do toggle (antes de salvar)
   const [storeMessage, setStoreMessage] = useState('Loja temporariamente fechada. Voltamos em breve!');
   const [storeLoading, setStoreLoading] = useState(false);
   const [storeSaving, setStoreSaving] = useState(false);
@@ -321,7 +322,7 @@ export default function AdminDashboard() {
     if (page !== 'loja') return;
     setStoreLoading(true);
     apiFetch<{ isOpen: boolean; closedMessage: string }>('/config/store')
-      .then(s => { setStoreIsOpen(s.isOpen); setStoreMessage(s.closedMessage); })
+      .then(s => { setStoreIsOpen(s.isOpen); setStoreIsOpenDraft(s.isOpen); setStoreMessage(s.closedMessage); })
       .catch(() => {})
       .finally(() => setStoreLoading(false));
   }, [page]);
@@ -332,14 +333,15 @@ export default function AdminDashboard() {
       await apiFetch<any>('/config/store', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isOpen: storeIsOpen, closedMessage: storeMessage }),
+        body: JSON.stringify({ isOpen: storeIsOpenDraft, closedMessage: storeMessage }),
       });
+      setStoreIsOpen(storeIsOpenDraft); // só atualiza o badge após salvar com sucesso
     } catch (e) {
       alert('Erro ao salvar: ' + (e instanceof Error ? e.message : 'desconhecido'));
     } finally {
       setStoreSaving(false);
     }
-  }, [storeIsOpen, storeMessage]);
+  }, [storeIsOpenDraft, storeMessage]);
 
   const updateTrackingLink = useCallback(async (id: string, trackingLink: string) => {
     setOrders(list => list.map(o => o.id === id ? { ...o, trackingLink } as any : o));
@@ -1049,21 +1051,21 @@ export default function AdminDashboard() {
                       <div>
                         <div style={{ fontSize:15,fontWeight:700,color:'#fff',marginBottom:4 }}>Status da loja</div>
                         <div style={{ fontSize:13,color:'#8a8a8a' }}>
-                          {storeIsOpen ? 'Loja aberta — clientes podem comprar normalmente.' : 'Loja fechada — nenhuma compra pode ser realizada.'}
+                          {storeIsOpenDraft ? 'Loja aberta — clientes podem comprar normalmente.' : 'Loja fechada — nenhuma compra pode ser realizada.'}
                         </div>
                       </div>
                       <button
-                        onClick={() => setStoreIsOpen(v => !v)}
+                        onClick={() => setStoreIsOpenDraft(v => !v)}
                         style={{
                           position:'relative', width:56, height:30, borderRadius:15,
                           border:'none', cursor:'pointer', transition:'background 0.25s', flexShrink:0,
-                          background: storeIsOpen ? '#c8ff00' : 'rgba(255,255,255,0.12)',
+                          background: storeIsOpenDraft ? '#c8ff00' : 'rgba(255,255,255,0.12)',
                         }}
                       >
                         <span style={{
-                          position:'absolute', top:3, left: storeIsOpen ? 28 : 3,
+                          position:'absolute', top:3, left: storeIsOpenDraft ? 28 : 3,
                           width:24, height:24, borderRadius:'50%',
-                          background: storeIsOpen ? '#0a0a0a' : '#6a6a6a',
+                          background: storeIsOpenDraft ? '#0a0a0a' : '#6a6a6a',
                           transition:'left 0.25s, background 0.25s',
                         }} />
                       </button>
