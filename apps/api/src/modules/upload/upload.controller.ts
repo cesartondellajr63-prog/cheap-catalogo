@@ -17,7 +17,7 @@ export class UploadController {
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(FileInterceptor('file'))
   async uploadImage(
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFile() file: { originalname: string; mimetype: string; buffer: Buffer },
   ): Promise<{ url: string }> {
     return this.uploadService.uploadImage(file);
   }
