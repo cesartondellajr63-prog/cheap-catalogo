@@ -835,23 +835,31 @@ export default function AdminDashboard() {
               <div style={{ fontSize:15,fontWeight:700,color:'#fff',letterSpacing:-0.3 }}>
                 Pedidos <span style={{ color:'#6a6a6a',fontWeight:400 }}>/ Lista Completa</span>
               </div>
-              <div style={{ flex:1,display:'flex',justifyContent:'center',maxWidth:400,margin:'0 auto' }}>
-                <div style={{ display:'flex',alignItems:'center',gap:10,flex:1,background:'rgba(255,255,255,0.04)',border:'1px solid rgba(255,255,255,0.12)',borderRadius:12,padding:'9px 16px' }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6a6a6a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                  <input value={pSearch} onChange={e => setPSearch(e.target.value)} placeholder="Buscar por nome, produto, nº pedido..." style={{ background:'transparent',border:'none',outline:'none',fontFamily:'Satoshi,sans-serif',fontSize:13,color:'#fff',width:'100%' }} />
+              {!isMobile && (
+                <div style={{ flex:1,display:'flex',justifyContent:'center',maxWidth:400,margin:'0 auto' }}>
+                  <div style={{ display:'flex',alignItems:'center',gap:10,flex:1,background:'rgba(255,255,255,0.04)',border:'1px solid rgba(255,255,255,0.12)',borderRadius:12,padding:'9px 16px' }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6a6a6a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                    <input value={pSearch} onChange={e => setPSearch(e.target.value)} placeholder="Buscar por nome, produto, nº pedido..." style={{ background:'transparent',border:'none',outline:'none',fontFamily:'Satoshi,sans-serif',fontSize:13,color:'#fff',width:'100%' }} />
+                  </div>
                 </div>
-              </div>
+              )}
               <button className="admin-btn-refresh" onClick={() => loadOrders()}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/>
                   <path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/>
                 </svg>
-                Atualizar
+                {!isMobile && 'Atualizar'}
               </button>
-
             </header>
 
             <div style={{ padding: isMobile ? '16px' : '28px 32px', flex:1 }}>
+              {isMobile && (
+                <div style={{ display:'flex',alignItems:'center',gap:10,background:'rgba(255,255,255,0.04)',border:'1px solid rgba(255,255,255,0.12)',borderRadius:12,padding:'10px 14px',marginBottom:12 }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6a6a6a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                  <input value={pSearch} onChange={e => setPSearch(e.target.value)} placeholder="Buscar pedido, nome..." style={{ background:'transparent',border:'none',outline:'none',fontFamily:'Satoshi,sans-serif',fontSize:13,color:'#fff',width:'100%' }} />
+                  {pSearch && <button onClick={() => setPSearch('')} style={{ background:'none',border:'none',color:'#6a6a6a',fontSize:16,cursor:'pointer',padding:0,lineHeight:1,flexShrink:0 }}>×</button>}
+                </div>
+              )}
               <OrdersTable
                 orders={filterPedidos(orders, pFiltro, pSearch)}
                 loading={loading}
