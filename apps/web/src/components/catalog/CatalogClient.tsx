@@ -190,23 +190,9 @@ export default function CatalogClient() {
                 : <div className="header-badge"><span className="badge-dot"></span> Online agora</div>
               }
               {count > 0 && !(storeStatus && !storeStatus.isOpen) && (
-                <button
-                  onClick={() => setCheckoutOpen(true)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '8px',
-                    background: 'var(--surface)', border: '1px solid var(--border)',
-                    borderRadius: '99px', padding: '8px 18px',
-                    fontFamily: 'var(--font-inter),Inter,sans-serif',
-                    fontSize: '13px', fontWeight: 600, color: '#fff',
-                    cursor: 'pointer', transition: 'all 0.2s', whiteSpace: 'nowrap',
-                  }}
-                >
+                <button className="header-cart-btn" onClick={() => setCheckoutOpen(true)}>
                   🛒 Carrinho
-                  <span style={{
-                    background: 'var(--accent)', color: '#000', borderRadius: '99px',
-                    padding: '2px 10px', fontSize: '13px', fontWeight: 800,
-                    fontFamily: 'var(--font-syne),Syne,sans-serif',
-                  }}>{count}</span>
+                  <span className="header-cart-count">{count}</span>
                 </button>
               )}
             </div>
