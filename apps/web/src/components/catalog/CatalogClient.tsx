@@ -184,7 +184,7 @@ export default function CatalogClient() {
         <div className="header-inner">
           <div className="header-top">
             <div className="logo">Cheap<span>.</span>Pods</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div className="header-right">
               {storeStatus && !storeStatus.isOpen
                 ? <div className="header-badge" style={{ background:'rgba(255,60,60,0.12)', borderColor:'rgba(255,60,60,0.3)', color:'#ff6060' }}><span className="badge-dot" style={{ background:'#ff4444' }}></span> Loja fechada</div>
                 : <div className="header-badge"><span className="badge-dot"></span> Online agora</div>
