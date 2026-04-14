@@ -151,6 +151,7 @@ export default function AdminDashboard() {
   const filterBtnRef = useRef<HTMLButtonElement>(null);
   const dashFilterBtnRef = useRef<HTMLButtonElement>(null);
   const [filterMenuPos, setFilterMenuPos] = useState({ top: 0, right: 0 });
+  const [filterMenuMobile, setFilterMenuMobile] = useState(false);
   const [pFilterPagamento, setPFilterPagamento] = useState<'pendente' | 'pago' | null>(null);
   const [pFilterMetodo, setPFilterMetodo] = useState<'mp' | 'cielo' | null>(null);
   const [pFilterMotoboy, setPFilterMotoboy] = useState<string | null>(null);
@@ -798,8 +799,12 @@ export default function AdminDashboard() {
                 filterButton={
                   <button ref={dashFilterBtnRef}
                     onClick={() => {
-                      const r = dashFilterBtnRef.current?.getBoundingClientRect();
-                      if (r) setFilterMenuPos({ top: r.bottom + 10, right: window.innerWidth - r.right });
+                      const mobile = window.innerWidth < 600;
+                      setFilterMenuMobile(mobile);
+                      if (!mobile) {
+                        const r = dashFilterBtnRef.current?.getBoundingClientRect();
+                        if (r) setFilterMenuPos({ top: r.bottom + 10, right: window.innerWidth - r.right });
+                      }
                       setFilterMenuOpen(v => !v);
                     }}
                     style={{ display:'flex',alignItems:'center',gap:6,padding:'6px 12px',borderRadius:8,border:'1px solid',fontFamily:'Satoshi,sans-serif',fontSize:12,fontWeight:700,cursor:'pointer',transition:'all 0.2s',
@@ -861,8 +866,12 @@ export default function AdminDashboard() {
                 filterButton={
                   <button ref={filterBtnRef}
                     onClick={() => {
-                      const r = filterBtnRef.current?.getBoundingClientRect();
-                      if (r) setFilterMenuPos({ top: r.bottom + 10, right: window.innerWidth - r.right });
+                      const mobile = window.innerWidth < 600;
+                      setFilterMenuMobile(mobile);
+                      if (!mobile) {
+                        const r = filterBtnRef.current?.getBoundingClientRect();
+                        if (r) setFilterMenuPos({ top: r.bottom + 10, right: window.innerWidth - r.right });
+                      }
                       setFilterMenuOpen(v => !v);
                     }}
                     style={{ display:'flex',alignItems:'center',gap:6,padding:'6px 12px',borderRadius:8,border:'1px solid',fontFamily:'Satoshi,sans-serif',fontSize:12,fontWeight:700,cursor:'pointer',transition:'all 0.2s',
@@ -1347,8 +1356,28 @@ export default function AdminDashboard() {
       {/* ── Filter Menu Portal ── */}
       {filterMenuOpen && typeof document !== 'undefined' && createPortal(
         <>
-          <div onClick={() => setFilterMenuOpen(false)} style={{ position:'fixed',inset:0,zIndex:199 }} />
-          <div style={{ position:'fixed',top:filterMenuPos.top,right:filterMenuPos.right,zIndex:200,background:'#141414',border:'1px solid rgba(255,255,255,0.12)',borderRadius:16,padding:20,minWidth:280,boxShadow:'0 16px 40px rgba(0,0,0,0.6)' }}>
+          <div onClick={() => setFilterMenuOpen(false)} style={{ position:'fixed',inset:0,zIndex:199,background: filterMenuMobile ? 'rgba(0,0,0,0.5)' : 'transparent' }} />
+          <div style={filterMenuMobile ? {
+            position:'fixed', bottom:0, left:0, right:0, zIndex:200,
+            background:'#141414', border:'1px solid rgba(255,255,255,0.12)',
+            borderRadius:'20px 20px 0 0', padding:'20px 20px 32px',
+            boxShadow:'0 -8px 40px rgba(0,0,0,0.6)',
+            maxHeight:'80vh', overflowY:'auto',
+          } : {
+            position:'fixed', top:filterMenuPos.top, right:filterMenuPos.right, zIndex:200,
+            background:'#141414', border:'1px solid rgba(255,255,255,0.12)',
+            borderRadius:16, padding:20, minWidth:280,
+            boxShadow:'0 16px 40px rgba(0,0,0,0.6)',
+            maxHeight:'calc(100vh - 80px)', overflowY:'auto',
+          }}>
+
+            {filterMenuMobile && (
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:18 }}>
+                <div style={{ width:36, height:4, borderRadius:99, background:'rgba(255,255,255,0.15)', margin:'0 auto 0 0' }} />
+                <div style={{ fontSize:13, fontWeight:700, color:'#fff' }}>Filtros</div>
+                <button onClick={() => setFilterMenuOpen(false)} style={{ background:'none', border:'none', color:'#6a6a6a', fontSize:20, cursor:'pointer', lineHeight:1, padding:0 }}>×</button>
+              </div>
+            )}
 
             <div style={{ marginBottom:18 }}>
               <div style={{ fontSize:11,fontWeight:700,color:'#6a6a6a',letterSpacing:0.8,textTransform:'uppercase',marginBottom:8 }}>Pagamento</div>
