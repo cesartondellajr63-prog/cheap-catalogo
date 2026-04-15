@@ -11,7 +11,7 @@ interface CheckoutModalProps {
   onUpdateCart: (newCart: CartItem[]) => void;
 }
 
-type Step = 1 | 2 | 3 | 4;
+type Step = 1 | 2 | 3 | 4 | 5;
 
 function maskTel(v: string) {
   v = v.replace(/\D/g, '');
@@ -54,14 +54,17 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
   const [freteExpired, setFreteExpired] = useState(false);
   const [freteExpiresAt, setFreteExpiresAt] = useState<number | null>(null);
 
-  // Step 4
+  // Step 4 — Garantia
+  const [termosAceitos, setTermosAceitos] = useState(false);
+
+  // Step 5
   const [pagLoading, setPagLoading] = useState(false);
   const [cardLoading, setCardLoading] = useState(false);
   const [pagError, setPagError] = useState('');
 
-  // Volta ao step 3 automaticamente se o frete expirar no step 4
+  // Volta ao step 3 automaticamente se o frete expirar no step 4 ou 5
   useEffect(() => {
-    if (freteExpired && step === 4) {
+    if (freteExpired && (step === 4 || step === 5)) {
       setStep(3);
     }
   }, [freteExpired, step]);
@@ -330,13 +333,13 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
 
         {/* Stepper */}
         <div className="stepper">
-          {[1, 2, 3, 4].map((n, i) => (
+          {[1, 2, 3, 4, 5].map((n, i) => (
             <React.Fragment key={n}>
               <div className={`step ${stepLabel(n)}`}>
                 <div className="step-circle">{step > n ? '✓' : n}</div>
-                <div className="step-label">{['Pedido', 'Seus dados', 'Entrega', 'Pagamento'][i]}</div>
+                <div className="step-label">{['Pedido', 'Seus dados', 'Entrega', 'Garantia', 'Pagamento'][i]}</div>
               </div>
-              {i < 3 && <div className={`step-line${step > n ? ' done' : ''}`}></div>}
+              {i < 4 && <div className={`step-line${step > n ? ' done' : ''}`}></div>}
             </React.Fragment>
           ))}
         </div>
@@ -538,15 +541,57 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
                   }
                 </button>
               ) : (
-                <button className="btn-primary" onClick={() => goToStep(4)}>Confirmar e ir para pagamento →</button>
+                <button className="btn-primary" onClick={() => goToStep(4)}>Confirmar endereço →</button>
               )}
               <button className="btn-secondary" onClick={() => goToStep(2)}>← Voltar aos dados</button>
             </div>
           </>
         )}
 
-        {/* Step 4: Payment */}
+        {/* Step 4: Garantia */}
         {step === 4 && (
+          <>
+            <h2>Garantia</h2>
+            <div style={{
+              background: 'var(--surface2)',
+              border: '1px solid var(--border)',
+              borderRadius: 12,
+              padding: '16px 18px',
+              marginBottom: 20,
+              color: 'var(--fg)',
+              fontSize: '0.92rem',
+              lineHeight: 1.6,
+            }}>
+              <strong style={{ display: 'block', marginBottom: 10, color: '#fff' }}>Leia com atenção antes de continuar:</strong>
+              Lembre-se: pods são produtos consumíveis. Por esse motivo, não conseguimos oferecer uma garantia abrangente. O prazo de garantia é de <strong style={{ color: 'var(--accent)' }}>4 dias</strong>. Ao concluir a compra, você estará ciente e de acordo com essas condições.
+            </div>
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: 12, cursor: 'pointer', marginBottom: 20 }}>
+              <input
+                type="checkbox"
+                checked={termosAceitos}
+                onChange={e => setTermosAceitos(e.target.checked)}
+                style={{ marginTop: 3, accentColor: 'var(--accent)', width: 18, height: 18, flexShrink: 0, cursor: 'pointer' }}
+              />
+              <span style={{ color: 'var(--muted)', fontSize: '0.88rem', lineHeight: 1.5 }}>
+                Li e estou ciente das condições de garantia descritas acima.
+              </span>
+            </label>
+            <div className="modal-actions">
+              <button
+                className="btn-primary"
+                onClick={() => goToStep(5)}
+                disabled={!termosAceitos}
+                style={{ opacity: termosAceitos ? 1 : 0.4 }}
+              >
+                Ir para pagamento →
+              </button>
+              <button className="btn-secondary" onClick={() => goToStep(3)}>← Voltar à entrega</button>
+            </div>
+          </>
+        )}
+
+        {/* Step 5: Payment */}
+        {step === 5 && (
           <>
             <h2>Pagamento</h2>
             <div className="payment-summary">
@@ -609,7 +654,7 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
                   </button>
                 </>
               )}
-              <button className="btn-secondary" onClick={() => goToStep(3)}>← Voltar à entrega</button>
+              <button className="btn-secondary" onClick={() => goToStep(4)}>← Voltar</button>
             </div>
           </>
         )}
