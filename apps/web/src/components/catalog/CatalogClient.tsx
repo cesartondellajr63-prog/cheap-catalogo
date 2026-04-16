@@ -17,6 +17,7 @@ function toDisplay(p: Product) {
     price: p.basePrice,
     flavors: (p.variants ?? []).filter(v => v.active !== false).map(v => v.name),
     image: (p.images ?? [])[0] ?? '',
+    description: p.description ?? '',
   };
 }
 type DisplayProduct = ReturnType<typeof toDisplay>;
@@ -444,6 +445,9 @@ export default function CatalogClient() {
                         </div>
                         <div className="model-body">
                           <div className="model-name">{p.model}</div>
+                          {p.description && (
+                            <div className="model-description">{p.description}</div>
+                          )}
                           <div className="model-flavors">{p.flavors.length} sabor{p.flavors.length > 1 ? 'es' : ''}</div>
                           <div className="model-price">{fmtBRLFromDecimal(p.price)}</div>
                           <div className="model-cta">

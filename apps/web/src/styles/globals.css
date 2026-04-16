@@ -99,6 +99,7 @@ header::after{content:'';position:absolute;bottom:-80px;right:-60px;width:260px;
 .dual-tag{position:absolute;bottom:8px;right:8px;z-index:2;background:rgba(126,255,245,0.15);border:1px solid rgba(126,255,245,0.3);border-radius:99px;padding:3px 7px;font-size:8px;font-weight:700;color:var(--accent2);letter-spacing:0.5px;text-transform:uppercase;}
 .model-body{padding:clamp(10px,1.5vw,14px);}
 .model-name{font-family:var(--font-syne),'Syne',sans-serif;font-size:clamp(12px,1.6vw,14px);font-weight:700;color:#fff;line-height:1.3;}
+.model-description{font-size:clamp(10px,1.2vw,11px);color:var(--muted);margin-top:4px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
 .model-flavors{font-size:clamp(10px,1.2vw,11px);color:var(--muted);margin-top:2px;}
 .model-price{font-family:var(--font-syne),'Syne',sans-serif;font-size:clamp(15px,2vw,18px);font-weight:800;color:var(--accent);margin-top:6px;letter-spacing:-0.3px;}
 .model-cta{display:flex;align-items:center;justify-content:space-between;margin-top:8px;}
