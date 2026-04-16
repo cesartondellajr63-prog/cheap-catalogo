@@ -1076,7 +1076,22 @@ export default function AdminDashboard() {
                               </span>
                             </td>
                             <td style={{ ...tdMono,color:'#c8ff00',fontWeight:600 }}>R$ {(p.basePrice ?? 0).toFixed(2).replace('.',',')}</td>
-                            <td style={tdMono}>{(p.variants ?? []).length}</td>
+                            <td style={tdMono}>
+                              {(() => {
+                                const all = p.variants ?? [];
+                                const outOfStock = all.filter((v: any) => v.active !== false && (v.stock ?? 1) <= 0);
+                                return (
+                                  <span style={{ display:'flex',alignItems:'center',gap:6 }}>
+                                    <span>{all.length}</span>
+                                    {outOfStock.length > 0 && (
+                                      <span style={{ padding:'2px 8px',borderRadius:6,background:'rgba(255,77,77,0.12)',border:'1px solid rgba(255,77,77,0.35)',color:'#ff4d4d',fontSize:10,fontWeight:700 }} title={`${outOfStock.length} sabor(es) sem estoque`}>
+                                        {outOfStock.length} sem estoque
+                                      </span>
+                                    )}
+                                  </span>
+                                );
+                              })()}
+                            </td>
                             <td style={td}>
                               {p.active
                                 ? <span style={{ padding:'4px 10px',borderRadius:8,background:'rgba(200,255,0,0.1)',border:'1px solid rgba(200,255,0,0.3)',color:'#c8ff00',fontSize:11,fontWeight:700 }}>Ativo</span>
@@ -2310,8 +2325,13 @@ function ProductModal({ mode, product, onSaved, onClose }: {
               <div style={{ padding:'14px',textAlign:'center',fontSize:12,color:'#6a6a6a',background:'rgba(255,255,255,0.02)',borderRadius:10,border:'1px dashed rgba(255,255,255,0.1)' }}>Nenhum sabor ainda. Clique em "+ Adicionar".</div>
             )}
             <div style={{ display:'flex',flexDirection:'column',gap:8 }}>
-              {form.variants.map(v => (
-                <div key={v._key} style={{ display:'flex',flexDirection:'column',gap:6,padding:'10px 12px',background:'rgba(255,255,255,0.03)',borderRadius:10,border:'1px solid rgba(255,255,255,0.07)' }}>
+              {form.variants.map(v => {
+                const isOutOfStock = v.active && parseInt(v.stock) <= 0;
+                return (
+                <div key={v._key} style={{ display:'flex',flexDirection:'column',gap:6,padding:'10px 12px',background: isOutOfStock ? 'rgba(255,77,77,0.06)' : 'rgba(255,255,255,0.03)',borderRadius:10,border: isOutOfStock ? '1px solid rgba(255,77,77,0.4)' : '1px solid rgba(255,255,255,0.07)' }}>
+                  {isOutOfStock && (
+                    <div style={{ fontSize:10,fontWeight:700,color:'#ff4d4d',letterSpacing:0.5 }}>SEM ESTOQUE</div>
+                  )}
                   <div style={{ display:'grid',gridTemplateColumns:'2fr 80px 100px 60px 28px',gap:8,alignItems:'center' }}>
                     <input style={{ ...inp,padding:'6px 10px',fontSize:12 }} value={v.name} onChange={e => updateVariant(v._key,'name',e.target.value)} placeholder="Nome do sabor" />
                     <input style={{ ...inp,padding:'6px 10px',fontSize:12 }} type="number" min="0" value={v.stock} onChange={e => updateVariant(v._key,'stock',e.target.value)} placeholder="Estoque" />
@@ -2369,7 +2389,8 @@ function ProductModal({ mode, product, onSaved, onClose }: {
                     )}
                   </div>
                 </div>
-              ))}
+              );
+              })}
             </div>
           </div>
         </div>

@@ -230,6 +230,17 @@ export class OrdersService {
     this.googleSheetsService.updateOrderStatus(orderData.orderNumber, status)
       .catch((err) => console.error(`[Sheets] Failed to update status for ${orderData.orderNumber}:`, err));
 
+    // Ao marcar como PAGO pela primeira vez, decrementa o estoque de cada variante
+    if (status === 'PAID' && previousStatus !== 'PAID') {
+      const items: any[] = orderData.items ?? [];
+      await Promise.allSettled(
+        items.map(item =>
+          this.productsService.decrementVariantStock(item.productId, item.variantName, item.quantity)
+            .catch(err => this.logger.error(`[Stock] Failed to decrement stock for ${item.productId}/${item.variantName}: ${err}`))
+        )
+      );
+    }
+
     const updated = await docRef.get();
     return { id, ...updated.data() };
   }
@@ -295,6 +306,18 @@ export class OrdersService {
       updatedAt: now,
       ...(!existingData.paidAt ? { paidAt: now } : {}),
     });
+
+    // Decrementa estoque apenas se não estava PAGO antes
+    if (existingData.status !== 'PAID') {
+      const items: any[] = existingData.items ?? [];
+      await Promise.allSettled(
+        items.map(item =>
+          this.productsService.decrementVariantStock(item.productId, item.variantName, item.quantity)
+            .catch(err => this.logger.error(`[Stock] Failed to decrement stock for ${item.productId}/${item.variantName}: ${err}`))
+        )
+      );
+    }
+
     const updated = await docRef.get();
     return { id, ...updated.data() };
   }

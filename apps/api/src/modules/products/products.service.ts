@@ -71,4 +71,28 @@ export class ProductsService {
     await docRef.update({ active: false, updatedAt: Date.now() });
     return { success: true };
   }
+
+  async decrementVariantStock(productSlug: string, variantName: string, quantity: number): Promise<void> {
+    const snapshot = await this.firebaseService.db
+      .collection('products')
+      .where('slug', '==', productSlug)
+      .limit(1)
+      .get();
+
+    if (snapshot.empty) return;
+
+    const doc = snapshot.docs[0];
+    const data = doc.data() as any;
+    const variants: any[] = data.variants ?? [];
+
+    const updated = variants.map(v => {
+      if (v.name === variantName) {
+        const newStock = Math.max(0, (v.stock ?? 0) - quantity);
+        return { ...v, stock: newStock };
+      }
+      return v;
+    });
+
+    await doc.ref.update({ variants: updated, updatedAt: Date.now() });
+  }
 }

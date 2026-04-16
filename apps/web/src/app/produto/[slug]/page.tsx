@@ -30,7 +30,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
     api.products.getBySlug(slug)
       .then(p => {
         setProduct(p);
-        const active = (p.variants ?? []).filter(v => v.active !== false);
+        const active = (p.variants ?? []).filter(v => v.active !== false && (v.stock ?? 1) > 0);
         if (active.length === 1) setSelectedFlavor(active[0].name);
       })
       .catch(() => router.replace('/'))
@@ -54,7 +54,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
   if (!product) return null;
 
   const brand = BRANDS_DATA.find(b => b.id === product.brandId) ?? BRANDS_DATA[0];
-  const activeFlavors = (product.variants ?? []).filter(v => v.active !== false);
+  const activeFlavors = (product.variants ?? []).filter(v => v.active !== false && (v.stock ?? 1) > 0);
   const count = getCartCount(cart);
 
   const selectedVariant = activeFlavors.find(v => v.name === selectedFlavor);
