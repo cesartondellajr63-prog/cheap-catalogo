@@ -522,30 +522,35 @@ export default function AdminDashboard() {
 
   // Ctrl+V com pedidos selecionados → cola o link da área de transferência em todos
   useEffect(() => {
-    const handlePaste = (e: ClipboardEvent) => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!(e.ctrlKey || e.metaKey) || e.key !== 'v') return;
       const target = e.target as HTMLElement;
-      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || (target as HTMLElement).isContentEditable) return;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
       if (selectedIds.size === 0) return;
-      const text = e.clipboardData?.getData('text')?.trim();
-      if (!text) return;
       e.preventDefault();
-      const ids = [...selectedIds];
-      setOrders(list => list.map(o => ids.includes(o.id) ? { ...o, trackingLink: text } as any : o));
-      Promise.all(ids.map(tid =>
-        apiFetch<any>(`/orders/${tid}/tracking`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ trackingLink: text }),
-        })
-      )).then(() => {
-        setPasteTrackingMsg(`✅ Link colado em ${ids.length} pedido${ids.length > 1 ? 's' : ''}`);
-        setTimeout(() => setPasteTrackingMsg(''), 3000);
-      }).catch(err => {
-        alert('Erro ao colar link de rastreio: ' + (err instanceof Error ? err.message : 'desconhecido'));
+      navigator.clipboard.readText().then(text => {
+        text = text.trim();
+        if (!text) return;
+        const ids = [...selectedIds];
+        setOrders(list => list.map(o => ids.includes(o.id) ? { ...o, trackingLink: text } as any : o));
+        Promise.all(ids.map(tid =>
+          apiFetch<any>(`/orders/${tid}/tracking`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ trackingLink: text }),
+          })
+        )).then(() => {
+          setPasteTrackingMsg(`✅ Link colado em ${ids.length} pedido${ids.length > 1 ? 's' : ''}`);
+          setTimeout(() => setPasteTrackingMsg(''), 3000);
+        }).catch(err => {
+          alert('Erro ao colar link de rastreio: ' + (err instanceof Error ? err.message : 'desconhecido'));
+        });
+      }).catch(() => {
+        alert('Não foi possível ler a área de transferência. Verifique as permissões do navegador.');
       });
     };
-    window.addEventListener('paste', handlePaste);
-    return () => window.removeEventListener('paste', handlePaste);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedIds]);
 
   const logout = () => {
