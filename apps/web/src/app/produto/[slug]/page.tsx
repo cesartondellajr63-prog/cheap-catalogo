@@ -129,13 +129,16 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
             </div>
           </div>
           {product.description && (
-            <div className="product-description">{product.description}</div>
+            <div className="product-description product-description-desktop">{product.description}</div>
           )}
         </div>
 
         <div className="product-right">
           <div className="product-info">
             <h1 className="product-name">{product.name}</h1>
+            {product.description && (
+              <div className="product-description-mobile">{product.description}</div>
+            )}
             <div className="product-meta">
               <span className="product-brand-label">Marca: <b>{brand.label}</b></span>
               <span className="meta-sep">•</span>
