@@ -193,6 +193,9 @@ export default function AdminDashboard() {
   // Modal
   const [modalOrder, setModalOrder] = useState<Order | null>(null);
 
+  // Paste tracking toast
+  const [pasteTrackingMsg, setPasteTrackingMsg] = useState('');
+
   // Mobile
   const [isMobile, setIsMobile] = React.useState(false);
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
@@ -405,18 +408,21 @@ export default function AdminDashboard() {
   }, [storeIsOpenDraft, storeMessage]);
 
   const updateTrackingLink = useCallback(async (id: string, trackingLink: string) => {
-    setOrders(list => list.map(o => o.id === id ? { ...o, trackingLink } as any : o));
-    if (modalOrder?.id === id) setModalOrder(m => m ? { ...m, trackingLink } as any : m);
+    const idsToUpdate = selectedIds.has(id) && selectedIds.size > 1 ? [...selectedIds] : [id];
+    setOrders(list => list.map(o => idsToUpdate.includes(o.id) ? { ...o, trackingLink } as any : o));
+    if (modalOrder && idsToUpdate.includes(modalOrder.id)) setModalOrder(m => m ? { ...m, trackingLink } as any : m);
     try {
-      await apiFetch<any>(`/orders/${id}/tracking`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ trackingLink }),
-      });
+      await Promise.all(idsToUpdate.map(tid =>
+        apiFetch<any>(`/orders/${tid}/tracking`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ trackingLink }),
+        })
+      ));
     } catch (e) {
       alert('Erro ao salvar link de rastreio: ' + (e instanceof Error ? e.message : 'desconhecido'));
     }
-  }, [modalOrder]);
+  }, [modalOrder, selectedIds]);
 
   const updateShippingStatus = useCallback(async (id: string, shippingStatus: string) => {
     const idsToUpdate = selectedIds.has(id) && selectedIds.size > 1 ? [...selectedIds] : [id];
@@ -513,6 +519,34 @@ export default function AdminDashboard() {
       return next;
     });
   }, []);
+
+  // Ctrl+V com pedidos selecionados → cola o link da área de transferência em todos
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || (target as HTMLElement).isContentEditable) return;
+      if (selectedIds.size === 0) return;
+      const text = e.clipboardData?.getData('text')?.trim();
+      if (!text) return;
+      e.preventDefault();
+      const ids = [...selectedIds];
+      setOrders(list => list.map(o => ids.includes(o.id) ? { ...o, trackingLink: text } as any : o));
+      Promise.all(ids.map(tid =>
+        apiFetch<any>(`/orders/${tid}/tracking`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ trackingLink: text }),
+        })
+      )).then(() => {
+        setPasteTrackingMsg(`✅ Link colado em ${ids.length} pedido${ids.length > 1 ? 's' : ''}`);
+        setTimeout(() => setPasteTrackingMsg(''), 3000);
+      }).catch(err => {
+        alert('Erro ao colar link de rastreio: ' + (err instanceof Error ? err.message : 'desconhecido'));
+      });
+    };
+    window.addEventListener('paste', handlePaste);
+    return () => window.removeEventListener('paste', handlePaste);
+  }, [selectedIds]);
 
   const logout = () => {
     fetch(`${BASE}/auth/logout`, { method: 'POST', credentials: 'include' }).catch(() => {});
@@ -1452,6 +1486,21 @@ export default function AdminDashboard() {
           </div>
         </>,
         document.body
+      )}
+
+      {/* Toast: Ctrl+V em pedidos selecionados */}
+      {pasteTrackingMsg && (
+        <div style={{
+          position: 'fixed', bottom: 32, left: '50%', transform: 'translateX(-50%)',
+          background: 'rgba(20,20,20,0.95)', border: '1px solid rgba(200,255,0,0.35)',
+          borderRadius: 12, padding: '12px 22px',
+          color: '#c8ff00', fontSize: 13, fontWeight: 700,
+          boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+          zIndex: 9999, pointerEvents: 'none',
+          animation: 'fadeUp 0.25s ease both',
+        }}>
+          {pasteTrackingMsg}
+        </div>
       )}
     </>
   );
