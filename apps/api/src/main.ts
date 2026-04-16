@@ -26,8 +26,18 @@ async function bootstrap() {
     crossOriginResourcePolicy: { policy: 'same-origin' },
   }));
 
+  const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:3000')
+    .split(',')
+    .map((o) => o.trim());
+
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error(`CORS: origin ${origin} not allowed`));
+      }
+    },
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'x-auth-token', 'x-signature', 'x-request-id', 'x-access-token'],
     credentials: true,
