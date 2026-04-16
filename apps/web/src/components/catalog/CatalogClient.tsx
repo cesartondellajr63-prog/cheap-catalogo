@@ -445,9 +445,6 @@ export default function CatalogClient() {
                         </div>
                         <div className="model-body">
                           <div className="model-name">{p.model}</div>
-                          {p.description && (
-                            <div className="model-description">{p.description}</div>
-                          )}
                           <div className="model-flavors">{p.flavors.length} sabor{p.flavors.length > 1 ? 'es' : ''}</div>
                           <div className="model-price">{fmtBRLFromDecimal(p.price)}</div>
                           <div className="model-cta">
