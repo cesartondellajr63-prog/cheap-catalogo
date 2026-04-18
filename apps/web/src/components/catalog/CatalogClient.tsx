@@ -229,6 +229,9 @@ export default function CatalogClient() {
 
       <div className="toolbar" ref={toolbarRef}>
         <div className="toolbar-inner">
+          <div className="toolbar-logo-row">
+            <span className="toolbar-logo">Cheap<span>.</span>Pods</span>
+          </div>
           <div className="search-inner">
             <span className="search-icon">🔍</span>
             <input
