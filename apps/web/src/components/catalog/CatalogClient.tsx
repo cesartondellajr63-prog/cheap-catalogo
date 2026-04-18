@@ -526,7 +526,6 @@ export default function CatalogClient() {
                       <div key={b.id} className="fmodal-brand-row">
                         <span className="fmodal-brand-num">{String(i + 1).padStart(2, '0')}</span>
                         <span className="fmodal-brand-sep">/</span>
-                        <span className="fmodal-brand-dot" style={{ background: b.color }} />
                         <span className="fmodal-brand-name">{b.label}</span>
                       </div>
                     ));
