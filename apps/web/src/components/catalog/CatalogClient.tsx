@@ -34,8 +34,11 @@ export default function CatalogClient() {
   const [storeStatus, setStoreStatus] = useState<{ isOpen: boolean; closedMessage: string } | null>(null);
   const [visibleBrands, setVisibleBrands] = useState<string[] | null>(null);
   const [customBrands, setCustomBrands] = useState<{ id: string; label: string; color: string }[]>([]);
+  const [footerModal, setFooterModal] = useState<null | 'brands' | 'track' | 'shipping' | 'returns'>(null);
+  const [trackNumber, setTrackNumber] = useState('');
 
   const brandFilterRef = useRef<HTMLDivElement>(null);
+  const toolbarRef = useRef<HTMLDivElement>(null);
   const dragState = useRef({ dragging: false, startX: 0, scrollLeft: 0 });
 
   const onFilterMouseDown = useCallback((e: React.MouseEvent) => {
@@ -70,6 +73,17 @@ export default function CatalogClient() {
       .then(data => setProducts(data.map(toDisplay)))
       .catch(() => {})
       .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    const update = () => {
+      if (toolbarRef.current) {
+        document.documentElement.style.setProperty('--toolbar-h', `${toolbarRef.current.offsetHeight}px`);
+      }
+    };
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
   }, []);
 
   useEffect(() => {
@@ -213,7 +227,7 @@ export default function CatalogClient() {
         </div>
       </header>
 
-      <div className="toolbar">
+      <div className="toolbar" ref={toolbarRef}>
         <div className="toolbar-inner">
           <div className="search-inner">
             <span className="search-icon">🔍</span>
@@ -492,6 +506,137 @@ export default function CatalogClient() {
           onUpdateCart={updateCart}
         />
       )}
+
+      {/* Footer Modals */}
+      {footerModal && (
+        <div className="modal-bg open" onClick={() => setFooterModal(null)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-handle-wrap"><div className="modal-handle" /></div>
+
+            {footerModal === 'brands' && (
+              <>
+                <h2>Marcas disponíveis</h2>
+                <div className="fmodal-brands-list">
+                  {(() => {
+                    const allBrands = [...BRANDS_DATA, ...customBrands.filter(cb => !BRANDS_DATA.find(b => b.id === cb.id))];
+                    const active = visibleBrands
+                      ? allBrands.filter(b => visibleBrands.includes(b.id))
+                      : allBrands;
+                    return active.map((b, i) => (
+                      <div key={b.id} className="fmodal-brand-row">
+                        <span className="fmodal-brand-num">{String(i + 1).padStart(2, '0')}</span>
+                        <span className="fmodal-brand-sep">/</span>
+                        <span className="fmodal-brand-dot" style={{ background: b.color }} />
+                        <span className="fmodal-brand-name">{b.label}</span>
+                      </div>
+                    ));
+                  })()}
+                </div>
+              </>
+            )}
+
+            {footerModal === 'track' && (
+              <>
+                <h2>Acompanhar pedido</h2>
+                <p className="fmodal-text">Digite o número do seu pedido para acompanhar o status.</p>
+                <div className="fmodal-track-row">
+                  <span className="fmodal-track-prefix">CP-</span>
+                  <input
+                    className="fmodal-track-input"
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="00000000"
+                    value={trackNumber}
+                    onChange={e => setTrackNumber(e.target.value.replace(/\D/g, '').slice(0, 8))}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && trackNumber) {
+                        window.open(`https://www.cheapcatalogo.com/acompanhar/CP-${trackNumber}`, '_blank');
+                      }
+                    }}
+                  />
+                </div>
+                <button
+                  className="add-btn"
+                  style={{ marginTop: 16 }}
+                  disabled={!trackNumber}
+                  onClick={() => window.open(`https://www.cheapcatalogo.com/acompanhar/CP-${trackNumber}`, '_blank')}
+                >
+                  Acompanhar
+                </button>
+              </>
+            )}
+
+            {footerModal === 'shipping' && (
+              <>
+                <h2>Frete &amp; entrega</h2>
+                <div className="fmodal-info-card">
+                  <div className="fmodal-info-icon">📍</div>
+                  <div>
+                    <div className="fmodal-info-label">Região de entrega</div>
+                    <div className="fmodal-info-value">São Paulo — SP</div>
+                  </div>
+                </div>
+                <div className="fmodal-info-card">
+                  <div className="fmodal-info-icon">⏱️</div>
+                  <div>
+                    <div className="fmodal-info-label">Prazo estimado</div>
+                    <div className="fmodal-info-value">45 a 150 minutos</div>
+                  </div>
+                </div>
+                <p className="fmodal-text" style={{ marginTop: 16 }}>O prazo pode variar de acordo com sua localização e o volume de pedidos no momento.</p>
+              </>
+            )}
+
+            {footerModal === 'returns' && (
+              <>
+                <h2>Troca &amp; devolução</h2>
+                <p className="fmodal-text">Pods são produtos consumíveis. Por esse motivo, não conseguimos oferecer uma garantia abrangente.</p>
+                <div className="fmodal-info-card" style={{ marginTop: 16 }}>
+                  <div className="fmodal-info-icon">📅</div>
+                  <div>
+                    <div className="fmodal-info-label">Prazo de garantia</div>
+                    <div className="fmodal-info-value">4 dias após o recebimento</div>
+                  </div>
+                </div>
+                <p className="fmodal-text" style={{ marginTop: 16 }}>Ao concluir a compra, você estará ciente e de acordo com essas condições.</p>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Footer */}
+      <footer className="site-footer">
+        <div className="site-footer-inner">
+          <div className="site-footer-brand">
+            <div className="logo">Cheap<span>.</span>Pods</div>
+            <p className="site-footer-tagline">Loja de pods descartáveis e cigarros eletrônicos. Produto exclusivo para maiores de 18 anos. O uso de nicotina causa dependência.</p>
+          </div>
+          <div className="site-footer-cols">
+            <div className="site-footer-col">
+              <div className="site-footer-col-title">Loja</div>
+              <ul>
+                <li><a href="/">Catálogo</a></li>
+                <li><button className="site-footer-btn" onClick={() => setFooterModal('brands')}>Marcas</button></li>
+              </ul>
+            </div>
+            <div className="site-footer-col">
+              <div className="site-footer-col-title">Ajuda</div>
+              <ul>
+                <li><button className="site-footer-btn" onClick={() => { setTrackNumber(''); setFooterModal('track'); }}>Acompanhar pedido</button></li>
+                <li><button className="site-footer-btn" onClick={() => setFooterModal('shipping')}>Frete &amp; entrega</button></li>
+                <li><button className="site-footer-btn" onClick={() => setFooterModal('returns')}>Troca &amp; devolução</button></li>
+                <li><a href="https://wa.me/5511951047070" target="_blank" rel="noopener noreferrer">WhatsApp</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div className="site-footer-bottom">
+          <span>© 2026 Cheap.Pods</span>
+          <span>São Paulo · Brasil</span>
+          <span>+18 · Nicotina causa dependência</span>
+        </div>
+      </footer>
     </>
   );
 }
