@@ -76,7 +76,7 @@ header::after{content:'';position:absolute;bottom:-80px;right:-60px;width:260px;
 /* CATALOG */
 .catalog{position:relative;z-index:1;max-width:var(--max);margin:0 auto;padding:0 var(--pad) clamp(32px,5vw,48px);}
 .brand-section{margin-top:clamp(24px,4vw,40px);}
-.brand-section-header{display:flex;align-items:center;gap:10px;position:sticky;top:var(--toolbar-h,116px);z-index:20;background:var(--bg);padding:12px 0;border-bottom:1px solid var(--border);margin-bottom:clamp(12px,2vw,18px);}
+.brand-section-header{display:flex;align-items:center;gap:10px;position:sticky;top:var(--toolbar-h,116px);z-index:20;background:rgba(10,10,10,0.75);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:12px 0;border-bottom:1px solid var(--border);margin-bottom:clamp(12px,2vw,18px);margin-left:calc(-1 * var(--pad));margin-right:calc(-1 * var(--pad));padding-left:var(--pad);padding-right:var(--pad);}
 .brand-section-num{font-size:11px;color:var(--muted);font-weight:500;letter-spacing:0.3px;}
 .brand-section-slash{font-size:11px;color:rgba(255,255,255,0.2);}
 .brand-section-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
