@@ -415,16 +415,17 @@ export default function CatalogClient() {
           </div>
         ) : (
           <>
-            {brandsToShow.map(brandId => {
+            {brandsToShow.map((brandId, idx) => {
               const brand = allBrandsData.find(b => b.id === brandId)!;
               const items = filtered.filter(p => p.brand === brandId);
               if (!items.length) return null;
               return (
                 <div key={brandId} className="brand-section">
                   <div className="brand-section-header">
+                    <span className="brand-section-num">{String(idx + 1).padStart(2, '0')}</span>
+                    <span className="brand-section-slash">/</span>
                     <span className="brand-section-dot" style={{ background: brand.color }}></span>
                     <span className="brand-section-name">{brand.label}</span>
-                    <span className="brand-section-count">{items.length} modelo{items.length > 1 ? 's' : ''}</span>
                   </div>
                   <div className="model-grid">
                     {items.map((p, i) => (
