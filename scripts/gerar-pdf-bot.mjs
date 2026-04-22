@@ -14,15 +14,15 @@ const html = `<!DOCTYPE html>
     font-family: 'Inter', 'Segoe UI', sans-serif;
     background: #f0f2f5;
     color: #1a1a2e;
-    font-size: 13px;
-    line-height: 1.6;
+    font-size: 12.5px;
+    line-height: 1.5;
   }
 
   .page {
     max-width: 780px;
     margin: 0 auto;
     background: white;
-    padding: 48px 52px;
+    padding: 36px 48px;
   }
 
   /* HEADER */
@@ -30,8 +30,8 @@ const html = `<!DOCTYPE html>
     background: linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
     color: white;
     border-radius: 16px;
-    padding: 36px 40px;
-    margin-bottom: 36px;
+    padding: 28px 36px;
+    margin-bottom: 24px;
     position: relative;
     overflow: hidden;
   }
@@ -90,8 +90,8 @@ const html = `<!DOCTYPE html>
     letter-spacing: 2px;
     text-transform: uppercase;
     color: #00c896;
-    margin-bottom: 14px;
-    margin-top: 32px;
+    margin-bottom: 8px;
+    margin-top: 14px;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -107,8 +107,8 @@ const html = `<!DOCTYPE html>
   .step {
     border: 1.5px solid #e8ecf0;
     border-radius: 12px;
-    padding: 20px 24px;
-    margin-bottom: 14px;
+    padding: 11px 16px;
+    margin-bottom: 6px;
     background: #fafbfc;
     position: relative;
   }
@@ -154,11 +154,11 @@ const html = `<!DOCTYPE html>
     background: #e9faf4;
     border-left: 3px solid #00c896;
     border-radius: 0 10px 10px 0;
-    padding: 12px 16px;
-    font-size: 13px;
+    padding: 10px 14px;
+    font-size: 12.5px;
     color: #1a1a2e;
     white-space: pre-line;
-    line-height: 1.65;
+    line-height: 1.5;
   }
   .bubble strong { font-weight: 700; }
 
@@ -195,8 +195,8 @@ const html = `<!DOCTYPE html>
   /* BRANCH BLOCKS */
   .branch {
     border-radius: 12px;
-    padding: 18px 22px;
-    margin-bottom: 14px;
+    padding: 10px 14px;
+    margin-bottom: 6px;
   }
   .branch-a {
     background: #fff5f5;
@@ -226,9 +226,7 @@ const html = `<!DOCTYPE html>
 
   /* ACTION NOTE */
   .action-note {
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
+    display: block;
     background: #fffbea;
     border: 1.5px solid #f5d76e;
     border-radius: 8px;
@@ -237,7 +235,7 @@ const html = `<!DOCTYPE html>
     font-size: 11.5px;
     color: #7a5c00;
   }
-  .action-note .icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+  .action-note .icon { font-size: 13px; margin-right: 5px; }
 
   /* MENU CARD */
   .menu-grid {
@@ -277,9 +275,7 @@ const html = `<!DOCTYPE html>
     padding: 10px 14px;
     font-size: 11.5px;
     color: #6b3fcf;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    display: block;
     margin-top: 10px;
   }
 
@@ -293,7 +289,7 @@ const html = `<!DOCTYPE html>
   .impl-table th {
     background: #1a1a2e;
     color: white;
-    padding: 9px 14px;
+    padding: 7px 12px;
     text-align: left;
     font-size: 11px;
     font-weight: 600;
@@ -302,7 +298,7 @@ const html = `<!DOCTYPE html>
   .impl-table th:first-child { border-radius: 8px 0 0 0; }
   .impl-table th:last-child { border-radius: 0 8px 0 0; }
   .impl-table td {
-    padding: 9px 14px;
+    padding: 6px 12px;
     border-bottom: 1px solid #e8ecf0;
     vertical-align: top;
   }
@@ -318,8 +314,8 @@ const html = `<!DOCTYPE html>
 
   /* FOOTER */
   .footer {
-    margin-top: 36px;
-    padding-top: 20px;
+    margin-top: 8px;
+    padding-top: 8px;
     border-top: 1px solid #e8ecf0;
     display: flex;
     justify-content: space-between;
@@ -330,11 +326,11 @@ const html = `<!DOCTYPE html>
   .footer strong { color: #1a1a2e; }
 
   /* PAGE BREAK */
-  .page-break { page-break-before: always; }
+  .menu-grid { page-break-inside: avoid; }
 
   @media print {
     body { background: white; }
-    .page { padding: 32px 40px; }
+    .page { padding: 22px 38px; }
   }
 </style>
 </head>
@@ -443,9 +439,6 @@ Agradecemos sua honestidade e te desejamos um ótimo dia! 🙏</div>
     </div>
   </div>
 
-  <!-- PAGE 2 -->
-  <div class="page-break"></div>
-
   <!-- RESPOSTAS DO MENU -->
   <div class="section-title">Respostas do Menu Principal</div>
 
@@ -526,7 +519,7 @@ Entre no grupo e não perca nenhuma oferta! 🔥</div>
     </div>
   </div>
 
-  <div class="step">
+  <div class="step" style="page-break-inside: avoid;">
     <div class="step-header">
       <div class="step-num" style="background:#00c896;">6</div>
       <div class="step-label">🧑 Fale com um atendente</div>
@@ -544,7 +537,7 @@ Em instantes alguém entrará em contato com você! ⏳
   </div>
 
   <!-- IMPLEMENTAÇÃO -->
-  <div class="section-title">Implementação no Make</div>
+  <div class="section-title" style="margin-top:22px;">Implementação no Make</div>
 
   <table class="impl-table">
     <thead>
