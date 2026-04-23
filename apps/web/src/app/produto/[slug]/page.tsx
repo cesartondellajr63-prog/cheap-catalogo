@@ -32,6 +32,10 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
         setProduct(p);
         const active = (p.variants ?? []).filter(v => v.active !== false && (v.stock ?? 1) > 0);
         if (active.length === 1) setSelectedFlavor(active[0].name);
+        const urls = new Set<string>();
+        (p.images ?? []).forEach(u => u && urls.add(u));
+        active.forEach(v => { if (v.image) urls.add(v.image); });
+        urls.forEach(u => { const img = new Image(); img.src = u; });
       })
       .catch(() => router.replace('/'))
       .finally(() => setLoading(false));
