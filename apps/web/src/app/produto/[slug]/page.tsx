@@ -109,10 +109,9 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
           <div className="product-img" style={{ background: displayImage ? 'transparent' : BRAND_GRADIENTS[product.brandId], transition: 'background 0.3s' }}>
             {displayImage ? (
               <img
-                key={displayImage}
                 src={displayImage}
                 alt={product.name}
-                style={{ width:'100%', height:'100%', objectFit:'contain', display:'block', animation:'fadeIn 0.25s ease' }}
+                style={{ width:'100%', height:'100%', objectFit:'contain', display:'block', maxWidth:'100%' }}
               />
             ) : (
               <div className="product-img-placeholder">
