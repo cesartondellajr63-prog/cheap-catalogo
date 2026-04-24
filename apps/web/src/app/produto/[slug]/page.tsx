@@ -154,7 +154,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
           <div className="flavor-section">
             <div className="flavor-title">Escolha o sabor</div>
             <div className="flavor-subtitle">Selecione uma opção abaixo</div>
-            <div className="flavor-grid">
+            <div className="flavor-grid" style={{ ['--flavor-cols' as string]: String(Math.min(Math.max(1, Math.ceil(activeFlavors.length / 10)), 4)) } as React.CSSProperties}>
               {activeFlavors.map(v => (
                 <div
                   key={v.name}
