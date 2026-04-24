@@ -72,6 +72,18 @@ export class ProductsService {
     return { success: true };
   }
 
+  async delete(id: string): Promise<{ success: boolean }> {
+    const docRef = this.firebaseService.db.collection('products').doc(id);
+    const docSnap = await docRef.get();
+
+    if (!docSnap.exists) {
+      throw new NotFoundException(`Product with id "${id}" not found.`);
+    }
+
+    await docRef.delete();
+    return { success: true };
+  }
+
   async decrementVariantStock(productSlug: string, variantName: string, quantity: number): Promise<void> {
     const snapshot = await this.firebaseService.db
       .collection('products')

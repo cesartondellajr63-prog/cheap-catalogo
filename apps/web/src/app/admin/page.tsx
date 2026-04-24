@@ -171,6 +171,7 @@ export default function AdminDashboard() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [prodModal, setProdModal] = useState<{ mode: 'create' | 'edit'; product?: Product } | null>(null);
+  const [deleteModal, setDeleteModal] = useState<{ product: Product; loading: boolean } | null>(null);
 
   // Filtros de marcas
   const ALL_BRANDS = [
@@ -1130,6 +1131,12 @@ export default function AdminDashboard() {
                                     Reativar
                                   </button>
                                 )}
+                                <button onClick={() => setDeleteModal({ product: p, loading: false })}
+                                  style={{ padding:'5px 12px',borderRadius:8,background:'rgba(255,40,40,0.1)',border:'1px solid rgba(255,40,40,0.35)',color:'#ff4040',fontFamily:'Satoshi,sans-serif',fontSize:11,fontWeight:700,cursor:'pointer',transition:'all 0.2s' }}
+                                  onMouseEnter={e=>(e.currentTarget.style.background='rgba(255,40,40,0.22)')}
+                                  onMouseLeave={e=>(e.currentTarget.style.background='rgba(255,40,40,0.1)')}>
+                                  Deletar
+                                </button>
                               </div>
                             </td>
                           </tr>
@@ -1411,6 +1418,57 @@ export default function AdminDashboard() {
           }}
           onClose={() => setProdModal(null)}
         />
+      )}
+
+      {/* ── DELETE PRODUCT CONFIRM MODAL ── */}
+      {deleteModal && (
+        <div
+          onClick={() => { if (!deleteModal.loading) setDeleteModal(null); }}
+          style={{ position:'fixed', inset:0, zIndex:250, background:'rgba(0,0,0,0.75)', backdropFilter:'blur(6px)', display:'flex', alignItems:'center', justifyContent:'center', padding:20 }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{ width:'100%', maxWidth:460, background:'linear-gradient(160deg,rgba(20,20,20,0.98),rgba(14,14,14,0.98))', border:'1px solid rgba(255,40,40,0.35)', borderRadius:18, padding:28, boxShadow:'0 20px 60px rgba(0,0,0,0.7)' }}
+          >
+            <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:14 }}>
+              <div style={{ width:40, height:40, borderRadius:12, background:'rgba(255,40,40,0.12)', border:'1px solid rgba(255,40,40,0.3)', display:'flex', alignItems:'center', justifyContent:'center', color:'#ff4040', fontSize:22, fontWeight:700 }}>!</div>
+              <div style={{ fontSize:17, fontWeight:800, color:'#fff', fontFamily:'Satoshi,sans-serif' }}>Deletar produto</div>
+            </div>
+            <div style={{ fontSize:13, color:'#bdbdbd', lineHeight:1.5, fontFamily:'Satoshi,sans-serif', marginBottom:8 }}>
+              Tem certeza que deseja deletar permanentemente <strong style={{ color:'#fff' }}>&quot;{deleteModal.product.name}&quot;</strong>?
+            </div>
+            <div style={{ fontSize:12, color:'#ff6a6a', fontFamily:'Satoshi,sans-serif', marginBottom:22 }}>
+              Esta ação não pode ser desfeita. Se você só quer esconder o produto da loja, use &quot;Desativar&quot;.
+            </div>
+            <div style={{ display:'flex', gap:10, justifyContent:'flex-end' }}>
+              <button
+                onClick={() => setDeleteModal(null)}
+                disabled={deleteModal.loading}
+                style={{ padding:'10px 18px', borderRadius:10, background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.14)', color:'#fff', fontFamily:'Satoshi,sans-serif', fontSize:12, fontWeight:700, cursor: deleteModal.loading ? 'not-allowed' : 'pointer', opacity: deleteModal.loading ? 0.5 : 1 }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={async () => {
+                  if (deleteModal.loading) return;
+                  setDeleteModal(m => m ? { ...m, loading: true } : m);
+                  try {
+                    await apiFetch(`/products/${deleteModal.product.id}/permanent`, { method: 'DELETE' });
+                    setProducts(prev => prev.filter(x => x.id !== deleteModal.product.id));
+                    setDeleteModal(null);
+                  } catch {
+                    alert('Erro ao deletar produto.');
+                    setDeleteModal(m => m ? { ...m, loading: false } : m);
+                  }
+                }}
+                disabled={deleteModal.loading}
+                style={{ padding:'10px 18px', borderRadius:10, background:'rgba(255,40,40,0.18)', border:'1px solid rgba(255,40,40,0.5)', color:'#ff4040', fontFamily:'Satoshi,sans-serif', fontSize:12, fontWeight:800, cursor: deleteModal.loading ? 'not-allowed' : 'pointer', opacity: deleteModal.loading ? 0.6 : 1 }}
+              >
+                {deleteModal.loading ? 'Deletando…' : 'Deletar permanentemente'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>

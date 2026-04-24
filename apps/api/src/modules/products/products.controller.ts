@@ -50,4 +50,10 @@ export class ProductsController {
   deactivate(@Param('id') id: string) {
     return this.productsService.deactivate(id);
   }
+
+  @Delete(':id/permanent')
+  @UseGuards(JwtAuthGuard)
+  delete(@Param('id') id: string) {
+    return this.productsService.delete(id);
+  }
 }
