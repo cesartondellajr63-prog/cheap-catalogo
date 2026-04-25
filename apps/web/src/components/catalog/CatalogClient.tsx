@@ -442,9 +442,26 @@ export default function CatalogClient() {
                               alt={p.model}
                               style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
                               loading="lazy"
+                              onError={e => {
+                                const el = e.currentTarget;
+                                el.style.display = 'none';
+                                const container = el.closest('.model-img') as HTMLElement | null;
+                                if (container) {
+                                  container.style.background = BRAND_GRADIENTS[p.brand] ?? '';
+                                  const placeholder = container.querySelector('.model-img-placeholder') as HTMLElement | null;
+                                  if (placeholder) placeholder.style.display = 'flex';
+                                }
+                              }}
                             />
-                          ) : (
+                          ) : null}
+                          {!p.image && (
                             <div className="model-img-placeholder">
+                              <div className="placeholder-icon">{BRAND_ICONS[p.brand]}</div>
+                              <div className="placeholder-line" style={{ background: brand.color }}></div>
+                            </div>
+                          )}
+                          {p.image && (
+                            <div className="model-img-placeholder" style={{ display: 'none' }}>
                               <div className="placeholder-icon">{BRAND_ICONS[p.brand]}</div>
                               <div className="placeholder-line" style={{ background: brand.color }}></div>
                             </div>
