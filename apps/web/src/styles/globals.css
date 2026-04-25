@@ -15,7 +15,7 @@
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; overflow-x: hidden; }
 body { background: var(--bg); font-family: var(--font-inter), 'Inter', sans-serif; color: var(--text); overflow-x: hidden; min-height: 100vh; -webkit-font-smoothing: antialiased; display: flex; flex-direction: column; }
 body::before { content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0; background: linear-gradient(135deg,#050505 0%,#242424 33%,#080808 66%,#1e1e1e 100%); background-size: 400% 400%; animation: diagGrad 90s ease infinite; }
 
@@ -244,7 +244,7 @@ header::after{content:'';position:absolute;bottom:-80px;right:-60px;width:260px;
 .cart-pill{display:flex;align-items:center;gap:6px;background:var(--accent);border-radius:99px;padding:8px 14px;font-size:13px;font-weight:700;color:#000;cursor:pointer;transition:all 0.15s;white-space:nowrap;min-height:40px;}
 .cart-pill:hover{background:#d8ff20;}
 .cart-pill-count{background:#000;color:var(--accent);border-radius:99px;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;}
-.product-page{max-width:680px;margin:0 auto;padding:clamp(20px,3vw,32px) var(--pad) clamp(100px,12vw,140px);position:relative;z-index:1;}
+.product-page{max-width:680px;width:100%;margin:0 auto;padding:clamp(20px,3vw,32px) var(--pad) clamp(100px,12vw,140px);position:relative;z-index:1;overflow-x:hidden;}
 @media(min-width:700px){.product-page{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:32px;align-items:start;max-width:900px;}.product-left{position:sticky;top:80px;min-width:0;}.product-right{display:flex;flex-direction:column;gap:24px;min-width:0;}}
 .product-img{width:100%;aspect-ratio:1/1;border-radius:clamp(16px,3vw,24px);overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);margin-bottom:clamp(16px,3vw,24px);}
 @media(min-width:700px){.product-img{margin-bottom:0;}}
