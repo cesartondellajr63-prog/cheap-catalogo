@@ -199,6 +199,9 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
               <span className="product-puffs-tag">{product.puffs} puffs</span>
             </div>
           </div>
+          <p style={{ fontSize: '0.65rem', color: '#666', marginTop: '6px', lineHeight: 1.4 }}>
+            *As imagens são meramente ilustrativas e podem não condizer fielmente com os produtos reais.
+          </p>
           {product.description && (
             <div className="product-description product-description-desktop">{product.description}</div>
           )}
