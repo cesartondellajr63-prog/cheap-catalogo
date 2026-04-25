@@ -417,7 +417,7 @@ export default function CatalogClient() {
           <>
             {brandsToShow.map((brandId, idx) => {
               const brand = allBrandsData.find(b => b.id === brandId)!;
-              const items = filtered.filter(p => p.brand === brandId);
+              const items = filtered.filter(p => p.brand === brandId).sort((a, b) => a.price - b.price);
               if (!items.length) return null;
               return (
                 <div key={brandId} className="brand-section">
