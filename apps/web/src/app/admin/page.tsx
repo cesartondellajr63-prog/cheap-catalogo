@@ -27,6 +27,32 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json();
 }
 
+// Redimensiona imagens 4K para no máximo 2048px antes do upload, mantendo proporção
+async function compressImage(file: File, maxPx = 2048, quality = 0.85): Promise<File> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const { naturalWidth: w, naturalHeight: h } = img;
+      if (w <= maxPx && h <= maxPx) { resolve(file); return; }
+      const scale = maxPx / Math.max(w, h);
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(w * scale);
+      canvas.height = Math.round(h * scale);
+      const ctx = canvas.getContext('2d');
+      if (!ctx) { resolve(file); return; }
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob(blob => {
+        if (!blob) { resolve(file); return; }
+        resolve(new File([blob], file.name, { type: 'image/jpeg', lastModified: Date.now() }));
+      }, 'image/jpeg', quality);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Falha ao carregar imagem')); };
+    img.src = url;
+  });
+}
+
 interface Customer {
   id: string;
   name: string;
@@ -2332,8 +2358,9 @@ function ProductModal({ mode, product, onSaved, onClose }: {
                 if (!file) return;
                 setUploadingImage(true);
                 try {
+                  const compressed = await compressImage(file);
                   const fd = new FormData();
-                  fd.append('file', file);
+                  fd.append('file', compressed);
                   const res = await fetch(`${BASE}/upload/image`, {
                     method: 'POST',
                     headers: { 'x-auth-token': getAdminToken() },
@@ -2412,8 +2439,9 @@ function ProductModal({ mode, product, onSaved, onClose }: {
                         if (!file) return;
                         setUploadingVariant(prev => ({ ...prev, [v._key]: true }));
                         try {
+                          const compressed = await compressImage(file);
                           const fd = new FormData();
-                          fd.append('file', file);
+                          fd.append('file', compressed);
                           const res = await fetch(`${BASE}/upload/image`, {
                             method: 'POST',
                             headers: { 'x-auth-token': getAdminToken() },

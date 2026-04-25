@@ -12,7 +12,7 @@ import { UploadService } from './upload.service';
     FirebaseModule,
     MulterModule.register({
       storage: memoryStorage(),
-      limits: { fileSize: 10 * 1024 * 1024 },
+      limits: { fileSize: 20 * 1024 * 1024 },
     }),
   ],
   controllers: [UploadController],
