@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Syne, Inter } from 'next/font/google'
 import '@/styles/globals.css'
 
@@ -13,6 +13,11 @@ const inter = Inter({
   weight: ['300', '400', '500', '600'],
   variable: '--font-inter',
 })
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+}
 
 export const metadata: Metadata = {
   title: 'Cheap Pods — Catálogo',
