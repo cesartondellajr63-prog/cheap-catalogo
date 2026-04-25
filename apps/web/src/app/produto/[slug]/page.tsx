@@ -209,7 +209,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
             </div>
           </div>
           <p style={{ fontSize: '0.65rem', color: '#666', marginTop: '0px', marginBottom: '20px', lineHeight: 1.5, textAlign: 'left', paddingLeft: '10px' }}>
-            *As imagens são meramente ilustrativas e podem não<br />condizer fielmente com os produtos reais.
+            *As imagens são meramente ilustrativas e podem<br />não condizer fielmente com os produtos reais.
           </p>
           {product.description && (
             <div className="product-description product-description-desktop">{product.description}</div>
