@@ -177,6 +177,15 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
       </div>
 
       <div className="product-page">
+        <div className="product-info-mobile-top">
+          <h1 className="product-name">{product.name}</h1>
+          <div className="product-meta">
+            <span className="product-brand-label">Marca: <b>{brand.label}</b></span>
+            <span className="meta-sep">•</span>
+            <span className="product-brand-label">{activeFlavors.length} sabor{activeFlavors.length > 1 ? 'es' : ''}</span>
+          </div>
+        </div>
+
         <div className="product-left">
           <div className="product-img" style={{ background: displayImage ? 'transparent' : BRAND_GRADIENTS[product.brandId], transition: 'background 0.3s' }}>
             {displayImage ? (
