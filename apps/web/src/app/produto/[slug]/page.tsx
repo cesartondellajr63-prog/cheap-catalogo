@@ -14,11 +14,13 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const [ageConfirmed, setAgeConfirmed] = useState<boolean | null>(null);
   const [selectedFlavor, setSelectedFlavor] = useState<string | null>(null);
   const [qty, setQty] = useState(1);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [toast, setToast] = useState('');
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+
   const updateCart = useCallback((newCart: CartItem[]) => {
     setCart(newCart);
     saveCart(newCart);
@@ -26,6 +28,13 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
 
   useEffect(() => {
     setCart(loadCart());
+    const confirmed = sessionStorage.getItem('age_confirmed');
+    if (confirmed === 'true') setAgeConfirmed(true);
+    else if (confirmed === 'false') setAgeConfirmed(false);
+    else setAgeConfirmed(null);
+  }, []);
+
+  useEffect(() => {
     api.products.getBySlug(slug)
       .then(p => {
         setProduct(p);
@@ -52,6 +61,11 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
     const interval = setInterval(check, 5000);
     return () => { cancelled = true; clearInterval(interval); };
   }, [router]);
+
+  const confirmAge = (yes: boolean) => {
+    sessionStorage.setItem('age_confirmed', yes ? 'true' : 'false');
+    setAgeConfirmed(yes);
+  };
 
   if (loading) return null;
   if (!product) return null;
@@ -91,6 +105,38 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
 
   return (
     <>
+      {/* Age Gate */}
+      {ageConfirmed === null && (
+        <div className="age-gate">
+          <div className="age-gate-box">
+            <div className="age-gate-icon">🔞</div>
+            <div className="age-gate-title">Verificação de Idade</div>
+            <div className="age-gate-text">
+              Este site vende <b>pods e cigarros eletrônicos</b>, produtos destinados exclusivamente a maiores de 18 anos.<br /><br />
+              Você tem 18 anos ou mais?
+            </div>
+            <div className="age-gate-btns">
+              <button className="age-gate-yes" onClick={() => confirmAge(true)}>✅ Sim, tenho 18 anos ou mais</button>
+              <button className="age-gate-no" onClick={() => confirmAge(false)}>Não, sou menor de idade</button>
+            </div>
+            <div className="age-gate-note">Ao continuar, você confirma ter idade legal para adquirir estes produtos.</div>
+          </div>
+        </div>
+      )}
+
+      {ageConfirmed === false && (
+        <div className="age-blocked show">
+          <div className="age-blocked-box">
+            <div className="age-blocked-icon">🚫</div>
+            <div className="age-blocked-title">Acesso Restrito</div>
+            <div className="age-blocked-text">
+              Desculpe, este site é exclusivo para maiores de 18 anos.<br /><br />
+              A venda de pods e cigarros eletrônicos para menores de idade é proibida por lei.
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="topbar">
         <div className="topbar-inner">
           <a className="back-btn" href="/">
