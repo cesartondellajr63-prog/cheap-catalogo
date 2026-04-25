@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, use, useCallback, useRef } from 'react';
+import { useState, useEffect, use, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { BRANDS_DATA, BRAND_GRADIENTS, BRAND_ICONS } from '@/lib/catalog-data';
 import { loadCart, saveCart, getCartCount } from '@/lib/cart';
@@ -19,8 +19,6 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
   const [cart, setCart] = useState<CartItem[]>([]);
   const [toast, setToast] = useState('');
   const [checkoutOpen, setCheckoutOpen] = useState(false);
-  const flavorGridRef = useRef<HTMLDivElement>(null);
-
   const updateCart = useCallback((newCart: CartItem[]) => {
     setCart(newCart);
     saveCart(newCart);
@@ -41,23 +39,6 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
       .catch(() => router.replace('/'))
       .finally(() => setLoading(false));
   }, [slug, router]);
-
-  useEffect(() => {
-    const grid = flavorGridRef.current;
-    if (!grid) return;
-    const measure = () => {
-      grid.style.removeProperty('--flavor-min-width');
-      requestAnimationFrame(() => {
-        const items = grid.querySelectorAll<HTMLElement>('.flavor-item');
-        let max = 0;
-        items.forEach(it => { if (it.offsetWidth > max) max = it.offsetWidth; });
-        if (max > 0) grid.style.setProperty('--flavor-min-width', `${max}px`);
-      });
-    };
-    measure();
-    window.addEventListener('resize', measure);
-    return () => window.removeEventListener('resize', measure);
-  }, [product]);
 
   // Redireciona para home se loja fechar enquanto usuário está na página
   useEffect(() => {
@@ -172,7 +153,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
           <div className="flavor-section">
             <div className="flavor-title">Escolha o sabor</div>
             <div className="flavor-subtitle">Selecione uma opção abaixo</div>
-            <div ref={flavorGridRef} className="flavor-grid" style={{ ['--flavor-cols' as string]: String(Math.min(Math.max(1, Math.ceil(activeFlavors.length / 10)), 4)) } as React.CSSProperties}>
+            <div className="flavor-grid" style={{ ['--flavor-cols' as string]: String(Math.min(Math.max(1, Math.ceil(activeFlavors.length / 10)), 4)) } as React.CSSProperties}>
               {activeFlavors.map(v => (
                 <div
                   key={v.name}
