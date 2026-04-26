@@ -137,20 +137,21 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
     setStep(3);
   };
 
-  const fetchCEP = async () => {
+  useEffect(() => {
     const raw = cep.replace(/\D/g, '');
     if (raw.length !== 8) return;
-    try {
-      const res = await fetch(`https://viacep.com.br/ws/${raw}/json/`);
-      const data = await res.json();
-      if (!data.erro) {
-        setRua(data.logradouro ?? '');
-        setBairro(data.bairro ?? '');
-        setCidade(data.localidade ?? '');
-        setEstado(data.uf ?? '');
-      }
-    } catch {}
-  };
+    fetch(`https://viacep.com.br/ws/${raw}/json/`)
+      .then(r => r.json())
+      .then(data => {
+        if (!data.erro) {
+          setRua(data.logradouro ?? '');
+          setBairro(data.bairro ?? '');
+          setCidade(data.localidade ?? '');
+          setEstado(data.uf ?? '');
+        }
+      })
+      .catch(() => {});
+  }, [cep]);
 
   // Geocodifica endereço via Nominatim (browser → sem necessidade de proxy)
   const geocodeEndereco = async (addr: string): Promise<{ lat: string; lng: string } | null> => {
@@ -438,7 +439,6 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
                     type="text"
                     value={cep}
                     onChange={e => { setCep(maskCEP(e.target.value)); resetFrete(); }}
-                    onBlur={fetchCEP}
                     placeholder="00000-000"
                     maxLength={9}
                     inputMode="numeric"
