@@ -199,7 +199,6 @@ export default function CheckoutPage() {
       });
       sessionStorage.setItem('pedidoAtual', pedidoData);
       localStorage.setItem('pedidoAtual', pedidoData);
-      saveCart([]);
       window.location.href = result.checkoutUrl;
     } catch (e: unknown) {
       setPagError(e instanceof Error ? e.message : 'Erro ao iniciar pagamento.');
