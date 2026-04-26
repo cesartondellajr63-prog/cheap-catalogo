@@ -55,12 +55,7 @@ export class ShippingService {
         const expired = cached.expiresAt <= Date.now();
         this.logger.log(`[FRETE] Cache CEP ${raw}: R$${cached.price} expired=${expired}`);
         if (!expired) {
-          return {
-            price: cached.price,
-            priceFormatted: 'R$ ' + cached.price.toFixed(2).replace('.', ','),
-            expiresAt: cached.expiresAt,
-            cached: true,
-          };
+          return this.storeAndReturnQuote(cached.price, Date.now() + 5 * 60 * 1000);
         }
       } else {
         this.logger.log(`[FRETE] Cache miss CEP ${raw}`);
