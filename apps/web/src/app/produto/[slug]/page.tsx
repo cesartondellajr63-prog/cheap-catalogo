@@ -16,6 +16,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
 
   const [ageConfirmed, setAgeConfirmed] = useState<boolean | null>(null);
   const [selectedFlavor, setSelectedFlavor] = useState<string | null>(null);
+  const [imgLoading, setImgLoading] = useState(false);
   const [qty, setQty] = useState(1);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [toast, setToast] = useState('');
@@ -188,11 +189,17 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
 
         <div className="product-left">
           <div className="product-img" style={{ background: displayImage ? 'transparent' : BRAND_GRADIENTS[product.brandId], transition: 'background 0.3s' }}>
+            {imgLoading && (
+              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>
+                <div style={{ width: 36, height: 36, border: '3px solid rgba(200,255,0,0.2)', borderTop: '3px solid #c8ff00', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+              </div>
+            )}
             {displayImage ? (
               <img
                 src={displayImage}
                 alt={product.name}
-                style={{ width:'100%', height:'100%', objectFit:'contain', display:'block', maxWidth:'100%' }}
+                style={{ width:'100%', height:'100%', objectFit:'contain', display:'block', maxWidth:'100%', filter: imgLoading ? 'blur(6px)' : 'none', transition: 'filter 0.3s' }}
+                onLoad={() => setImgLoading(false)}
               />
             ) : (
               <div className="product-img-placeholder">
@@ -239,7 +246,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                 <div
                   key={v.name}
                   className={`flavor-item${selectedFlavor === v.name ? ' selected' : ''}`}
-                  onClick={() => setSelectedFlavor(v.name)}
+                  onClick={() => { setImgLoading(true); setSelectedFlavor(v.name); }}
                 >
                   <div className="flavor-radio">
                     <div className="flavor-radio-dot"></div>
