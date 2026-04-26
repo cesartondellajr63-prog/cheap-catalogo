@@ -211,7 +211,7 @@ export class PaymentsService {
     });
 
     // 2. Monta o body para o Checkout Cielo usando preços resolvidos do Firebase
-    const CARD_FEE = 1.07;
+    const CARD_FEE = 1.052;
     const toCents = (v: number) => Math.round(v * 100);
     const withFee = (v: number) => Math.round(v * CARD_FEE * 100) / 100;
 

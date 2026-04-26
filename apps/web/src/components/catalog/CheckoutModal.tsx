@@ -648,7 +648,7 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
                   >
                     {cardLoading
                       ? <><span className="spinner"></span> Aguarde...</>
-                      : <><span>💳 Pagar com Cartão</span><span style={{ fontSize: '0.7rem', opacity: 0.8, fontWeight: 400 }}>Taxa de 7% será aplicada</span></>
+                      : <><span>💳 Pagar com Cartão</span><span style={{ fontSize: '0.7rem', opacity: 0.8, fontWeight: 400 }}>Taxa de 5,2% será aplicada</span></>
                     }
                   </button>
                 </>

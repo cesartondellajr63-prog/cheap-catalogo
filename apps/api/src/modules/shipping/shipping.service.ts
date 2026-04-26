@@ -42,11 +42,7 @@ export class ShippingService {
     };
   }
 
-  async getQuote(_dto: QuoteShippingDto): Promise<any> {
-    // TESTE — frete fixo em R$ 0,02. Remover para voltar ao cálculo real.
-    return this.storeAndReturnQuote(0.02, Date.now() + 5 * 60 * 1000);
-
-    const dto = _dto;
+  async getQuote(dto: QuoteShippingDto): Promise<any> {
     const raw = dto.zipCode?.replace(/\D/g, '') ?? null;
 
     // Cache por CEP quando disponível
