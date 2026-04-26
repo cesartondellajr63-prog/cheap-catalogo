@@ -88,7 +88,7 @@ export class ShippingService {
     this.logger.log(`[FRETE] Distância ao destino: ${distKm.toFixed(1)} km`);
     if (distKm > 50) {
       throw new InternalServerErrorException(
-        `Entrega disponível apenas em um raio de 50 km. Seu endereço está a ${Math.round(distKm)} km.`,
+        'Entrega indisponível para o seu endereço, infelizmente a distancia é muito grande',
       );
     }
 
