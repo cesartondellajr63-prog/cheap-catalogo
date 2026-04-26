@@ -43,10 +43,18 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
         setProduct(p);
         const active = (p.variants ?? []).filter(v => v.active !== false && (v.stock ?? 1) > 0);
         if (active.length === 1) setSelectedFlavor(active[0].name);
-        const urls = new Set<string>();
-        (p.images ?? []).forEach(u => u && urls.add(u));
-        active.forEach(v => { if (v.image) urls.add(v.image); });
-        urls.forEach(u => { const img = new Image(); img.src = u; });
+        const urls: string[] = [];
+        const seen = new Set<string>();
+        const add = (u: string) => { if (u && !seen.has(u)) { seen.add(u); urls.push(u); } };
+        active.forEach(v => { if (v.image) add(v.image); });
+        (p.images ?? []).forEach(u => add(u));
+        const preloadNext = (i: number) => {
+          if (i >= urls.length) return;
+          const img = new Image();
+          img.onload = img.onerror = () => preloadNext(i + 1);
+          img.src = urls[i];
+        };
+        preloadNext(0);
       })
       .catch(() => router.replace('/'))
       .finally(() => setLoading(false));
