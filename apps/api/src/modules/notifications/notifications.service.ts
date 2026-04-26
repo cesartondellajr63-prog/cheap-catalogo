@@ -180,7 +180,7 @@ export class NotificationsService {
     const message =
       `Que bom que concluiu seu pedido conosco!\n\n` +
       `Segue o link para acompanhamento:\n\n` +
-      `https://cheap-catalogo.vercel.app/acompanhar/${orderNumber}`;
+      `https://www.cheapcatalogo.com/acompanhar/${orderNumber}`;
 
     try {
       const res = await fetch(
