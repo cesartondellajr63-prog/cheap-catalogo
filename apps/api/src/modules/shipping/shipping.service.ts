@@ -19,6 +19,16 @@ export class ShippingService {
 
   constructor(private readonly firebaseService: FirebaseService) {}
 
+  private haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+
   private fetchWithTimeout(url: string, options: RequestInit = {}, ms = 15000): Promise<Response> {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), ms);
@@ -72,6 +82,14 @@ export class ShippingService {
 
     if (latNum < -33 || latNum > 5 || lngNum < -73 || lngNum > -35) {
       throw new InternalServerErrorException('Endereço fora do Brasil ou coordenadas inválidas.');
+    }
+
+    const distKm = this.haversineKm(parseFloat(ORIGIN.lat), parseFloat(ORIGIN.lng), latNum, lngNum);
+    this.logger.log(`[FRETE] Distância ao destino: ${distKm.toFixed(1)} km`);
+    if (distKm > 50) {
+      throw new InternalServerErrorException(
+        `Entrega disponível apenas em um raio de 50 km. Seu endereço está a ${Math.round(distKm)} km.`,
+      );
     }
 
     // Chamar Lalamove com lat/lng já geocodificados pelo frontend
