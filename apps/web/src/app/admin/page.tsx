@@ -190,6 +190,7 @@ export default function AdminDashboard() {
   const [storeIsOpen, setStoreIsOpen] = useState(true);       // estado salvo (badge)
   const [storeIsOpenDraft, setStoreIsOpenDraft] = useState(true); // estado do toggle (antes de salvar)
   const [storeMessage, setStoreMessage] = useState('Loja temporariamente fechada. Voltamos em breve!');
+  const [storeMessageBot, setStoreMessageBot] = useState('Hoje não estamos mais funcionando. Te avisaremos quando estivermos funcionando!');
   const [storeLoading, setStoreLoading] = useState(false);
   const [storeSaving, setStoreSaving] = useState(false);
 
@@ -413,7 +414,7 @@ export default function AdminDashboard() {
     if (page !== 'loja') return;
     setStoreLoading(true);
     apiFetch<{ isOpen: boolean; closedMessage: string }>('/config/store')
-      .then(s => { setStoreIsOpen(s.isOpen); setStoreIsOpenDraft(s.isOpen); setStoreMessage(s.closedMessage); })
+      .then(s => { setStoreIsOpen(s.isOpen); setStoreIsOpenDraft(s.isOpen); setStoreMessage(s.closedMessage); setStoreMessageBot(s.closedMessageBot ?? 'Hoje não estamos mais funcionando. Te avisaremos quando estivermos funcionando!'); })
       .catch(() => {})
       .finally(() => setStoreLoading(false));
   }, [page]);
@@ -424,7 +425,7 @@ export default function AdminDashboard() {
       await apiFetch<any>('/config/store', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isOpen: storeIsOpenDraft, closedMessage: storeMessage }),
+        body: JSON.stringify({ isOpen: storeIsOpenDraft, closedMessage: storeMessage, closedMessageBot: storeMessageBot }),
       });
       setStoreIsOpen(storeIsOpenDraft); // só atualiza o badge após salvar com sucesso
     } catch (e) {
@@ -432,7 +433,7 @@ export default function AdminDashboard() {
     } finally {
       setStoreSaving(false);
     }
-  }, [storeIsOpenDraft, storeMessage]);
+  }, [storeIsOpenDraft, storeMessage, storeMessageBot]);
 
   const updateTrackingLink = useCallback(async (id: string, trackingLink: string) => {
     const idsToUpdate = selectedIds.has(id) && selectedIds.size > 1 ? [...selectedIds] : [id];
@@ -1361,15 +1362,18 @@ export default function AdminDashboard() {
                     </div>
                   </div>
 
-                  {/* Mensagem */}
-                  <div style={{ ...glassCard, marginBottom:20 }}>
-                    <div style={{ fontSize:13,fontWeight:700,color:'#fff',marginBottom:10 }}>
-                      Mensagem exibida quando fechada
+                  {/* Mensagem Site */}
+                  <div style={{ ...glassCard, marginBottom:16 }}>
+                    <div style={{ fontSize:13,fontWeight:700,color:'#fff',marginBottom:4 }}>
+                      🌐 Mensagem exibida no site
+                    </div>
+                    <div style={{ fontSize:11, color:'#6a6a6a', marginBottom:10 }}>
+                      Aparece na página da loja quando ela está fechada
                     </div>
                     <textarea
                       value={storeMessage}
                       onChange={e => setStoreMessage(e.target.value)}
-                      rows={4}
+                      rows={3}
                       style={{
                         width:'100%', boxSizing:'border-box',
                         background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.12)',
@@ -1377,6 +1381,28 @@ export default function AdminDashboard() {
                         fontFamily:'Satoshi,sans-serif', fontSize:13, resize:'vertical', outline:'none',
                       }}
                       placeholder="Ex: Estamos fechados hoje. Voltamos amanhã às 9h!"
+                    />
+                  </div>
+
+                  {/* Mensagem WhatsApp Bot */}
+                  <div style={{ ...glassCard, marginBottom:20 }}>
+                    <div style={{ fontSize:13,fontWeight:700,color:'#fff',marginBottom:4 }}>
+                      💬 Mensagem enviada pelo bot (WhatsApp)
+                    </div>
+                    <div style={{ fontSize:11, color:'#6a6a6a', marginBottom:10 }}>
+                      Enviada automaticamente quando alguém contactar o WhatsApp fora do horário
+                    </div>
+                    <textarea
+                      value={storeMessageBot}
+                      onChange={e => setStoreMessageBot(e.target.value)}
+                      rows={3}
+                      style={{
+                        width:'100%', boxSizing:'border-box',
+                        background:'rgba(255,255,255,0.04)', border:'1px solid rgba(64,196,255,0.2)',
+                        borderRadius:10, padding:'12px 14px', color:'#fff',
+                        fontFamily:'Satoshi,sans-serif', fontSize:13, resize:'vertical', outline:'none',
+                      }}
+                      placeholder="Ex: Hoje não estamos mais funcionando. Te avisaremos quando estivermos funcionando!"
                     />
                   </div>
 
