@@ -242,6 +242,7 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
       });
       sessionStorage.setItem('pedidoAtual', pedidoPix);
       localStorage.setItem('pedidoAtual', pedidoPix);
+      saveCart(localCart);
       window.location.href = result.checkoutUrl;
     } catch (e: unknown) {
       setPagError(e instanceof Error ? e.message : 'Erro ao iniciar pagamento.');
