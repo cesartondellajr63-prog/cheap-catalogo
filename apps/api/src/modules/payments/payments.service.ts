@@ -50,7 +50,7 @@ export class PaymentsService {
       throw new InternalServerErrorException('Mercado Pago access token not configured.');
     }
 
-    const frontendUrl = process.env.FRONTEND_URL!;
+    const frontendUrl = process.env.FRONTEND_URL!.split(',')[0].trim();
     const backendUrl = process.env.BACKEND_URL!;
 
     // 1. Valida o frete server-side — ignora dto.shippingPrice
@@ -186,7 +186,7 @@ export class PaymentsService {
       throw new InternalServerErrorException('Cielo credentials not configured.');
     }
 
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const frontendUrl = (process.env.FRONTEND_URL || 'http://localhost:3000').split(',')[0].trim();
     const backendUrl  = process.env.BACKEND_URL  || 'http://localhost:3001';
 
     // 0. Valida o frete server-side — ignora dto.shippingPrice
