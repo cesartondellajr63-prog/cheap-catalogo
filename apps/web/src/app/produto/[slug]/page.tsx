@@ -255,7 +255,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                 <div
                   key={v.name}
                   className={`flavor-item${selectedFlavor === v.name ? ' selected' : ''}`}
-                  onClick={() => { setImgLoading(true); setSelectedFlavor(v.name); }}
+                  onClick={() => { if (selectedFlavor !== v.name) { setImgLoading(true); setSelectedFlavor(v.name); } }}
                 >
                   <div className="flavor-radio">
                     <div className="flavor-radio-dot"></div>
