@@ -413,7 +413,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (page !== 'loja') return;
     setStoreLoading(true);
-    apiFetch<{ isOpen: boolean; closedMessage: string }>('/config/store')
+    apiFetch<{ isOpen: boolean; closedMessage: string; closedMessageBot: string }>('/config/store')
       .then(s => { setStoreIsOpen(s.isOpen); setStoreIsOpenDraft(s.isOpen); setStoreMessage(s.closedMessage); setStoreMessageBot(s.closedMessageBot ?? 'Hoje não estamos mais funcionando. Te avisaremos quando estivermos funcionando!'); })
       .catch(() => {})
       .finally(() => setStoreLoading(false));
