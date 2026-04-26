@@ -14,6 +14,7 @@
     "install:all": "cd apps/api && npm install && cd ../web && npm install"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "puppeteer": "^24.42.0"
   }
 }
