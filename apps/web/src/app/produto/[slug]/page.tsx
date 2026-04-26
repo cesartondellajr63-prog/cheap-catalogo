@@ -188,6 +188,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
       <div className="product-page">
         <div className="product-info-mobile-top">
           <h1 className="product-name">{product.name}</h1>
+          <div className="product-price">{fmtBRLFromDecimal(product.basePrice)}</div>
           <div className="product-meta">
             <span className="product-brand-label">Marca: <b>{brand.label}</b></span>
             <span className="meta-sep">•</span>
