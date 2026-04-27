@@ -178,7 +178,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
             </svg>
             Voltar
           </a>
-          <a className="topbar-logo" href="/" style={{ textDecoration:'none', color:'inherit' }}>Cheap<span>.</span>Pods</a>
+          <a className="topbar-logo" href="/" style={{ textDecoration:'none', color:'inherit' }}>CheapPods</a>
           <div className="cart-pill" onClick={() => count > 0 && setCheckoutOpen(true)}>
             🛒 <span className="cart-pill-count">{count}</span>
           </div>
@@ -224,8 +224,8 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
               <span className="product-puffs-tag">{product.puffs} puffs</span>
             </div>
           </div>
-          <p style={{ fontSize: '0.65rem', color: '#666', marginTop: '0px', marginBottom: '20px', lineHeight: 1.5, textAlign: 'left', paddingLeft: '10px' }}>
-            *As imagens são meramente ilustrativas e podem<br />não condizer fielmente com os produtos reais.
+          <p style={{ fontSize: '0.65rem', color: '#fff', marginTop: '0px', marginBottom: '20px', lineHeight: 1.5, textAlign: 'left', paddingLeft: '10px' }}>
+            Imagens geradas por inteligência artificial para melhor representação dos sabores. As cores podem apresentar variações em relação ao produto real. Imagens meramente ilustrativas.
           </p>
           {product.description && (
             <div className="product-description product-description-desktop">{product.description}</div>

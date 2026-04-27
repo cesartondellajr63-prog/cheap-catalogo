@@ -13,7 +13,7 @@ export interface StaticProduct {
 
 export const BRANDS_DATA = [
   { id: 'ignite',     label: 'Ignite',      color: '#ff6a00' },
-  { id: 'elfbar',     label: 'Elf Bar',     color: '#3b9eff' },
+  { id: 'elfbar',     label: 'Elfbar',      color: '#3b9eff' },
   { id: 'lostmary',   label: 'Lost Mary',   color: '#ff4e6a' },
   { id: 'oxbar',      label: 'Oxbar',       color: '#a855f7' },
   { id: 'hqd',        label: 'HQD',         color: '#00c9a7' },

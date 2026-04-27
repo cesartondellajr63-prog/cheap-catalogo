@@ -696,7 +696,7 @@ export default function AdminDashboard() {
         <div style={{ display:'flex',alignItems:'center',gap:12,padding:'0 10px',marginBottom:40 }}>
           <div style={{ width:40,height:40,background:'linear-gradient(135deg,rgba(200,255,0,0.18),rgba(126,255,245,0.12))',border:'1px solid rgba(200,255,0,0.25)',borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',fontSize:17 }}>⚡</div>
           <div>
-            <div style={{ fontFamily:'Satoshi,sans-serif',fontSize:15,fontWeight:800,color:'#fff' }}>Cheap Pods</div>
+            <div style={{ fontFamily:'Satoshi,sans-serif',fontSize:15,fontWeight:800,color:'#fff' }}>CheapPods</div>
             <div style={{ fontFamily:'JetBrains Mono,monospace',fontSize:9,fontWeight:600,letterSpacing:'1.5px',textTransform:'uppercase',color:'#8a8a8a',marginTop:2 }}>Admin Panel</div>
           </div>
         </div>

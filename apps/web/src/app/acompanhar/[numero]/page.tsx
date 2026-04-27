@@ -200,7 +200,7 @@ export default function AcompanharPedidoPage() {
         {/* Cabeçalho */}
         <div style={{ textAlign:'center', marginBottom:8 }}>
           <h1 style={{ fontFamily:'var(--font-syne),Syne,sans-serif', fontSize:'clamp(20px,4vw,26px)', fontWeight:800, color:'#fff', letterSpacing:'-0.5px' }}>
-            Cheap<span style={{ color:'var(--accent)' }}>.</span>Pods
+            CheapPods
           </h1>
           <p style={{ color:'rgba(255,255,255,0.45)', fontSize:13, marginTop:4 }}>Acompanhamento de Pedido</p>
         </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { Trophy, BadgeDollarSign, CreditCard, ShieldCheck, Bike } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import type { CartItem, Product } from '@/types';
 import { loadCart, saveCart, getCartCount } from '@/lib/cart';
@@ -198,7 +199,7 @@ export default function CatalogClient() {
       <header>
         <div className="header-inner">
           <div className="header-top">
-            <div className="logo">Cheap<span>.</span>Pods</div>
+            <div className="logo">CheapPods</div>
             <div className="header-right">
               {storeStatus && !storeStatus.isOpen
                 ? <div className="header-badge" style={{ background:'rgba(255,60,60,0.12)', borderColor:'rgba(255,60,60,0.3)', color:'#ff6060' }}><span className="badge-dot" style={{ background:'#ff4444' }}></span> Loja fechada</div>
@@ -215,13 +216,14 @@ export default function CatalogClient() {
           <div className="header-body">
             <div>
               <h1 className="hero-title">Os melhores<br /><em>pods</em> do rolê.</h1>
-              <p className="hero-sub">Ignite, Elf Bar, Lost Mary, Oxbar e Black Sheep. Escolha o seu sabor.</p>
+
             </div>
             <div className="stats-strip">
-              <div className="stat-item"><div className="stat-num">18</div><div className="stat-label">Modelos</div></div>
-              <div className="stat-item"><div className="stat-num">5</div><div className="stat-label">Marcas</div></div>
-              <div className="stat-item"><div className="stat-num">150+</div><div className="stat-label">Sabores</div></div>
-              <div className="stat-item"><div className="stat-num">⚡</div><div className="stat-label">Rápido</div></div>
+              <div className="stat-item"><div className="stat-num"><Trophy size={22} strokeWidth={2} color="var(--accent)" /></div><div className="stat-label">Top 1 de SP!</div></div>
+              <div className="stat-item"><div className="stat-num"><BadgeDollarSign size={22} strokeWidth={2} color="var(--accent)" /></div><div className="stat-label">Melhores preços</div></div>
+              <div className="stat-item"><div className="stat-num"><CreditCard size={22} strokeWidth={2} color="var(--accent)" /></div><div className="stat-label">Pagamento fácil (Pix/Cartão)</div></div>
+              <div className="stat-item"><div className="stat-num"><ShieldCheck size={22} strokeWidth={2} color="var(--accent)" /></div><div className="stat-label">Pods originais e lacrados</div></div>
+              <div className="stat-item"><div className="stat-num"><Bike size={22} strokeWidth={2} color="var(--accent)" /></div><div className="stat-label">Entrega até meia-noite</div></div>
             </div>
           </div>
         </div>
@@ -626,7 +628,7 @@ export default function CatalogClient() {
       <footer className="site-footer">
         <div className="site-footer-inner">
           <div className="site-footer-brand">
-            <div className="logo">Cheap<span>.</span>Pods</div>
+            <div className="logo">CheapPods</div>
             <p className="site-footer-tagline">Loja de pods descartáveis e cigarros eletrônicos. Produto exclusivo para maiores de 18 anos. O uso de nicotina causa dependência.</p>
           </div>
           <div className="site-footer-cols">
@@ -649,7 +651,7 @@ export default function CatalogClient() {
           </div>
         </div>
         <div className="site-footer-bottom">
-          <span>© 2026 Cheap.Pods</span>
+          <span>© 2026 CheapPods</span>
           <span>São Paulo · Brasil</span>
           <span>+18 · Nicotina causa dependência</span>
         </div>

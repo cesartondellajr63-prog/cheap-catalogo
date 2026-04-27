@@ -291,7 +291,7 @@ export default function PedidoPage({ params }: { params: Promise<{ id: string }>
         <div style={{ maxWidth:600, margin:'0 auto', display:'flex', alignItems:'center', justifyContent:'center' }}>
           <div style={{ fontFamily:'var(--font-syne),Syne,sans-serif', fontSize:'clamp(16px,3vw,20px)', fontWeight:800, cursor:'pointer' }}
             onClick={() => window.location.href = '/'}>
-            Cheap<span style={{ color:'var(--accent)' }}>.</span>Pods
+            CheapPods
           </div>
         </div>
       </header>
@@ -305,7 +305,7 @@ export default function PedidoPage({ params }: { params: Promise<{ id: string }>
       </Suspense>
 
       <footer style={{ position:'relative', zIndex:2, padding:'10px var(--pad)', textAlign:'center', borderTop:'1px solid var(--border)', color:'var(--muted)', fontSize:12 }}>
-        <p>© 2026 Cheap Pods — Todos os direitos reservados</p>
+        <p>© 2026 CheapPods — Todos os direitos reservados</p>
       </footer>
     </div>
   );

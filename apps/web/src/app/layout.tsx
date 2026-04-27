@@ -20,7 +20,7 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
-  title: 'Cheap Pods — Catálogo',
+  title: 'CheapPods — Catálogo',
   description: 'Os melhores pods com os melhores preços. Ignite, Elf Bar, Lost Mary, Oxbar e Black Sheep.',
   icons: {
     apple: '/apple-touch-icon.png',

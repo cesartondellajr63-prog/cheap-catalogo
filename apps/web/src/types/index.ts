@@ -110,7 +110,7 @@ export interface LoginResult {
 // Static data matching existing catalog
 export const BRANDS_STATIC: Brand[] = [
   { id: 'ignite',     name: 'Ignite',      slug: 'ignite',      color: '#ff6a00', active: true },
-  { id: 'elfbar',     name: 'Elf Bar',     slug: 'elfbar',      color: '#3b9eff', active: true },
+  { id: 'elfbar',     name: 'Elfbar',      slug: 'elfbar',      color: '#3b9eff', active: true },
   { id: 'lostmary',   name: 'Lost Mary',   slug: 'lostmary',    color: '#ff4e6a', active: true },
   { id: 'blacksheep', name: 'Black Sheep', slug: 'blacksheep',  color: '#888888', active: true },
   { id: 'oxbar',      name: 'Oxbar',       slug: 'oxbar',       color: '#a855f7', active: true },
