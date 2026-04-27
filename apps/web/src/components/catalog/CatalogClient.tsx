@@ -223,7 +223,7 @@ export default function CatalogClient() {
               <div className="stat-item"><div className="stat-num"><BadgeDollarSign size={22} strokeWidth={2} color="var(--accent)" /></div><div className="stat-label">Melhores preços</div></div>
               <div className="stat-item"><div className="stat-num"><CreditCard size={22} strokeWidth={2} color="var(--accent)" /></div><div className="stat-label">Pagamento fácil (Pix/Cartão)</div></div>
               <div className="stat-item"><div className="stat-num"><ShieldCheck size={22} strokeWidth={2} color="var(--accent)" /></div><div className="stat-label">Pods originais e lacrados</div></div>
-              <div className="stat-item"><div className="stat-num"><Bike size={22} strokeWidth={2} color="var(--accent)" /></div><div className="stat-label">Entrega até meia-noite</div></div>
+              <div className="stat-item"><div className="stat-num"><Bike size={22} strokeWidth={2} color="var(--accent)" /></div><div className="stat-label">Entregas até meia-noite</div></div>
             </div>
           </div>
         </div>
