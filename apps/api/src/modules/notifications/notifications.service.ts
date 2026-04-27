@@ -179,12 +179,11 @@ export class NotificationsService {
 
     const message =
       `Que bom, seu pagamento foi aprovado! 😁\n\n` +
-      `Obrigado pela sua compra!\n` +
+      `Obrigado pela sua compra! 💙\n` +
       `É uma honra ter você como nosso cliente.\n\n` +
       `Seu pedido já está sendo preparado com todo cuidado.\n\n` +
-      `Você pode acompanhar o status e todas as atualizações por aqui:\n` +
-      `👉 https://www.cheapcatalogo.com/acompanhar/${orderNumber}\n\n` +
-      `Assim que houver novidades, você será notificado automaticamente.`;
+      `Você pode acompanhar as atualizações do seu pedido pelo site a qualquer momento.\n` +
+      `👉 https://www.cheapcatalogo.com/acompanhar/${orderNumber}`;
 
     try {
       const res = await fetch(
