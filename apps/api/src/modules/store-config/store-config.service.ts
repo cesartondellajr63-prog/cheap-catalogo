@@ -6,6 +6,8 @@ const DEFAULT_MESSAGE_BOT = 'Hoje não estamos mais funcionando. Te avisaremos q
 
 const ALL_BRAND_IDS = ['ignite','elfbar','lostmary','oxbar','hqd','nikbar','dinnerlady','rabbeats'];
 
+const MAKE_WEBHOOK_URL = 'https://hook.us1.make.com/pqwkn7zmone4qf3jgncs2kj9ecjye8rc';
+
 @Injectable()
 export class StoreConfigService {
   constructor(private readonly firebaseService: FirebaseService) {}
@@ -24,6 +26,12 @@ export class StoreConfigService {
   }
 
   async update(body: { isOpen?: boolean; closedMessage?: string; closedMessageBot?: string }): Promise<{ isOpen: boolean; closedMessage: string; closedMessageBot: string }> {
+    if (body.isOpen === true) {
+      const current = await this.get();
+      if (!current.isOpen) {
+        fetch(MAKE_WEBHOOK_URL, { method: 'POST' }).catch(() => {});
+      }
+    }
     await this.firebaseService.db.doc('config/store').set(body, { merge: true });
     return this.get();
   }
