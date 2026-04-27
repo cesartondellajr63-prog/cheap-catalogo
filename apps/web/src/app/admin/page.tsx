@@ -1845,7 +1845,8 @@ function OrderRow({ o, onRowClick, onStatusChange, onShippingChange, onMotoboyCh
       </td>
       <td style={td} onClick={e => e.stopPropagation()}>
         {isPaid(o.status) && phone ? (() => {
-          const waUrl = `https://wa.me/55${phone}?text=Que%20bom%20que%20concluiu%20seu%20pedido%20conosco!%0A%0ASegue%20o%20link%20para%20acompanhamento%3A%0A%0Ahttps%3A%2F%2Fwww.cheapcatalogo.com%2Facompanhar%2F${o.orderNumber}`;
+          const waMsg = `Que bom, seu pagamento foi aprovado! 😁\n\nObrigado pela sua compra!\nÉ uma honra ter você como nosso cliente.\n\nSeu pedido já está sendo preparado com todo cuidado.\n\nVocê pode acompanhar o status e todas as atualizações por aqui:\n👉 https://www.cheapcatalogo.com/acompanhar/${o.orderNumber}\n\nAssim que houver novidades, você será notificado automaticamente.`;
+          const waUrl = `https://wa.me/55${phone}?text=${encodeURIComponent(waMsg)}`;
           return (
             <a
               href={waUrl}
