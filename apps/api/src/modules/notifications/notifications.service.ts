@@ -178,9 +178,13 @@ export class NotificationsService {
     const to = digits.startsWith('55') ? digits : `55${digits}`;
 
     const message =
-      `Que bom que concluiu seu pedido conosco!\n\n` +
-      `Segue o link para acompanhamento:\n\n` +
-      `https://www.cheapcatalogo.com/acompanhar/${orderNumber}`;
+      `Que bom, seu pagamento foi aprovado! 😁\n\n` +
+      `Obrigado pela sua compra!\n` +
+      `É uma honra ter você como nosso cliente.\n\n` +
+      `Seu pedido já está sendo preparado com todo cuidado.\n\n` +
+      `Você pode acompanhar o status e todas as atualizações por aqui:\n` +
+      `👉 https://www.cheapcatalogo.com/acompanhar/${orderNumber}\n\n` +
+      `Assim que houver novidades, você será notificado automaticamente.`;
 
     try {
       const res = await fetch(
