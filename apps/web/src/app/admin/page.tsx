@@ -1373,7 +1373,7 @@ export default function AdminDashboard() {
                     <textarea
                       value={storeMessage}
                       onChange={e => setStoreMessage(e.target.value)}
-                      rows={3}
+                      rows={6}
                       style={{
                         width:'100%', boxSizing:'border-box',
                         background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.12)',
@@ -1395,7 +1395,7 @@ export default function AdminDashboard() {
                     <textarea
                       value={storeMessageBot}
                       onChange={e => setStoreMessageBot(e.target.value)}
-                      rows={3}
+                      rows={6}
                       style={{
                         width:'100%', boxSizing:'border-box',
                         background:'rgba(255,255,255,0.04)', border:'1px solid rgba(64,196,255,0.2)',
