@@ -1367,7 +1367,7 @@ export default function AdminDashboard() {
                   <div style={{ ...glassCard, marginBottom:20 }}>
                     <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',gap:16 }}>
                       <div>
-                        <div style={{ fontSize:15,fontWeight:700,color:'#fff',marginBottom:4 }}>Webhook ao abrir a loja</div>
+                        <div style={{ fontSize:15,fontWeight:700,color:'#fff',marginBottom:4 }}>Enviar mensagens ao abrir a loja</div>
                         <div style={{ fontSize:13,color:'#8a8a8a' }}>
                           {webhookEnabled ? 'Ativado — dispara o Make.com quando a loja abrir.' : 'Desativado — loja abre sem disparar o webhook.'}
                         </div>
