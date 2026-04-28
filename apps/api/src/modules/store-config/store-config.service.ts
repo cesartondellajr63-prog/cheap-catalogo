@@ -29,7 +29,9 @@ export class StoreConfigService {
   async update(body: { isOpen?: boolean; closedMessage?: string; closedMessageBot?: string; webhookEnabled?: boolean }): Promise<{ isOpen: boolean; closedMessage: string; closedMessageBot: string; webhookEnabled: boolean }> {
     if (body.isOpen === true) {
       const current = await this.get();
-      if (!current.isOpen && current.webhookEnabled) {
+      // Usa o valor do body se enviado; senão usa o que está salvo no Firebase
+      const webhookEnabled = body.webhookEnabled !== undefined ? body.webhookEnabled : current.webhookEnabled;
+      if (!current.isOpen && webhookEnabled) {
         fetch(MAKE_WEBHOOK_URL, { method: 'POST' }).catch(() => {});
       }
     }
