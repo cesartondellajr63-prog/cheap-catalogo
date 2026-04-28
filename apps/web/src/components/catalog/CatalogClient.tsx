@@ -16,7 +16,7 @@ function toDisplay(p: Product) {
     model: p.name,
     puffs: p.puffs ?? '',
     price: p.basePrice,
-    flavors: (p.variants ?? []).filter(v => v.active !== false).map(v => v.name),
+    flavors: (p.variants ?? []).filter(v => v.active !== false && (v.stock ?? 1) > 0).map(v => v.name),
     image: (p.images ?? [])[0] ?? '',
     description: p.description ?? '',
   };
