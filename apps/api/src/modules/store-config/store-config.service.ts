@@ -12,23 +12,24 @@ const MAKE_WEBHOOK_URL = 'https://hook.us1.make.com/pqwkn7zmone4qf3jgncs2kj9ecjy
 export class StoreConfigService {
   constructor(private readonly firebaseService: FirebaseService) {}
 
-  async get(): Promise<{ isOpen: boolean; closedMessage: string; closedMessageBot: string }> {
+  async get(): Promise<{ isOpen: boolean; closedMessage: string; closedMessageBot: string; webhookEnabled: boolean }> {
     const doc = await this.firebaseService.db.doc('config/store').get();
     if (!doc.exists) {
-      return { isOpen: true, closedMessage: DEFAULT_MESSAGE, closedMessageBot: DEFAULT_MESSAGE_BOT };
+      return { isOpen: true, closedMessage: DEFAULT_MESSAGE, closedMessageBot: DEFAULT_MESSAGE_BOT, webhookEnabled: true };
     }
     const data = doc.data()!;
     return {
       isOpen: data.isOpen ?? true,
       closedMessage: data.closedMessage ?? DEFAULT_MESSAGE,
       closedMessageBot: data.closedMessageBot ?? DEFAULT_MESSAGE_BOT,
+      webhookEnabled: data.webhookEnabled ?? true,
     };
   }
 
-  async update(body: { isOpen?: boolean; closedMessage?: string; closedMessageBot?: string }): Promise<{ isOpen: boolean; closedMessage: string; closedMessageBot: string }> {
+  async update(body: { isOpen?: boolean; closedMessage?: string; closedMessageBot?: string; webhookEnabled?: boolean }): Promise<{ isOpen: boolean; closedMessage: string; closedMessageBot: string; webhookEnabled: boolean }> {
     if (body.isOpen === true) {
       const current = await this.get();
-      if (!current.isOpen) {
+      if (!current.isOpen && current.webhookEnabled) {
         fetch(MAKE_WEBHOOK_URL, { method: 'POST' }).catch(() => {});
       }
     }
