@@ -653,8 +653,29 @@ export default function AdminDashboard() {
   }
 
   // KPIs
+  const now = new Date();
+  const totalVendidoMes = orders.filter(o => {
+    if (!isPaid(o.status)) return false;
+    const d = new Date(o.createdAt);
+    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+  }).reduce((s, o) => s + o.total, 0);
+  const totalVendidoHoje = orders.filter(o => {
+    if (!isPaid(o.status)) return false;
+    const d = new Date(o.createdAt);
+    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+  }).reduce((s, o) => s + o.total, 0);
   const totalVendido = orders.filter(o => isPaid(o.status)).reduce((s, o) => s + o.total, 0);
-  const totalPedidos = orders.length;
+  const totalPedidosMes = orders.filter(o => {
+    if (!isPaid(o.status)) return false;
+    const d = new Date(o.createdAt);
+    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+  }).length;
+  const totalPedidosHoje = orders.filter(o => {
+    if (!isPaid(o.status)) return false;
+    const d = new Date(o.createdAt);
+    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+  }).length;
+  const totalPedidos = orders.filter(o => isPaid(o.status)).length;
   const aguardando = orders.filter(o => o.status === 'PENDING').length;
   const concluidos = orders.filter(o => (o as any).shippingStatus === '🟢 Entregue').length;
   const pendentes = orders.filter(o => (o as any).shippingStatus !== '🟢 Entregue' && o.status !== 'PENDING').length;
@@ -772,9 +793,9 @@ export default function AdminDashboard() {
               {/* KPI Cards */}
               <div style={{ display:'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : '2fr 1fr 1fr 1fr 1fr', gap:14, marginBottom:24 }}>
                 <div style={{ gridColumn: isMobile ? '1 / -1' : undefined }}>
-                  <StatCard label="Total Vendido" value={fmtR(totalVendido)} sub="pagos + enviados" color="#c8ff00" icon="💰" featured />
+                  <StatCard label="Total Vendido" value={fmtR(totalVendidoMes)} sub="vendas do mês" sub2={`hoje: ${fmtR(totalVendidoHoje)}`} color="#c8ff00" icon="💰" featured />
                 </div>
-                <StatCard label="Total Pedidos" value={String(totalPedidos)} sub="todos os status" color="#7efff5" icon="📦" onClick={() => setFiltro('todos')} active={filtro === 'todos'} />
+                <StatCard label="Total Pedidos" value={String(totalPedidosMes)} sub="pedidos do mês" sub2={`hoje: ${totalPedidosHoje}`} color="#7efff5" icon="📦" onClick={() => setFiltro('todos')} active={filtro === 'todos'} />
                 <StatCard label="Aguardando Pagamento" value={String(aguardando)} sub="pagamento pendente" color="#7efff5" icon="💳" onClick={() => setFiltro(filtro === 'aguardando' ? 'todos' : 'aguardando')} active={filtro === 'aguardando'} />
                 <StatCard label="Aguardando Entrega" value={String(pendentes)} sub="pagos, não entregues" color="#ffb545" icon="🏍️" onClick={() => setFiltro(filtro === 'pendente' ? 'todos' : 'pendente')} active={filtro === 'pendente'} />
                 <StatCard label="Concluídos" value={String(concluidos)} sub={`${pctConcluidos}% do total`} color="#c8ff00" icon="✅" onClick={() => setFiltro(filtro === 'concluido' ? 'todos' : 'concluido')} active={filtro === 'concluido'} />
@@ -1728,8 +1749,8 @@ const dateInput: React.CSSProperties = {
 function truncate(s: string, n: number) { return s.length > n ? s.slice(0, n) + '…' : s; }
 
 // ── StatCard ──
-function StatCard({ label, value, sub, color, icon, featured, onClick, active }: {
-  label: string; value: string; sub: string; color: string; icon: string; featured?: boolean; onClick?: () => void; active?: boolean;
+function StatCard({ label, value, sub, sub2, color, icon, featured, onClick, active }: {
+  label: string; value: string; sub: string; sub2?: string; color: string; icon: string; featured?: boolean; onClick?: () => void; active?: boolean;
 }) {
   return (
     <div onClick={onClick} style={{
@@ -1755,6 +1776,7 @@ function StatCard({ label, value, sub, color, icon, featured, onClick, active }:
       </div>
       <div style={{ fontFamily:'JetBrains Mono,monospace',fontSize: featured ? 32 : 24,fontWeight:700,letterSpacing:-0.5,color }}>{value}</div>
       <div style={{ fontSize:11,color:'#6a6a6a',marginTop:5,fontWeight:500 }}>{sub}</div>
+      {sub2 && <div style={{ fontSize:10,color:'#4a4a4a',marginTop:6,fontWeight:400,letterSpacing:'0.3px' }}>{sub2}</div>}
       <div style={{ position:'absolute',bottom:0,left:0,right:0,height:2,background:`linear-gradient(90deg,${color},transparent)` }}></div>
     </div>
   );
