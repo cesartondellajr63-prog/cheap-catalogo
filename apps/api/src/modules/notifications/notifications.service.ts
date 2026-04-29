@@ -213,6 +213,86 @@ export class NotificationsService {
     }
   }
 
+  async sendOrderShippedWhatsApp(phone: string, orderNumber: string, customerName = '', motoboy = ''): Promise<void> {
+    const instanceId = process.env.ZAPI_INSTANCE_ID;
+    const token = process.env.ZAPI_TOKEN;
+    const clientToken = process.env.ZAPI_CLIENT_TOKEN;
+
+    if (!instanceId || !token || !clientToken) {
+      this.logger.log(`[Z-API] Variáveis não configuradas, pulando WhatsApp (shipped) para ${orderNumber}.`);
+      return;
+    }
+
+    const digits = phone.replace(/\D/g, '');
+    const to = digits.startsWith('55') ? digits : `55${digits}`;
+    const greeting = customerName ? `${customerName}, seu` : `Seu`;
+    const isLalamove = motoboy === '🛵 Lala Move';
+    const message = isLalamove
+      ? `${greeting} pedido está a caminho! 🛵\n\n` +
+        `Em breve ele chegará até você.\n\n` +
+        `Você pode acompanhar a entrega pelo link:\n` +
+        `👉 https://www.cheapcatalogo.com/acompanhar/${orderNumber}`
+      : `${greeting} pedido está a caminho! 🛵\n\n` +
+        `Em breve ele chegará até você.`;
+
+    try {
+      const res = await fetch(
+        `https://api.z-api.io/instances/${instanceId}/token/${token}/send-text`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Client-Token': clientToken },
+          body: JSON.stringify({ phone: to, message }),
+        },
+      );
+      if (!res.ok) {
+        const err = await res.text();
+        this.logger.error(`[Z-API] Falha ao enviar WhatsApp (shipped) para ${orderNumber}: ${err}`);
+      } else {
+        this.logger.log(`[Z-API] WhatsApp (shipped) enviado para ${to} — pedido ${orderNumber}.`);
+      }
+    } catch (error) {
+      this.logger.error(`[Z-API] Erro ao chamar Z-API (shipped): ${(error as Error).message}`);
+    }
+  }
+
+  async sendOrderDeliveredWhatsApp(phone: string, orderNumber: string): Promise<void> {
+    const instanceId = process.env.ZAPI_INSTANCE_ID;
+    const token = process.env.ZAPI_TOKEN;
+    const clientToken = process.env.ZAPI_CLIENT_TOKEN;
+
+    if (!instanceId || !token || !clientToken) {
+      this.logger.log(`[Z-API] Variáveis não configuradas, pulando WhatsApp (delivered) para ${orderNumber}.`);
+      return;
+    }
+
+    const digits = phone.replace(/\D/g, '');
+    const to = digits.startsWith('55') ? digits : `55${digits}`;
+    const message =
+      `Seu pedido foi entregue com sucesso! ✅\n\n` +
+      `Agradecemos pela sua compra — é uma honra ter você como nosso cliente 🙌\n\n` +
+      `Esperamos que aproveite ao máximo! Qualquer coisa, estamos por aqui.\n\n` +
+      `Te esperamos na próxima 😀🚀`;
+
+    try {
+      const res = await fetch(
+        `https://api.z-api.io/instances/${instanceId}/token/${token}/send-text`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Client-Token': clientToken },
+          body: JSON.stringify({ phone: to, message }),
+        },
+      );
+      if (!res.ok) {
+        const err = await res.text();
+        this.logger.error(`[Z-API] Falha ao enviar WhatsApp (delivered) para ${orderNumber}: ${err}`);
+      } else {
+        this.logger.log(`[Z-API] WhatsApp (delivered) enviado para ${to} — pedido ${orderNumber}.`);
+      }
+    } catch (error) {
+      this.logger.error(`[Z-API] Erro ao chamar Z-API (delivered): ${(error as Error).message}`);
+    }
+  }
+
   async sendPaymentApproved(order: Order): Promise<void> {
     if (!order.customerEmail) {
       this.logger.log(`Order ${order.orderNumber}: no email provided, skipping payment approved.`);

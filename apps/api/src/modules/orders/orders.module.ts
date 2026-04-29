@@ -5,10 +5,11 @@ import { AuthModule } from '../auth/auth.module';
 import { CustomersModule } from '../customers/customers.module';
 import { GoogleSheetsModule } from '../../shared/google-sheets/google-sheets.module';
 import { ProductsModule } from '../products/products.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { ThrottleGuard } from '../../shared/guards/throttle.guard';
 
 @Module({
-  imports: [AuthModule, CustomersModule, GoogleSheetsModule, ProductsModule],
+  imports: [AuthModule, CustomersModule, GoogleSheetsModule, ProductsModule, NotificationsModule],
   controllers: [OrdersController],
   providers: [OrdersService, ThrottleGuard],
   exports: [OrdersService],

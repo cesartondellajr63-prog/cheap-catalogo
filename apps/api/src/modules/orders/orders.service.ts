@@ -4,6 +4,7 @@ import { FirebaseService } from '../../shared/firebase/firebase.service';
 import { CustomersService } from '../customers/customers.service';
 import { GoogleSheetsService } from '../../shared/google-sheets/google-sheets.service';
 import { ProductsService } from '../products/products.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CreateOrderDto, OrderItemDto } from './dto/create-order.dto';
 
 const VALID_STATUSES = ['PENDING', 'PAID', 'SHIPPED', 'DELIVERED', 'CANCELLED', 'REFUNDED'];
@@ -17,6 +18,7 @@ export class OrdersService {
     private readonly customersService: CustomersService,
     private readonly googleSheetsService: GoogleSheetsService,
     private readonly productsService: ProductsService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   /**
@@ -250,9 +252,27 @@ export class OrdersService {
     const docSnap = await docRef.get();
     if (!docSnap.exists) throw new NotFoundException(`Order with id "${id}" not found.`);
     await docRef.update({ shippingStatus, updatedAt: Date.now() });
-    const orderNumber = (docSnap.data() as any).orderNumber;
+    const orderData = docSnap.data() as any;
+    const orderNumber = orderData.orderNumber;
     this.googleSheetsService.updateOrderShippingStatus(orderNumber, shippingStatus)
       .catch((err) => console.error(`[Sheets] Failed to update shippingStatus for ${orderNumber}:`, err));
+
+    if (orderData.customerPhone) {
+      if (shippingStatus === 'a caminho') {
+        this.notificationsService.sendOrderShippedWhatsApp(
+          orderData.customerPhone,
+          orderNumber,
+          orderData.customerName ?? '',
+          orderData.motoboy ?? '',
+        ).catch((err) => this.logger.error(`[WhatsApp] Falha ao enviar (shipped): ${err}`));
+      } else if (shippingStatus === 'concluido') {
+        this.notificationsService.sendOrderDeliveredWhatsApp(
+          orderData.customerPhone,
+          orderNumber,
+        ).catch((err) => this.logger.error(`[WhatsApp] Falha ao enviar (delivered): ${err}`));
+      }
+    }
+
     const updated = await docRef.get();
     return { id, ...updated.data() };
   }
