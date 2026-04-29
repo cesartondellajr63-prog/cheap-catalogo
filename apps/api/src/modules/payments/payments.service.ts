@@ -307,6 +307,14 @@ export class PaymentsService {
     const sessionSnap = await sessionRef.get();
 
     if (!sessionSnap.exists) {
+      // Sessão pode ter sido removida pelo background polling após confirmar o pagamento.
+      // Se o pedido já está PAID, retorna approved para o frontend redirecionar normalmente.
+      try {
+        const order = await this.ordersService.findById(orderId);
+        if (order.status === 'PAID') {
+          return { status: 'approved', paymentId: order.mpPaymentId || null, amount: order.total, metadata: null };
+        }
+      } catch {}
       throw new ForbiddenException('Session not found.');
     }
 
