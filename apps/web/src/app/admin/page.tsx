@@ -652,25 +652,29 @@ export default function AdminDashboard() {
 
   // KPIs
   const now = new Date();
+  const paidDate = (o: Order) => {
+    const raw = (o as any).paidAt;
+    return raw ? new Date(raw) : new Date(o.createdAt);
+  };
   const totalVendidoMes = orders.filter(o => {
     if (!isPaid(o.status)) return false;
-    const d = new Date(o.createdAt);
+    const d = paidDate(o);
     return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
   }).reduce((s, o) => s + o.total, 0);
   const totalVendidoHoje = orders.filter(o => {
     if (!isPaid(o.status)) return false;
-    const d = new Date(o.createdAt);
+    const d = paidDate(o);
     return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
   }).reduce((s, o) => s + o.total, 0);
   const totalVendido = orders.filter(o => isPaid(o.status)).reduce((s, o) => s + o.total, 0);
   const totalPedidosMes = orders.filter(o => {
     if (!isPaid(o.status)) return false;
-    const d = new Date(o.createdAt);
+    const d = paidDate(o);
     return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
   }).length;
   const totalPedidosHoje = orders.filter(o => {
     if (!isPaid(o.status)) return false;
-    const d = new Date(o.createdAt);
+    const d = paidDate(o);
     return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
   }).length;
   const totalPedidos = orders.filter(o => isPaid(o.status)).length;
