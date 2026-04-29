@@ -29,7 +29,7 @@ export class WebhooksController {
     if (!secret) {
       throw new Error('WEBHOOK_SECRET environment variable is required.');
     }
-    this.webhookSecret = secret;
+    this.webhookSecret = secret.trim();
   }
 
   @Post('mercadopago')
@@ -86,7 +86,9 @@ export class WebhooksController {
       throw new UnauthorizedException('Webhook timestamp expired (Replay Attack protection).');
     }
 
-    const manifest = `id:${paymentId};request-id:${requestId || ''};ts:${ts};`;
+    const manifest = requestId
+      ? `id:${paymentId};request-id:${requestId};ts:${ts};`
+      : `id:${paymentId};ts:${ts};`;
     const expectedHmac = crypto
       .createHmac('sha256', this.webhookSecret)
       .update(manifest)
