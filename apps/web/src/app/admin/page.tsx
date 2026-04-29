@@ -1052,7 +1052,7 @@ export default function AdminDashboard() {
                                   <span style={{ fontFamily:'JetBrains Mono,monospace',fontSize:11,color:'#8a8a8a',marginLeft:8 }}>{c.phone}</span>
                                 </> : <span style={{ color:'#6a6a6a' }}>—</span>}
                               </td>
-                              <td style={{ ...td,maxWidth:220,whiteSpace:'normal',wordBreak:'break-word',lineHeight:1.4 }}>{c.address ?? '—'}</td>
+                              <td style={{ ...td,maxWidth:220,whiteSpace:'normal',wordBreak:'break-word',lineHeight:1.4 }}>{c.address?.replace(/,\s*/g, ' ') ?? '—'}</td>
                               <td style={tdMono}>{c.createdAt ? new Date(c.createdAt).toLocaleDateString('pt-BR') : '—'}</td>
                             </tr>
                           ));
@@ -1824,7 +1824,7 @@ function OrderRow({ o, onRowClick, onStatusChange, onShippingChange, onMotoboyCh
           : <span style={{ color:'#6a6a6a' }}>—</span>}
       </td>
       <td style={{ ...td, maxWidth: 200, whiteSpace: 'normal', wordBreak: 'break-word', lineHeight: 1.4 }}>
-        {o.customer?.address ?? ''}{o.customer?.city ? `, ${o.customer.city}` : ''}
+        {(o.customer?.address ?? '').replace(/,\s*/g, ' ')}{o.customer?.city ? ` ${o.customer.city}` : ''}
       </td>
       <td style={{ ...tdMono, fontWeight: 600, color: '#7efff5' }}>{fmtR(o.shippingCost ?? 0)}</td>
       <td style={{ ...td, maxWidth: 240, whiteSpace: 'normal', wordBreak: 'break-word', lineHeight: 1.4, fontSize: 11, color: '#b0b0b0' }}>
