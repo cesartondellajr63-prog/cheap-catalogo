@@ -193,6 +193,7 @@ export default function CheckoutPage() {
         city: cidade,
       });
       const pedidoData = JSON.stringify({
+        paymentType: 'pix',
         orderId: result.orderId,
         orderNumber: result.orderNumber,
         accessToken: result.accessToken,

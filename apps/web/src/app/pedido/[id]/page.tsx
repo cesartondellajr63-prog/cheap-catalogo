@@ -155,8 +155,8 @@ function PedidoContent({ orderId: orderIdProp }: { orderId: string }) {
 
   const accessToken = (pedidoAtual.accessToken as string | undefined) ?? '';
 
-  // Se paymentType === 'card' ou não há accessToken → veio da Cielo (cartão)
-  const isCard = pedidoAtual.paymentType === 'card' || !accessToken;
+  // paymentType é salvo explicitamente ('card' = Cielo, 'pix' = MP); fallback pelo accessToken
+  const isCard = pedidoAtual.paymentType === 'card' || (pedidoAtual.paymentType !== 'pix' && !accessToken);
 
   const itemsText = (pedidoAtual.items as string[] | undefined)?.join(', ') ?? '';
   const addressText = (pedidoAtual.address as string | undefined) ?? '';

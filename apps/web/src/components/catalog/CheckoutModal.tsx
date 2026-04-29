@@ -235,6 +235,7 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
         city: cidade,
       });
       const pedidoPix = JSON.stringify({
+        paymentType: 'pix',
         orderId: result.orderId,
         orderNumber: result.orderNumber,
         accessToken: result.accessToken,
