@@ -185,8 +185,6 @@ export class ShippingService {
     let finalPrice: number;
     if (totalReais < 11) {
       finalPrice = 11;
-    } else if (totalReais <= 18) {
-      finalPrice = totalReais + 2;
     } else {
       finalPrice = totalReais;
     }
