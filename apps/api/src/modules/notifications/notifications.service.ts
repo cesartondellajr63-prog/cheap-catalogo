@@ -164,7 +164,7 @@ export class NotificationsService {
     }
   }
 
-  async sendOrderPaidWhatsApp(phone: string, orderNumber: string, customerName = '', customerAddress = ''): Promise<void> {
+  async sendOrderPaidWhatsApp(phone: string, orderNumber: string, customerName = '', customerAddress = '', items: { productName: string; variantName?: string; quantity: number }[] = []): Promise<void> {
     const instanceId = process.env.ZAPI_INSTANCE_ID;
     const token = process.env.ZAPI_TOKEN;
     const clientToken = process.env.ZAPI_CLIENT_TOKEN;
@@ -178,9 +178,12 @@ export class NotificationsService {
     const to = digits.startsWith('55') ? digits : `55${digits}`;
 
     const greeting = customerName ? `${customerName} seu` : `Seu`;
+    const productSummary = items.length > 0
+      ? items.map(i => `${i.productName}${i.variantName ? ` (${i.variantName})` : ''}${i.quantity > 1 ? ` x${i.quantity}` : ''}`).join(', ')
+      : 'pedido';
     const addressLine = customerAddress
-      ? `Seu pedido já está sendo preparado com todo cuidado. Ele já será enviado para ${customerAddress}\n\n`
-      : `Seu pedido já está sendo preparado com todo cuidado.\n\n`;
+      ? `Seu ${productSummary} já está sendo preparado com todo cuidado. Ele já será enviado para ${customerAddress}\n\n`
+      : `Seu ${productSummary} já está sendo preparado com todo cuidado.\n\n`;
     const message =
       `${greeting} pagamento foi aprovado! 😁\n\n` +
       `Obrigado pela sua compra! 💙\n` +

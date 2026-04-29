@@ -191,7 +191,7 @@ export class WebhooksController {
     this.logger.log(`[WHATSAPP] phone=${customerPhone} orderNumber=${order.orderNumber}`);
 
     if (customerPhone && order.orderNumber) {
-      void this.notificationsService.sendOrderPaidWhatsApp(customerPhone, order.orderNumber, customerName, customerAddress);
+      void this.notificationsService.sendOrderPaidWhatsApp(customerPhone, order.orderNumber, customerName, customerAddress, order.items || []);
     }
 
     if (customerPhone) {
@@ -283,7 +283,7 @@ export class WebhooksController {
       const name = order.customerName || order.customer?.name || '';
       const address = [order.address, order.city].filter(Boolean).join(', ');
       if (phone && order.orderNumber) {
-        void this.notificationsService.sendOrderPaidWhatsApp(phone, order.orderNumber, name, address);
+        void this.notificationsService.sendOrderPaidWhatsApp(phone, order.orderNumber, name, address, order.items || []);
       }
     } catch (e) {
       this.logger.error(`Cielo webhook error: ${(e as Error).message}`);
