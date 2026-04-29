@@ -166,9 +166,10 @@ function PedidoContent({ orderId: orderIdProp }: { orderId: string }) {
     ? `Olá! Acabei de finalizar o pagamento do pedido do meu ${itemsText} e gostaria de solicitar o link de rastreio. Nº do pedido: ${orderNumber}`
     : `Olá! Acabei de finalizar o pagamento do pedido e gostaria de solicitar o link de rastreio. Nº do pedido: ${orderNumber}`;
 
+  const paymentMethodText = isCard ? 'Cielo' : 'Mercado Pago';
   const waMsgTimeout = itemsText
-    ? `Olá! Acabei de realizar o pagamento do pedido do meu ${itemsText} porém não recebi a confirmação, consegue verificar para mim? Nº do pedido: ${orderNumber}`
-    : `Olá! Acabei de realizar o pagamento do pedido porém não recebi a confirmação, consegue verificar para mim? Nº do pedido: ${orderNumber}`;
+    ? `Olá! Acabei de tentar realizar o pagamento do pedido do meu ${itemsText} pelo ${paymentMethodText} porém não recebi a confirmação, consegue verificar para mim? Nº do pedido: ${orderNumber}`
+    : `Olá! Acabei de tentar realizar o pagamento pelo ${paymentMethodText} porém não recebi a confirmação, consegue verificar para mim? Nº do pedido: ${orderNumber}`;
 
   const waMsg = status === 'timeout' ? waMsgTimeout : waMsgApproved;
   const waLink = `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(waMsg)}`;
