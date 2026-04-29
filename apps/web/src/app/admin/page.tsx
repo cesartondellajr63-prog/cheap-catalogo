@@ -793,9 +793,9 @@ export default function AdminDashboard() {
               {/* KPI Cards */}
               <div style={{ display:'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : '2fr 1fr 1fr 1fr 1fr', gap:14, marginBottom:24 }}>
                 <div style={{ gridColumn: isMobile ? '1 / -1' : undefined }}>
-                  <StatCard label="Total Vendido" value={fmtR(totalVendidoMes)} sub="vendas do mês" sub2={`hoje: ${fmtR(totalVendidoHoje)}`} color="#c8ff00" icon="💰" featured />
+                  <StatCard label="Total Vendido" value={fmtR(totalVendidoMes)} sub="vendas do mês" sub2={fmtR(totalVendidoHoje)} color="#c8ff00" icon="💰" featured />
                 </div>
-                <StatCard label="Total Pedidos" value={String(totalPedidosMes)} sub="pedidos do mês" sub2={`hoje: ${totalPedidosHoje}`} color="#7efff5" icon="📦" onClick={() => setFiltro('todos')} active={filtro === 'todos'} />
+                <StatCard label="Total Pedidos" value={String(totalPedidosMes)} sub="pedidos do mês" sub2={String(totalPedidosHoje)} color="#7efff5" icon="📦" onClick={() => setFiltro('todos')} active={filtro === 'todos'} />
                 <StatCard label="Aguardando Pagamento" value={String(aguardando)} sub="pagamento pendente" color="#7efff5" icon="💳" onClick={() => setFiltro(filtro === 'aguardando' ? 'todos' : 'aguardando')} active={filtro === 'aguardando'} />
                 <StatCard label="Aguardando Entrega" value={String(pendentes)} sub="pagos, não entregues" color="#ffb545" icon="🏍️" onClick={() => setFiltro(filtro === 'pendente' ? 'todos' : 'pendente')} active={filtro === 'pendente'} />
                 <StatCard label="Concluídos" value={String(concluidos)} sub={`${pctConcluidos}% do total`} color="#c8ff00" icon="✅" onClick={() => setFiltro(filtro === 'concluido' ? 'todos' : 'concluido')} active={filtro === 'concluido'} />
@@ -1770,13 +1770,13 @@ function StatCard({ label, value, sub, sub2, color, icon, featured, onClick, act
     }}>
       {/* top glow line */}
       <div style={{ position:'absolute',top:0,left:0,right:0,height:1,background:`linear-gradient(90deg,transparent,${color}55,transparent)`,pointerEvents:'none' }}></div>
-      <div style={{ display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:16 }}>
+      <div style={{ display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:8 }}>
         <div style={{ fontSize:10,fontWeight:700,letterSpacing:'1.2px',textTransform:'uppercase',color:'#b0b0b0' }}>{label}</div>
         <div style={{ width:36,height:36,borderRadius:11,display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,background:`${color}1a`,border:`1px solid ${color}33` }}>{icon}</div>
       </div>
       <div style={{ fontFamily:'JetBrains Mono,monospace',fontSize: featured ? 32 : 24,fontWeight:700,letterSpacing:-0.5,color }}>{value}</div>
       <div style={{ fontSize:11,color:'#6a6a6a',marginTop:5,fontWeight:500 }}>{sub}</div>
-      {sub2 && <div style={{ fontSize:10,color:'#4a4a4a',marginTop:6,fontWeight:400,letterSpacing:'0.3px' }}>{sub2}</div>}
+      {sub2 && <div style={{ fontSize:16,color:'#4a4a4a',marginTop:4,fontWeight:400,letterSpacing:'0.3px' }}>{sub2}</div>}
       <div style={{ position:'absolute',bottom:0,left:0,right:0,height:2,background:`linear-gradient(90deg,${color},transparent)` }}></div>
     </div>
   );
