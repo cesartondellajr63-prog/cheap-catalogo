@@ -186,7 +186,7 @@ export class WebhooksController {
       metadata.customer_name ||
       `${payment.payer?.first_name || ''} ${payment.payer?.last_name || ''}`.trim();
     const customerEmail = payment.payer?.email || '';
-    const customerAddress = metadata.customer_address || order.customerAddress || '';
+    const customerAddress = metadata.customer_address || [order.address, order.city].filter(Boolean).join(', ');
 
     this.logger.log(`[WHATSAPP] phone=${customerPhone} orderNumber=${order.orderNumber}`);
 
@@ -281,7 +281,7 @@ export class WebhooksController {
 
       const phone = order.customerPhone || order.customer?.phone || '';
       const name = order.customerName || order.customer?.name || '';
-      const address = order.customerAddress || order.customer?.address || '';
+      const address = [order.address, order.city].filter(Boolean).join(', ');
       if (phone && order.orderNumber) {
         void this.notificationsService.sendOrderPaidWhatsApp(phone, order.orderNumber, name, address);
       }

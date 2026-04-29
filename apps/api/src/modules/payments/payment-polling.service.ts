@@ -109,7 +109,7 @@ export class PaymentPollingService implements OnModuleInit, OnModuleDestroy {
         order.customerPhone,
         order.orderNumber,
         order.customerName || '',
-        order.customerAddress || '',
+        [order.address, order.city].filter(Boolean).join(', '),
       );
     }
   }
