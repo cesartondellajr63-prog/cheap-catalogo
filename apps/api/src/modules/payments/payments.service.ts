@@ -391,7 +391,12 @@ export class PaymentsService {
           await this.ordersService.updateStatus(orderId, 'PAID', 'polling_mercadopago');
 
           if (order.customerPhone && order.orderNumber) {
-            void this.notificationsService.sendOrderPaidWhatsApp(order.customerPhone, order.orderNumber);
+            void this.notificationsService.sendOrderPaidWhatsApp(
+              order.customerPhone,
+              order.orderNumber,
+              order.customerName || '',
+              order.customerAddress || '',
+            );
           }
         }
       } catch {}

@@ -182,16 +182,17 @@ export class WebhooksController {
       payment.payer?.phone?.number ||
       '';
 
-    this.logger.log(`[WHATSAPP] phone=${customerPhone} orderNumber=${order.orderNumber}`);
-
-    if (customerPhone && order.orderNumber) {
-      void this.notificationsService.sendOrderPaidWhatsApp(customerPhone, order.orderNumber);
-    }
     const customerName =
       metadata.customer_name ||
       `${payment.payer?.first_name || ''} ${payment.payer?.last_name || ''}`.trim();
     const customerEmail = payment.payer?.email || '';
-    const customerAddress = metadata.customer_address || '';
+    const customerAddress = metadata.customer_address || order.customerAddress || '';
+
+    this.logger.log(`[WHATSAPP] phone=${customerPhone} orderNumber=${order.orderNumber}`);
+
+    if (customerPhone && order.orderNumber) {
+      void this.notificationsService.sendOrderPaidWhatsApp(customerPhone, order.orderNumber, customerName, customerAddress);
+    }
 
     if (customerPhone) {
       const customersRef = this.firebaseService.db.collection('customers');
@@ -279,8 +280,10 @@ export class WebhooksController {
       this.logger.log(`Order ${order.id} marked as PAID via Cielo webhook.`);
 
       const phone = order.customerPhone || order.customer?.phone || '';
+      const name = order.customerName || order.customer?.name || '';
+      const address = order.customerAddress || order.customer?.address || '';
       if (phone && order.orderNumber) {
-        void this.notificationsService.sendOrderPaidWhatsApp(phone, order.orderNumber);
+        void this.notificationsService.sendOrderPaidWhatsApp(phone, order.orderNumber, name, address);
       }
     } catch (e) {
       this.logger.error(`Cielo webhook error: ${(e as Error).message}`);

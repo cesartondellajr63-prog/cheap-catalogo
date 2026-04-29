@@ -164,7 +164,7 @@ export class NotificationsService {
     }
   }
 
-  async sendOrderPaidWhatsApp(phone: string, orderNumber: string): Promise<void> {
+  async sendOrderPaidWhatsApp(phone: string, orderNumber: string, customerName = '', customerAddress = ''): Promise<void> {
     const instanceId = process.env.ZAPI_INSTANCE_ID;
     const token = process.env.ZAPI_TOKEN;
     const clientToken = process.env.ZAPI_CLIENT_TOKEN;
@@ -177,11 +177,15 @@ export class NotificationsService {
     const digits = phone.replace(/\D/g, '');
     const to = digits.startsWith('55') ? digits : `55${digits}`;
 
+    const greeting = customerName ? `${customerName} seu` : `Seu`;
+    const addressLine = customerAddress
+      ? `Seu pedido já está sendo preparado com todo cuidado. Ele já será enviado para ${customerAddress}\n\n`
+      : `Seu pedido já está sendo preparado com todo cuidado.\n\n`;
     const message =
-      `Que bom, seu pagamento foi aprovado! 😁\n\n` +
+      `${greeting} pagamento foi aprovado! 😁\n\n` +
       `Obrigado pela sua compra! 💙\n` +
       `É uma honra ter você como nosso cliente.\n\n` +
-      `Seu pedido já está sendo preparado com todo cuidado.\n\n` +
+      addressLine +
       `Você pode acompanhar as atualizações do seu pedido pelo site a qualquer momento.\n` +
       `👉 https://www.cheapcatalogo.com/acompanhar/${orderNumber}`;
 
