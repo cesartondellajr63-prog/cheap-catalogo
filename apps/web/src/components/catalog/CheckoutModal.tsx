@@ -153,8 +153,9 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
       .catch(() => {});
   }, [cep]);
 
-  // Geocodifica via BrasilAPI (CEP) ou Nominatim como fallback
+  // Geocodifica via BrasilAPI (CEP) → Nominatim por CEP → Nominatim por endereço
   const geocodePorCep = async (cepRaw: string): Promise<{ lat: string; lng: string } | null> => {
+    // 1. BrasilAPI — coordenadas precisas quando disponíveis
     try {
       const res = await fetch(`https://brasilapi.com.br/api/cep/v2/${cepRaw}`);
       if (res.ok) {
@@ -165,13 +166,21 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
         }
       }
     } catch {}
+    // 2. Nominatim por código postal (mais confiável que texto livre)
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?postalcode=${cepRaw}&countrycodes=br&format=json&limit=1`,
+      );
+      const data = await res.json() as any[];
+      if (data.length) return { lat: data[0].lat, lng: data[0].lon };
+    } catch {}
     return null;
   };
 
   const geocodeEndereco = async (addr: string): Promise<{ lat: string; lng: string } | null> => {
     try {
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(addr)}&format=json&limit=1`,
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(addr)}&countrycodes=br&format=json&limit=1`,
       );
       const data = await res.json() as any[];
       if (data.length) return { lat: data[0].lat, lng: data[0].lon };
