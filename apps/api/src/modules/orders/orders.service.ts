@@ -258,14 +258,14 @@ export class OrdersService {
       .catch((err) => console.error(`[Sheets] Failed to update shippingStatus for ${orderNumber}:`, err));
 
     if (orderData.customerPhone) {
-      if (shippingStatus === 'a caminho') {
+      if (shippingStatus === '🟡 A Caminho') {
         this.notificationsService.sendOrderShippedWhatsApp(
           orderData.customerPhone,
           orderNumber,
           orderData.customerName ?? '',
           orderData.motoboy ?? '',
         ).catch((err) => this.logger.error(`[WhatsApp] Falha ao enviar (shipped): ${err}`));
-      } else if (shippingStatus === 'concluido') {
+      } else if (shippingStatus === '🟢 Entregue') {
         this.notificationsService.sendOrderDeliveredWhatsApp(
           orderData.customerPhone,
           orderNumber,
