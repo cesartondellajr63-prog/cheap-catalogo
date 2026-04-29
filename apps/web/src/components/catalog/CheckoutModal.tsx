@@ -188,6 +188,21 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
     return null;
   };
 
+  const geocodeEstruturado = async (
+    street: string, city: string, state: string,
+  ): Promise<{ lat: string; lng: string } | null> => {
+    try {
+      const params = new URLSearchParams({
+        street, city, state, country: 'Brasil',
+        countrycodes: 'br', format: 'json', limit: '1',
+      });
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?${params}`);
+      const data = await res.json() as any[];
+      if (data.length) return { lat: data[0].lat, lng: data[0].lon };
+    } catch {}
+    return null;
+  };
+
   const resetFrete = () => {
     if (freteResult) {
       setFreteResult(null);
@@ -208,6 +223,8 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
       const cepRaw = cep.replace(/\D/g, '');
       let geo = cepRaw.length === 8 ? await geocodePorCep(cepRaw) : null;
       if (!geo) geo = await geocodeEndereco(addrCompleto);
+      if (!geo) geo = await geocodeEstruturado(rua, cidade, estado || 'SP');
+      if (!geo) geo = await geocodeEstruturado(bairro, cidade, estado || 'SP');
       if (!geo) {
         geo = await geocodeEndereco(`${cidade}, ${estado || 'SP'}, Brasil`);
       }
