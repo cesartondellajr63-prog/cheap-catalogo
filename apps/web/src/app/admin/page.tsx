@@ -165,13 +165,13 @@ export default function AdminDashboard() {
   const [usuario, setUsuario] = useState('');
 
   // Filters — dashboard
-  const [filtro, setFiltro] = useState<'todos' | 'aguardando' | 'pendente' | 'concluido' | 'arquivado'>('todos');
+  const [filtro, setFiltro] = useState<'todos' | 'pendente' | 'concluido' | 'arquivado'>('todos');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
 
   // Filters — pedidos page
   const [pSearch, setPSearch] = useState('');
-  const [pFiltro, setPFiltro] = useState<'todos' | 'aguardando' | 'pendente' | 'concluido' | 'arquivado'>('todos');
+  const [pFiltro, setPFiltro] = useState<'todos' | 'pendente' | 'concluido' | 'arquivado'>('todos');
   const [filterMenuOpen, setFilterMenuOpen] = useState(false);
   const [dashFilterMenuOpen, setDashFilterMenuOpen] = useState(false);
   const filterBtnRef = useRef<HTMLButtonElement>(null);
@@ -594,8 +594,7 @@ export default function AdminDashboard() {
     if (f === 'arquivado') r = r.filter(o => (o as any).archived);
     else {
       r = r.filter(o => !(o as any).archived);
-      if (f === 'aguardando') r = r.filter(o => o.status === 'PENDING');
-      else if (f === 'pendente') r = r.filter(o => o.status !== 'PENDING' && (o as any).shippingStatus !== '🟢 Entregue');
+      if (f === 'pendente') r = r.filter(o => (o as any).shippingStatus !== '🟢 Entregue');
       else if (f === 'concluido') r = r.filter(o => (o as any).shippingStatus === '🟢 Entregue');
     }
     if (dFrom) r = r.filter(o => new Date(o.createdAt) >= new Date(dFrom));
@@ -622,8 +621,7 @@ export default function AdminDashboard() {
     if (f === 'arquivado') r = r.filter(o => (o as any).archived);
     else {
       r = r.filter(o => !(o as any).archived);
-      if (f === 'aguardando') r = r.filter(o => o.status === 'PENDING');
-      else if (f === 'pendente') r = r.filter(o => o.status !== 'PENDING' && (o as any).shippingStatus !== '🟢 Entregue');
+      if (f === 'pendente') r = r.filter(o => (o as any).shippingStatus !== '🟢 Entregue');
       else if (f === 'concluido') r = r.filter(o => (o as any).shippingStatus === '🟢 Entregue');
     }
     if (pFilterPagamento === 'pendente') r = r.filter(o => o.status === 'PENDING');
@@ -796,7 +794,7 @@ export default function AdminDashboard() {
                   <StatCard label="Total Vendido" value={fmtR(totalVendidoMes)} sub="Vendas hoje:" sub2={fmtR(totalVendidoHoje)} color="#c8ff00" icon="💰" featured />
                 </div>
                 <StatCard label="Total Pedidos" value={String(totalPedidosMes)} sub="Pedidos hoje:" sub2={String(totalPedidosHoje)} color="#7efff5" icon="📦" onClick={() => setFiltro('todos')} active={filtro === 'todos'} />
-                <StatCard label="Aguardando Pagamento" value={String(aguardando)} sub="pagamento pendente" color="#7efff5" icon="💳" onClick={() => setFiltro(filtro === 'aguardando' ? 'todos' : 'aguardando')} active={filtro === 'aguardando'} />
+                <StatCard label="Aguardando Pagamento" value={String(aguardando)} sub="pagamento pendente" color="#7efff5" icon="💳" onClick={() => setFiltro(filtro === 'pendente' ? 'todos' : 'pendente')} active={filtro === 'pendente'} />
                 <StatCard label="Aguardando Entrega" value={String(pendentes)} sub="pagos, não entregues" color="#ffb545" icon="🏍️" onClick={() => setFiltro(filtro === 'pendente' ? 'todos' : 'pendente')} active={filtro === 'pendente'} />
                 <StatCard label="Concluídos" value={String(concluidos)} sub={`${pctConcluidos}% do total`} color="#c8ff00" icon="✅" onClick={() => setFiltro(filtro === 'concluido' ? 'todos' : 'concluido')} active={filtro === 'concluido'} />
               </div>
@@ -837,11 +835,10 @@ export default function AdminDashboard() {
                     <div style={{ fontSize:10,fontWeight:700,letterSpacing:'1.2px',textTransform:'uppercase',color:'#8a8a8a',marginBottom:12 }}>Status</div>
                     <div style={{ display:'flex',flexWrap:'wrap',gap:8 }}>
                       {([
-                        { key:'todos',     label:'Todos',          cls:'green' },
-                        { key:'aguardando', label:'💳 Aguard. Pagamento', cls:'cyan'  },
-                        { key:'pendente',   label:'🏍️ Aguard. Entrega',  cls:'amber' },
-                        { key:'concluido', label:'✅ Concluídos',  cls:'green' },
-                        { key:'arquivado',  label:'📦 Arquivados',        cls:'gray'  },
+                        { key:'todos',     label:'Todos',        cls:'green' },
+                        { key:'pendente',  label:'⏳ Pendentes',  cls:'amber' },
+                        { key:'concluido', label:'✅ Concluídos', cls:'green' },
+                        { key:'arquivado', label:'📦 Arquivados', cls:'gray'  },
                       ] as const).map(f => (
                         <button key={f.key} onClick={() => setFiltro(f.key)}
                           style={{ padding:'7px 16px',borderRadius:10,border:'1px solid',fontFamily:'Satoshi,sans-serif',fontSize:12,fontWeight:700,cursor:'pointer',transition:'all 0.2s',whiteSpace:'nowrap',
@@ -1774,7 +1771,7 @@ function StatCard({ label, value, sub, sub2, color, icon, featured, onClick, act
         <div style={{ fontSize:10,fontWeight:700,letterSpacing:'1.2px',textTransform:'uppercase',color:'#b0b0b0' }}>{label}</div>
         <div style={{ width:36,height:36,borderRadius:11,display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,background:`${color}1a`,border:`1px solid ${color}33` }}>{icon}</div>
       </div>
-      <div style={{ fontFamily:'JetBrains Mono,monospace',fontSize: featured ? 32 : 24,fontWeight:700,letterSpacing:-0.5,color }}>{value}</div>
+      <div style={{ fontFamily:'JetBrains Mono,monospace',fontSize: featured ? 42 : 32,fontWeight:700,letterSpacing:-0.5,color }}>{value}</div>
       <div style={{ fontSize:11,color:'#6a6a6a',marginTop:5,fontWeight:500 }}>{sub}</div>
       {sub2 && <div style={{ fontSize:16,color:'#4a4a4a',marginTop:4,fontWeight:400,letterSpacing:'0.3px' }}>{sub2}</div>}
       <div style={{ position:'absolute',bottom:0,left:0,right:0,height:2,background:`linear-gradient(90deg,${color},transparent)` }}></div>
