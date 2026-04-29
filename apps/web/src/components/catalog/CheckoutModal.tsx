@@ -153,7 +153,21 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
       .catch(() => {});
   }, [cep]);
 
-  // Geocodifica endereço via Nominatim (browser → sem necessidade de proxy)
+  // Geocodifica via BrasilAPI (CEP) ou Nominatim como fallback
+  const geocodePorCep = async (cepRaw: string): Promise<{ lat: string; lng: string } | null> => {
+    try {
+      const res = await fetch(`https://brasilapi.com.br/api/cep/v2/${cepRaw}`);
+      if (res.ok) {
+        const data = await res.json() as any;
+        const coords = data?.location?.coordinates;
+        if (coords?.latitude && coords?.longitude) {
+          return { lat: String(coords.latitude), lng: String(coords.longitude) };
+        }
+      }
+    } catch {}
+    return null;
+  };
+
   const geocodeEndereco = async (addr: string): Promise<{ lat: string; lng: string } | null> => {
     try {
       const res = await fetch(
@@ -182,13 +196,14 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
     setFreteLoading(true);
     try {
       const addrCompleto = `${rua}, ${numero}, ${bairro}, ${cidade}, ${estado || 'SP'}, Brasil`;
-      let geo = await geocodeEndereco(addrCompleto);
+      const cepRaw = cep.replace(/\D/g, '');
+      let geo = cepRaw.length === 8 ? await geocodePorCep(cepRaw) : null;
+      if (!geo) geo = await geocodeEndereco(addrCompleto);
       if (!geo) {
         geo = await geocodeEndereco(`${cidade}, ${estado || 'SP'}, Brasil`);
       }
       if (!geo) throw new Error('Endereço não encontrado. Verifique a cidade e tente novamente.');
 
-      const cepRaw = cep.replace(/\D/g, '');
       const result = await api.shipping.quote({
         lat: geo.lat,
         lng: geo.lng,
