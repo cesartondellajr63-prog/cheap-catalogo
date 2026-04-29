@@ -793,9 +793,9 @@ export default function AdminDashboard() {
               {/* KPI Cards */}
               <div style={{ display:'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : '2fr 1fr 1fr 1fr 1fr', gap:14, marginBottom:24 }}>
                 <div style={{ gridColumn: isMobile ? '1 / -1' : undefined }}>
-                  <StatCard label="Total Vendido" value={fmtR(totalVendidoMes)} sub="vendas do mês" sub2={fmtR(totalVendidoHoje)} color="#c8ff00" icon="💰" featured />
+                  <StatCard label="Total Vendido" value={fmtR(totalVendidoMes)} sub="Vendas hoje:" sub2={fmtR(totalVendidoHoje)} color="#c8ff00" icon="💰" featured />
                 </div>
-                <StatCard label="Total Pedidos" value={String(totalPedidosMes)} sub="pedidos do mês" sub2={String(totalPedidosHoje)} color="#7efff5" icon="📦" onClick={() => setFiltro('todos')} active={filtro === 'todos'} />
+                <StatCard label="Total Pedidos" value={String(totalPedidosMes)} sub="Pedidos hoje:" sub2={String(totalPedidosHoje)} color="#7efff5" icon="📦" onClick={() => setFiltro('todos')} active={filtro === 'todos'} />
                 <StatCard label="Aguardando Pagamento" value={String(aguardando)} sub="pagamento pendente" color="#7efff5" icon="💳" onClick={() => setFiltro(filtro === 'aguardando' ? 'todos' : 'aguardando')} active={filtro === 'aguardando'} />
                 <StatCard label="Aguardando Entrega" value={String(pendentes)} sub="pagos, não entregues" color="#ffb545" icon="🏍️" onClick={() => setFiltro(filtro === 'pendente' ? 'todos' : 'pendente')} active={filtro === 'pendente'} />
                 <StatCard label="Concluídos" value={String(concluidos)} sub={`${pctConcluidos}% do total`} color="#c8ff00" icon="✅" onClick={() => setFiltro(filtro === 'concluido' ? 'todos' : 'concluido')} active={filtro === 'concluido'} />
