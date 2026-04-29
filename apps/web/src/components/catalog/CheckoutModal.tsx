@@ -153,9 +153,17 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
       .catch(() => {});
   }, [cep]);
 
-  // Geocodifica via BrasilAPI (CEP) → Nominatim por CEP → Nominatim por endereço
+  // Geocodifica via CEP — tenta múltiplas fontes em ordem de confiabilidade
   const geocodePorCep = async (cepRaw: string): Promise<{ lat: string; lng: string } | null> => {
-    // 1. BrasilAPI — coordenadas precisas quando disponíveis
+    // 1. AwesomeAPI — retorna lat/lng diretamente para CEPs brasileiros
+    try {
+      const res = await fetch(`https://cep.awesomeapi.com.br/json/${cepRaw}`);
+      if (res.ok) {
+        const data = await res.json() as any;
+        if (data?.lat && data?.lng) return { lat: String(data.lat), lng: String(data.lng) };
+      }
+    } catch {}
+    // 2. BrasilAPI — coordenadas precisas quando disponíveis
     try {
       const res = await fetch(`https://brasilapi.com.br/api/cep/v2/${cepRaw}`);
       if (res.ok) {
@@ -166,7 +174,7 @@ export default function CheckoutModal({ cart, onClose, onUpdateCart }: CheckoutM
         }
       }
     } catch {}
-    // 2. Nominatim por código postal (mais confiável que texto livre)
+    // 3. Nominatim por código postal
     try {
       const res = await fetch(
         `https://nominatim.openstreetmap.org/search?postalcode=${cepRaw}&countrycodes=br&format=json&limit=1`,
