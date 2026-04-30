@@ -7,15 +7,16 @@ const DEFAULT_MESSAGE_BOT = 'Hoje não estamos mais funcionando. Te avisaremos q
 const ALL_BRAND_IDS = ['ignite','elfbar','lostmary','oxbar','hqd','nikbar','dinnerlady','rabbeats'];
 
 const MAKE_WEBHOOK_URL = 'https://hook.us1.make.com/pqwkn7zmone4qf3jgncs2kj9ecjye8rc';
+const MAKE_CLOSE_WEBHOOK_URL = 'https://hook.us1.make.com/79xhkux6jcchttd9wo81tokeignka89s';
 
 @Injectable()
 export class StoreConfigService {
   constructor(private readonly firebaseService: FirebaseService) {}
 
-  async get(): Promise<{ isOpen: boolean; closedMessage: string; closedMessageBot: string; webhookEnabled: boolean }> {
+  async get(): Promise<{ isOpen: boolean; closedMessage: string; closedMessageBot: string; webhookEnabled: boolean; closeWebhookEnabled: boolean }> {
     const doc = await this.firebaseService.db.doc('config/store').get();
     if (!doc.exists) {
-      return { isOpen: true, closedMessage: DEFAULT_MESSAGE, closedMessageBot: DEFAULT_MESSAGE_BOT, webhookEnabled: true };
+      return { isOpen: true, closedMessage: DEFAULT_MESSAGE, closedMessageBot: DEFAULT_MESSAGE_BOT, webhookEnabled: true, closeWebhookEnabled: true };
     }
     const data = doc.data()!;
     return {
@@ -23,16 +24,24 @@ export class StoreConfigService {
       closedMessage: data.closedMessage ?? DEFAULT_MESSAGE,
       closedMessageBot: data.closedMessageBot ?? DEFAULT_MESSAGE_BOT,
       webhookEnabled: data.webhookEnabled ?? true,
+      closeWebhookEnabled: data.closeWebhookEnabled ?? true,
     };
   }
 
-  async update(body: { isOpen?: boolean; closedMessage?: string; closedMessageBot?: string; webhookEnabled?: boolean }): Promise<{ isOpen: boolean; closedMessage: string; closedMessageBot: string; webhookEnabled: boolean }> {
-    if (body.isOpen === true) {
+  async update(body: { isOpen?: boolean; closedMessage?: string; closedMessageBot?: string; webhookEnabled?: boolean; closeWebhookEnabled?: boolean }): Promise<{ isOpen: boolean; closedMessage: string; closedMessageBot: string; webhookEnabled: boolean; closeWebhookEnabled: boolean }> {
+    if (body.isOpen === true || body.isOpen === false) {
       const current = await this.get();
-      // Usa o valor do body se enviado; senão usa o que está salvo no Firebase
-      const webhookEnabled = body.webhookEnabled !== undefined ? body.webhookEnabled : current.webhookEnabled;
-      if (!current.isOpen && webhookEnabled) {
-        fetch(MAKE_WEBHOOK_URL, { method: 'POST' }).catch(() => {});
+      if (body.isOpen === true) {
+        // Usa o valor do body se enviado; senão usa o que está salvo no Firebase
+        const webhookEnabled = body.webhookEnabled !== undefined ? body.webhookEnabled : current.webhookEnabled;
+        if (!current.isOpen && webhookEnabled) {
+          fetch(MAKE_WEBHOOK_URL, { method: 'POST' }).catch(() => {});
+        }
+      } else if (body.isOpen === false && current.isOpen) {
+        const closeWebhookEnabled = body.closeWebhookEnabled !== undefined ? body.closeWebhookEnabled : current.closeWebhookEnabled;
+        if (closeWebhookEnabled) {
+          fetch(MAKE_CLOSE_WEBHOOK_URL, { method: 'POST' }).catch(() => {});
+        }
       }
     }
     await this.firebaseService.db.doc('config/store').set(body, { merge: true });

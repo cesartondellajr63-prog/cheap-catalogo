@@ -192,6 +192,7 @@ export default function AdminDashboard() {
   const [storeMessage, setStoreMessage] = useState('Loja temporariamente fechada. Voltamos em breve!');
   const [storeMessageBot, setStoreMessageBot] = useState('Hoje não estamos mais funcionando. Te avisaremos quando estivermos funcionando!');
   const [webhookEnabled, setWebhookEnabled] = useState(true);
+  const [closeWebhookEnabled, setCloseWebhookEnabled] = useState(true);
   const [storeLoading, setStoreLoading] = useState(false);
   const [storeSaving, setStoreSaving] = useState(false);
 
@@ -414,8 +415,8 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (page !== 'loja') return;
     setStoreLoading(true);
-    apiFetch<{ isOpen: boolean; closedMessage: string; closedMessageBot: string; webhookEnabled: boolean }>('/config/store')
-      .then(s => { setStoreIsOpen(s.isOpen); setStoreIsOpenDraft(s.isOpen); setStoreMessage(s.closedMessage); setStoreMessageBot(s.closedMessageBot ?? 'Hoje não estamos mais funcionando. Te avisaremos quando estivermos funcionando!'); setWebhookEnabled(s.webhookEnabled ?? true); })
+    apiFetch<{ isOpen: boolean; closedMessage: string; closedMessageBot: string; webhookEnabled: boolean; closeWebhookEnabled: boolean }>('/config/store')
+      .then(s => { setStoreIsOpen(s.isOpen); setStoreIsOpenDraft(s.isOpen); setStoreMessage(s.closedMessage); setStoreMessageBot(s.closedMessageBot ?? 'Hoje não estamos mais funcionando. Te avisaremos quando estivermos funcionando!'); setWebhookEnabled(s.webhookEnabled ?? true); setCloseWebhookEnabled(s.closeWebhookEnabled ?? true); })
       .catch(() => {})
       .finally(() => setStoreLoading(false));
   }, [page]);
@@ -426,7 +427,7 @@ export default function AdminDashboard() {
       await apiFetch<any>('/config/store', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isOpen: storeIsOpenDraft, closedMessage: storeMessage, closedMessageBot: storeMessageBot, webhookEnabled }),
+        body: JSON.stringify({ isOpen: storeIsOpenDraft, closedMessage: storeMessage, closedMessageBot: storeMessageBot, webhookEnabled, closeWebhookEnabled }),
       });
       setStoreIsOpen(storeIsOpenDraft); // só atualiza o badge após salvar com sucesso
     } catch (e) {
@@ -1405,6 +1406,33 @@ export default function AdminDashboard() {
                           position:'absolute', top:3, left: webhookEnabled ? 28 : 3,
                           width:24, height:24, borderRadius:'50%',
                           background: webhookEnabled ? '#0a0a0a' : '#6a6a6a',
+                          transition:'left 0.25s, background 0.25s',
+                        }} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Webhook fechar loja */}
+                  <div style={{ ...glassCard, marginBottom:20 }}>
+                    <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',gap:16 }}>
+                      <div>
+                        <div style={{ fontSize:15,fontWeight:700,color:'#fff',marginBottom:4 }}>Apagar Data Store</div>
+                        <div style={{ fontSize:13,color:'#8a8a8a' }}>
+                          {closeWebhookEnabled ? 'Ativado — dispara o Make.com quando a loja fechar.' : 'Desativado — loja fecha sem disparar o webhook.'}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setCloseWebhookEnabled(v => !v)}
+                        style={{
+                          position:'relative', width:56, height:30, borderRadius:15,
+                          border:'none', cursor:'pointer', transition:'background 0.25s', flexShrink:0,
+                          background: closeWebhookEnabled ? '#c8ff00' : 'rgba(255,255,255,0.12)',
+                        }}
+                      >
+                        <span style={{
+                          position:'absolute', top:3, left: closeWebhookEnabled ? 28 : 3,
+                          width:24, height:24, borderRadius:'50%',
+                          background: closeWebhookEnabled ? '#0a0a0a' : '#6a6a6a',
                           transition:'left 0.25s, background 0.25s',
                         }} />
                       </button>

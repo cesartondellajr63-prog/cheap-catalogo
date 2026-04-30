@@ -13,7 +13,7 @@ export class StoreConfigController {
 
   @UseGuards(JwtAuthGuard)
   @Patch()
-  update(@Body() body: { isOpen?: boolean; closedMessage?: string; closedMessageBot?: string; webhookEnabled?: boolean }) {
+  update(@Body() body: { isOpen?: boolean; closedMessage?: string; closedMessageBot?: string; webhookEnabled?: boolean; closeWebhookEnabled?: boolean }) {
     return this.storeConfigService.update(body);
   }
 }
